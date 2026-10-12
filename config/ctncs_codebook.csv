@@ -1,0 +1,543 @@
+taxonomy_version,code,parent_code,level,label,definition
+1.0,01,,1,Entertainment,"Narrative-first content meant to amuse, engage, or emotionally hook. Includes skits, dramas, pop culture, celebrity content."
+1.0,01.01,01,2,Movies & TV,"Narrative content about scripted entertainment — includes reviews, recaps, breakdowns, and lore analysis."
+1.0,01.01.01,01.01,3,Film Reviews,"Critiques or analyzes films with a focus on storytelling, cinematography, themes, or cultural relevance."
+1.0,01.01.01.01,01.01.01,4,Blockbuster Critiques,"Analyzes major studio films with a focus on story, spectacle, and cultural relevance."
+1.0,01.01.01.01.41,01.01.01.01,5,Reviews,"Evaluates and shares opinions on a product, service, or media item."
+1.0,01.01.01.02,01.01.01,4,Indie Film Analysis,"Explores indie cinema through critical reflection, narrative themes, and artistic style."
+1.0,01.01.01.02.15,01.01.01.02,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,01.01.01.02.24,01.01.01.02,5,Lists,"Presents a ranked or grouped set of recommendations, facts, or ideas."
+1.0,01.01.02,01.01,3,TV Recaps,"Summarizes, comments on, or dissects episodes or arcs from scripted television series."
+1.0,01.01.02.03,01.01.02,4,Episode Summaries,"Summarizes episodes through plot breakdowns, character arcs, and major developments."
+1.0,01.01.02.03.38,01.01.02.03,5,Recap,"Summarizes key events, lessons, or takeaways from a larger experience or episode."
+1.0,01.01.02.03.59,01.01.02.03,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,01.01.02.04,01.01.02,4,Season Highlights,Highlights seasonal arcs or finales with emphasis on narrative payoff or fan impact.
+1.0,01.01.02.04.22,01.01.02.04,5,Highlight,Shows standout or peak moments from a longer piece of content or event.
+1.0,01.01.02.04.27,01.01.02.04,5,Montage,"A fast-paced edit showing a sequence of related visuals or actions, often set to music."
+1.0,01.02,01,2,Comedy,"Humor-forward content designed to entertain through skits, satire, parody, improv, or stand-up."
+1.0,01.02.03,01.02,3,Skits,"Performs short, scripted scenes for humor or storytelling, often shared as standalone sketches."
+1.0,01.02.03.05,01.02.03,4,Short-Form Sketches,"Short scripted comedy or narrative sketches designed for quick, shareable impact."
+1.0,01.02.03.06,01.02.03,4,Improv Scenes,Improvised comedy content featuring spontaneous dialogue and unpredictable scenarios.
+1.0,01.02.03.06.03,01.02.03.06,5,Behind-the-Scenes,Reveals the process or preparation behind a finished product or performance.
+1.0,01.02.03.06.25,01.02.03.06,5,Live,"Content streamed in real-time, often interactive or unedited."
+1.0,01.02.04,01.02,3,Stand-Up,"Solo comedic performances delivered to a live or virtual audience, often observational or narrative in tone."
+1.0,01.02.04.07,01.02.04,4,Live Routines,"Captures live comedic or performative routines, often in stand-up or stage settings."
+1.0,01.02.04.07.25,01.02.04.07,5,Live,"Content streamed in real-time, often interactive or unedited."
+1.0,01.02.04.07.36,01.02.04.07,5,Rant,"Expresses strong opinion or frustration in an unfiltered, emotional format."
+1.0,01.02.04.08,01.02.04,4,Comedy Specials,Long-form recorded comedy specials with structured pacing and audience engagement.
+1.0,01.02.04.08.33,01.02.04.08,5,Podcasts,"Long-form audio or video conversations, usually structured around topics or guests."
+1.0,01.02.04.08.41,01.02.04.08,5,Reviews,"Evaluates and shares opinions on a product, service, or media item."
+1.0,01.03,01,2,Music & Performance,"Live or recorded expression through music, dance, acting, or talent-based performance."
+1.0,01.03.05,01.03,3,Music Videos,Music paired with visual storytelling or aesthetic presentation for artistic or promotional purposes.
+1.0,01.03.05.09,01.03.05,4,Pop Releases,Showcases professionally released music content for mainstream distribution.
+1.0,01.03.05.09.27,01.03.05.09,5,Montage,"A fast-paced edit showing a sequence of related visuals or actions, often set to music."
+1.0,01.03.05.10,01.03.05,4,Indie Clips,Highlights independently produced music videos or audio-visual experiments.
+1.0,01.03.05.10.14,01.03.05.10,5,DIY,"Demonstrates how a product or process works, often in real-time."
+1.0,01.03.05.10.46,01.03.05.10,5,Showcase,"Displays the features or value of a single product, creation, or talent."
+1.0,01.03.06,01.03,3,Live Performances,"Live or recorded artistic showcases of music, theater, dance, or performance-based disciplines."
+1.0,01.03.06.11,01.03.06,4,Concert Footage,"Features footage from concerts, festivals, or live musical events with audience engagement."
+1.0,01.03.06.11.22,01.03.06.11,5,Highlight,Shows standout or peak moments from a longer piece of content or event.
+1.0,01.03.06.11.25,01.03.06.11,5,Live,"Content streamed in real-time, often interactive or unedited."
+1.0,01.03.06.12,01.03.06,4,Street Shows,"Street-level performances including dance, theater, or busking recorded in public spaces."
+1.0,01.03.06.12.30,01.03.06.12,5,Performance,"Content where the creator performs music, art, theater, or physical feats for the audience."
+1.0,01.03.06.12.59,01.03.06.12,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,02,,1,Education,"Purpose is to teach, explain, or transfer skills. Includes tutorials, explainers, language learning, academic breakdowns."
+1.0,02.04,02,2,Academic,Formal subject matter rooted in school or university disciplines — often structured and instructional.
+1.0,02.04.07,02.04,3,Math Lessons,"Teaches math concepts or problem-solving using clear, step-by-step visual instruction."
+1.0,02.04.07.13,02.04.07,4,Algebra Basics,Simplifies core algebra concepts using visuals and real-world examples for beginner learners.
+1.0,02.04.07.13.15,02.04.07.13,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,02.04.07.13.56,02.04.07.13,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,02.04.07.14,02.04.07,4,Calculus Concepts,Introduces calculus principles like derivatives and integrals through conceptual breakdowns.
+1.0,02.04.07.14.19,02.04.07.14,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,02.04.07.14.35,02.04.07.14,5,Q&A,Answers audience-submitted or pre-generated questions in a conversational tone.
+1.0,02.04.08,02.04,3,History Lessons,"Explains historical events, timelines, figures, or cultural eras through narrative or analysis."
+1.0,02.04.08.15,02.04.08,4,Ancient Civilizations,"Presents historical timelines, leaders, and civilizations through artifacts and analysis."
+1.0,02.04.08.15.29,02.04.08.15,5,Overview,"Presents a broad explanation of a topic, usually without deep technical detail."
+1.0,02.04.08.15.48,02.04.08.15,5,Storytime,"Shares a personal or fictional narrative with a hook, pacing, and emotional arc."
+1.0,02.04.08.16,02.04.08,4,Modern Events,Explains recent historical developments and their impact on contemporary society.
+1.0,02.04.08.16.04,02.04.08.16,5,Breakdown,"Dissects a topic into parts for clarity, often using visuals or step-by-step commentary."
+1.0,02.04.08.16.58,02.04.08.16,5,Update,"Provides a status report or change log on an ongoing story, project, or journey."
+1.0,02.05,02,2,Skills & DIY,"Instructional content teaching practical, hands-on tasks like repairs, crafts, or creative builds."
+1.0,02.05.09,02.05,3,Coding Tutorials,"Tutorials or walkthroughs that teach how to code, build, or deploy software applications."
+1.0,02.05.09.17,02.05.09,4,Web Development,"Teaches how to build websites through HTML, CSS, and JavaScript foundations."
+1.0,02.05.09.17.56,02.05.09.17,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,02.05.09.17.60,02.05.09.17,5,Walkthrough,"Leads the viewer through a process, system, or game with detailed explanation."
+1.0,02.05.09.18,02.05.09,4,App Coding,Demonstrates mobile or cross-platform app creation from design to deployment.
+1.0,02.05.09.18.13,02.05.09.18,5,Demo,"Explores a topic in high detail, usually beyond surface-level information."
+1.0,02.05.09.18.52,02.05.09.18,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,02.05.10,02.05,3,Crafting Guides,"Instructional content showing how to create objects, crafts, or handmade products step by step."
+1.0,02.05.10.19,02.05.10,4,Woodworking,Walks through hands-on woodworking projects from materials to finishing techniques.
+1.0,02.05.10.19.14,02.05.10.19,5,DIY,"Demonstrates how a product or process works, often in real-time."
+1.0,02.05.10.19.56,02.05.10.19,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,02.05.10.20,02.05.10,4,Sewing Projects,"Guides viewers through sewing construction, stitching techniques, and fabric selection."
+1.0,02.05.10.20.19,02.05.10.20,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,02.05.10.20.46,02.05.10.20,5,Showcase,"Displays the features or value of a single product, creation, or talent."
+1.0,02.06,02,2,Science & Discovery,"Content exploring physical, natural, or theoretical phenomena with curiosity and explanation."
+1.0,02.06.11,02.06,3,Space Exploration,"Explores human and robotic exploration of space, astronomy, or rocketry."
+1.0,02.06.11.21,02.06.11,4,Planetary Studies,"Explains the structure and movement of planets, moons, and solar system objects."
+1.0,02.06.11.21.15,02.06.11.21,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,02.06.11.21.58,02.06.11.21,5,Update,"Provides a status report or change log on an ongoing story, project, or journey."
+1.0,02.06.11.22,02.06.11,4,Space Missions,"Covers technical details of crewed and robotic space missions, launches, and landings."
+1.0,02.06.11.22.02,02.06.11.22,5,Analysis,Evaluates or interprets a subject through critical reasoning or structured breakdown.
+1.0,02.06.11.22.38,02.06.11.22,5,Recap,"Summarizes key events, lessons, or takeaways from a larger experience or episode."
+1.0,02.06.12,02.06,3,Nature Studies,"Educational content on ecosystems, wildlife, and earth’s natural environments."
+1.0,02.06.12.23,02.06.12,4,Wildlife Behavior,"Analyzes animal behavior, instincts, and interactions in their natural environments."
+1.0,02.06.12.23.28,02.06.12.23,5,Observation,"Content based on quiet or neutral watching — often animals, environments, or processes."
+1.0,02.06.12.23.59,02.06.12.23,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,02.06.12.24,02.06.12,4,Ecosystem Analysis,"Evaluates ecosystems by exploring species, terrain, climate, and environmental balance."
+1.0,02.06.12.24.04,02.06.12.24,5,Breakdown,"Dissects a topic into parts for clarity, often using visuals or step-by-step commentary."
+1.0,02.06.12.24.06,02.06.12.24,5,Case Study,Presents a real-world example to explain how something worked or failed.
+1.0,03,,1,Lifestyle,"Personal identity content: routines, fashion, food, home, beauty. Often vlog-style or advice-driven."
+1.0,03.07,03,2,Fitness,"Training-focused content covering workouts, form guides, performance tracking, and movement routines."
+1.0,03.07.13,03.07,3,Yoga,"Guided practices or routines designed to improve flexibility, balance, or breath control."
+1.0,03.07.13.25,03.07.13,4,Beginner Flows,Teaches introductory yoga movements and breathing with gentle pacing and alignment tips.
+1.0,03.07.13.25.56,03.07.13.25,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,03.07.13.25.59,03.07.13.25,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,03.07.13.26,03.07.13,4,Advanced Poses,"Focuses on advanced yoga sequences, transitions, and strength-based flexibility work."
+1.0,03.07.13.26.52,03.07.13.26,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,03.07.14,03.07,3,Strength Training,"Training routines designed to increase muscular strength, endurance, and performance."
+1.0,03.07.14.27,03.07.14,4,Weightlifting,Demonstrates proper form and techniques in free weights and gym-based strength routines.
+1.0,03.07.14.27.19,03.07.14.27,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,03.07.14.27.50,03.07.14.27,5,Test,"Puts a product, method, or assumption through a structured trial to evaluate results."
+1.0,03.07.14.28,03.07.14,4,Bodyweight Exercises,"Shows no-equipment exercises emphasizing core strength, mobility, and repetition sets."
+1.0,03.07.14.28.16,03.07.14.28,5,Experiment,"Tests a hypothesis or idea in real-time, usually with unexpected or educational results."
+1.0,03.07.14.28.56,03.07.14.28,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,03.08,03,2,Food & Cooking,"Content showcasing food prep, recipes, taste tests, cooking tips, and culinary storytelling."
+1.0,03.08.15,03.08,3,Recipes,Instructional cooking content showing how to make specific dishes or meals.
+1.0,03.08.15.29,03.08.15,4,Vegan Dishes,Prepares plant-based meals using accessible ingredients and clean presentation.
+1.0,03.08.15.29.39,03.08.15.29,5,Recipes,"Teaches how to prepare a specific dish with ingredients, steps, and tips."
+1.0,03.08.15.29.56,03.08.15.29,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,03.08.15.30,03.08.15,4,Quick Meals,Demonstrates meals that can be prepared in 30 minutes or less for time-conscious audiences.
+1.0,03.08.15.30.20,03.08.15.30,5,Hack,Shows a shortcut or unconventional method to achieve a result quickly or efficiently.
+1.0,03.08.15.30.52,03.08.15.30,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,03.08.16,03.08,3,Cooking Techniques,"Techniques, methods, or principles used to prepare food or refine cooking skills."
+1.0,03.08.16.31,03.08.16,4,Baking Skills,"Demonstrates baking techniques including dough prep, timing, decoration, and ingredient handling."
+1.0,03.08.16.31.13,03.08.16.31,5,Demo,"Explores a topic in high detail, usually beyond surface-level information."
+1.0,03.08.16.31.19,03.08.16.31,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,03.08.16.32,03.08.16,4,Grilling Tips,"Offers instruction or techniques for grilling meat, vegetables, or specialty items over open flame or heat"
+1.0,03.08.16.32.52,03.08.16.32,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,03.08.16.32.59,03.08.16.32,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,03.09,03,2,Fashion & Beauty,"Aesthetic-focused content including makeup tutorials, hauls, styling, skincare, and reviews."
+1.0,03.09.17,03.09,3,Makeup Tutorials,"Step-by-step beauty tutorials, often focused on application, technique, or transformation."
+1.0,03.09.17.33,03.09.17,4,Daily Looks,"Shares informal, everyday outfit or beauty styling with a focus on approachability and authenticity."
+1.0,03.09.17.33.55,03.09.17.33,5,Try-On,"Models clothing or accessories while commenting on fit, feel, or quality."
+1.0,03.09.17.33.56,03.09.17.33,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,03.09.17.34,03.09.17,4,Special Effects,Highlights dramatic or fantasy-oriented beauty transformations using FX makeup or prosthetics.
+1.0,03.09.17.34.13,03.09.17.34,5,Demo,"Explores a topic in high detail, usually beyond surface-level information."
+1.0,03.09.18,03.09,3,Fashion Trends,"Content about seasonal, cultural, or community trends in personal style or appearance."
+1.0,03.09.18.35,03.09.18,4,Streetwear,"Covers urban fashion trends rooted in youth culture, sneakers, skatewear, or music scenes."
+1.0,03.09.18.35.21,03.09.18.35,5,Haul,"Displays and discusses items recently purchased, often with mini-reviews."
+1.0,03.09.18.35.46,03.09.18.35,5,Showcase,"Displays the features or value of a single product, creation, or talent."
+1.0,03.09.18.36,03.09.18,4,High Fashion,"Showcases couture, editorial, and designer fashion with a focus on artistic presentation and runway aesthetics."
+1.0,03.09.18.36.41,03.09.18.36,5,Reviews,"Evaluates and shares opinions on a product, service, or media item."
+1.0,03.09.18.36.53,03.09.18.36,5,Tour,"Takes the viewer through a space, platform, or experience step by step."
+1.0,04,,1,Technology,"Covers tools, software, hardware, AI, reviews, product demos. Can be consumer or technical in scope."
+1.0,04.10,04,2,Consumer Tech,"Reviews and usage of personal tech products like phones, gadgets, and wearables."
+1.0,04.10.19,04.10,3,Gadget Reviews,"Reviews or comparisons of personal tech products like phones, laptops, or headphones."
+1.0,04.10.19.37,04.10.19,4,Smartphones,"Reviews or compares phone models, features, or accessories with a focus on consumer usability."
+1.0,04.10.19.37.41,04.10.19.37,5,Reviews,"Evaluates and shares opinions on a product, service, or media item."
+1.0,04.10.19.37.57,04.10.19.37,5,Unboxing,"Opens and explores a new product, often with commentary on packaging and first impressions."
+1.0,04.10.19.38,04.10.19,4,Wearables,"Explores fitness trackers, smartwatches, and AR devices through demonstrations or performance tests."
+1.0,04.10.19.38.09,04.10.19.38,5,Comparison,"Contrasts two or more options, tools, products, or perspectives."
+1.0,04.10.19.38.18,04.10.19.38,5,First Impressions,"Initial reactions to a new product, trend, or experience — usually unfiltered."
+1.0,04.10.20,04.10,3,Smart Devices,"Content about connected or smart-enabled devices for home, productivity, or lifestyle."
+1.0,04.10.20.39,04.10.20,4,Home Automation,"Demonstrates or reviews smart home systems like lighting, thermostats, or voice-controlled hubs."
+1.0,04.10.20.39.45,04.10.20.39,5,Setup,"Shows how tools, environments, or systems are arranged and optimized."
+1.0,04.10.20.39.56,04.10.20.39,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,04.10.20.40,04.10.20,4,IoT Gadgets,"Explains interconnected smart devices and their functionality in home, work, or lifestyle applications."
+1.0,04.10.20.40.13,04.10.20.40,5,Demo,"Explores a topic in high detail, usually beyond surface-level information."
+1.0,04.10.20.40.20,04.10.20.40,5,Hack,Shows a shortcut or unconventional method to achieve a result quickly or efficiently.
+1.0,04.11,04,2,Software & Coding,"Instructional or exploratory content focused on programming, debugging, and digital tools."
+1.0,04.11.21,04.11,3,App Development,Demonstrations or walkthroughs of building or deploying software applications.
+1.0,04.11.21.41,04.11.21,4,Mobile Apps,"Reviews, compares, or demonstrates mobile apps for productivity, creativity, or entertainment."
+1.0,04.11.21.41.56,04.11.21.41,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,04.11.21.41.60,04.11.21.41,5,Walkthrough,"Leads the viewer through a process, system, or game with detailed explanation."
+1.0,04.11.21.42,04.11.21,4,Desktop Software,"Covers installation, features, and workflows of PC or Mac-based software for task-specific needs."
+1.0,04.11.21.42.13,04.11.21.42,5,Demo,"Explores a topic in high detail, usually beyond surface-level information."
+1.0,04.11.21.42.19,04.11.21.42,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,04.11.22,04.11,3,Programming Skills,"Conceptual or instructional content on writing, structuring, or improving code logic."
+1.0,04.11.22.43,04.11.22,4,Code Debugging,"Walks through identifying and fixing errors in software, often using real-time screen capture or examples."
+1.0,04.11.22.43.35,04.11.22.43,5,Q&A,Answers audience-submitted or pre-generated questions in a conversational tone.
+1.0,04.11.22.43.52,04.11.22.43,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,04.11.22.44,04.11.22,4,Best Practices,"Teaches or reinforces professional coding habits, conventions, or workflows for quality assurance."
+1.0,04.11.22.44.06,04.11.22.44,5,Case Study,Presents a real-world example to explain how something worked or failed.
+1.0,04.11.22.44.15,04.11.22.44,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,04.12,04,2,Digital Culture,"Content that documents, reflects, or participates in platform-native trends, memes, or subcultures."
+1.0,04.12.23,04.12,3,Internet Trends,"Highlights or commentary on current viral moments, internet behavior, and digital culture."
+1.0,04.12.23.45,04.12.23,4,Social Media Shifts,"Analyzes updates, platform policy changes, or user behavior trends shaping social ecosystems."
+1.0,04.12.23.45.02,04.12.23.45,5,Analysis,Evaluates or interprets a subject through critical reasoning or structured breakdown.
+1.0,04.12.23.45.58,04.12.23.45,5,Update,"Provides a status report or change log on an ongoing story, project, or journey."
+1.0,04.12.23.46,04.12.23,4,Meme Culture,"Explores viral formats, remix behavior, or visual language emerging from internet humor."
+1.0,04.12.23.46.10,04.12.23.46,5,Compilation,Combines multiple short clips or moments into a single cohesive video.
+1.0,04.12.24,04.12,3,Digital Media,Analysis or documentation of how digital platforms shape culture and interaction.
+1.0,04.12.24.47,04.12.24,4,Video Content,"Discusses creation, structure, or engagement strategies for video-first formats across platforms."
+1.0,04.12.24.47.03,04.12.24.47,5,Behind-the-Scenes,Reveals the process or preparation behind a finished product or performance.
+1.0,04.12.24.47.56,04.12.24.47,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,04.12.24.48,04.12.24,4,Podcasts,"Offers guidance on hosting, editing, or promoting audio content distributed through RSS platforms."
+1.0,04.12.24.48.23,04.12.24.48,5,Interview,Features a conversation between host and guest(s) to extract insight or perspective.
+1.0,04.12.24.48.33,04.12.24.48,5,Podcasts,"Long-form audio or video conversations, usually structured around topics or guests."
+1.0,04.13,04,2,Emerging Tech,"Content featuring experimental or high-growth technologies like AI, blockchain, and VR/AR."
+1.0,04.13.25,04.13,3,AI Applications,Demonstrations or explanations of how AI models or tools are used in real scenarios.
+1.0,04.13.25.49,04.13.25,4,Chatbots,"Demonstrates how chatbots are built, trained, and used in customer service, content, or automation workflows."
+1.0,04.13.25.49.13,04.13.25.49,5,Demo,"Explores a topic in high detail, usually beyond surface-level information."
+1.0,04.13.25.49.15,04.13.25.49,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,04.13.25.50,04.13.25,4,Machine Learning,"Explains how ML models are structured, trained, and applied across tasks like prediction, classification, or personalizatio"
+1.0,04.13.25.50.06,04.13.25.50,5,Case Study,Presents a real-world example to explain how something worked or failed.
+1.0,04.13.25.50.56,04.13.25.50,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,04.13.26,04.13,3,Blockchain Tech,"Explains blockchain technology, decentralization, crypto, or smart contracts."
+1.0,04.13.26.51,04.13.26,4,Cryptocurrencies,"Breaks down how digital currencies function, how to trade them, and the risks or innovations they bring."
+1.0,04.13.26.51.24,04.13.26.51,5,Lists,"Presents a ranked or grouped set of recommendations, facts, or ideas."
+1.0,04.13.26.51.41,04.13.26.51,5,Reviews,"Evaluates and shares opinions on a product, service, or media item."
+1.0,04.13.26.52,04.13.26,4,Smart Contracts,"Explains how blockchain-based contracts execute automatically, often using real-world examples or project walkthroughs."
+1.0,04.13.26.52.02,04.13.26.52,5,Analysis,Evaluates or interprets a subject through critical reasoning or structured breakdown.
+1.0,04.13.26.52.19,04.13.26.52,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,05,,1,News & Commentary,"Discusses current events, politics, cultural takes. Includes both factual updates and subjective analysis."
+1.0,05.14,05,2,Current Events,"Real-time or recent commentary on news, culture, or global developments."
+1.0,05.14.27,05.14,3,Breaking News,"Real-time or same-day coverage of breaking stories, emergencies, or global events."
+1.0,05.14.27.53,05.14.27,4,Live Updates,"Delivers real-time content about unfolding events, typically fast-paced and streamed or posted as-it-happens."
+1.0,05.14.27.53.25,05.14.27.53,5,Live,"Content streamed in real-time, often interactive or unedited."
+1.0,05.14.27.53.58,05.14.27.53,5,Update,"Provides a status report or change log on an ongoing story, project, or journey."
+1.0,05.14.27.54,05.14.27,4,Event Recaps,"Summarizes performances, launches, keynotes, or other major events with commentary or highlight coverage."
+1.0,05.14.27.54.38,05.14.27.54,5,Recap,"Summarizes key events, lessons, or takeaways from a larger experience or episode."
+1.0,05.14.28,05.14,3,Daily Updates,"Short-form summaries of daily happenings, typically news or culture-based."
+1.0,05.14.28.55,05.14.28,4,News Briefs,"Presents short, focused news segments covering key headlines with minimal analysis or opinion."
+1.0,05.14.28.55.26,05.14.28.55,5,Mini,Delivers a shorter or condensed version of a traditionally longer content type.
+1.0,05.14.28.55.43,05.14.28.55,5,Roundup,"Aggregates several examples, trends, or pieces of news into one piece of content."
+1.0,05.14.28.56,05.14.28,4,Morning Reports,"Curated summaries of daily headlines, weather, cultural moments, or platform trends delivered in the morning."
+1.0,05.14.28.56.29,05.14.28.56,5,Overview,"Presents a broad explanation of a topic, usually without deep technical detail."
+1.0,05.14.28.56.59,05.14.28.56,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,05.15,05,2,Politics & Opinion,"Political ideas, takes, or debates — includes ideology breakdowns, campaigns, and critiques."
+1.0,05.15.29,05.15,3,Debates,"Content that stages, hosts, or responds to structured ideological or social debates."
+1.0,05.15.29.57,05.15.29,4,Live Discussions,"Real-time group or solo dialogue on timely topics, often streamed or recorded with audience engagement."
+1.0,05.15.29.57.11,05.15.29.57,5,Debate,Shows how to make or build something step by step using accessible materials.
+1.0,05.15.29.57.25,05.15.29.57,5,Live,"Content streamed in real-time, often interactive or unedited."
+1.0,05.15.29.58,05.15.29,4,Opinion Clashes,"Presents opposing viewpoints in a debate or reaction format, often around controversial issues."
+1.0,05.15.29.58.36,05.15.29.58,5,Rant,"Expresses strong opinion or frustration in an unfiltered, emotional format."
+1.0,05.15.30,05.15,3,Policy Analysis,"Breakdowns or analysis of political issues, proposals, or legislative actions."
+1.0,05.15.30.59,05.15.30,4,Legislation Reviews,"Breaks down bills, laws, or political decisions with context, critique, or explainer framing."
+1.0,05.15.30.59.04,05.15.30.59,5,Breakdown,"Dissects a topic into parts for clarity, often using visuals or step-by-step commentary."
+1.0,05.15.30.59.15,05.15.30.59,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,05.15.30.60,05.15.30,4,Election Insights,"Analyzes candidates, voter behavior, polling data, or campaign strategy before or after elections."
+1.0,05.15.30.60.02,05.15.30.60,5,Analysis,Evaluates or interprets a subject through critical reasoning or structured breakdown.
+1.0,05.15.30.60.24,05.15.30.60,5,Lists,"Presents a ranked or grouped set of recommendations, facts, or ideas."
+1.0,05.15.91,05.15,3,Conspiracy Theories,"Explores secretive narratives, alternate histories, or fringe theories critically or speculatively."
+1.0,05.16,05,2,Culture & Society,"Observations on identity, values, behavior, rituals, or subcultures within society."
+1.0,05.16.31,05.16,3,Social Issues,"Content that explores social justice issues, equity, and systemic critique."
+1.0,05.16.31.61,05.16.31,4,Justice Topics,"Explores themes of law, incarceration, civil rights, and systemic inequality through commentary or reporting."
+1.0,05.16.31.61.01,05.16.31.61,5,Advocacy,Content designed to raise awareness or drive action around social or political causes.
+1.0,05.16.31.61.33,05.16.31.61,5,Podcasts,"Long-form audio or video conversations, usually structured around topics or guests."
+1.0,05.16.31.62,05.16.31,4,Community Stories,Shares lived experiences or perspectives from underrepresented or localized communities.
+1.0,05.16.31.62.23,05.16.31.62,5,Interview,Features a conversation between host and guest(s) to extract insight or perspective.
+1.0,05.16.31.62.59,05.16.31.62,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,05.16.32,05.16,3,Cultural Trends,"Describes cultural behaviors, rituals, changes, or subgroups within society."
+1.0,05.16.32.63,05.16.32,4,Fashion Shifts,"Analyzes changes in fashion trends over time, across regions, or within subcultures."
+1.0,05.16.32.63.43,05.16.32.63,5,Roundup,"Aggregates several examples, trends, or pieces of news into one piece of content."
+1.0,05.16.32.63.54,05.16.32.63,5,Trends,"Highlights popular styles, challenges, or behavior emerging within a timeframe."
+1.0,05.16.32.64,05.16.32,4,Tech Impacts,"Explores how emerging technologies affect behavior, jobs, ethics, or cultural norms."
+1.0,05.16.32.64.02,05.16.32.64,5,Analysis,Evaluates or interprets a subject through critical reasoning or structured breakdown.
+1.0,05.16.32.64.08,05.16.32.64,5,Commentary,"Offers subjective opinion or interpretation of an existing event, work, or trend."
+1.0,06,,1,Creative Arts,"Expression-first content: music, performance, drawing, animation, poetry, design. Often overlaps with entertainment but prioritizes craft."
+1.0,06.17,06,2,Visual Arts,"Content based on visual creative process — including drawing, illustration, or digital design."
+1.0,06.17.34,06.17,3,Drawing,Instruction or process documentation of analog or digital drawing techniques.
+1.0,06.17.34.67,06.17.34,4,Sketching Techniques,"Teaches foundational linework, shading, and drawing fundamentals through process demos."
+1.0,06.17.34.67.52,06.17.34.67,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,06.17.34.67.56,06.17.34.67,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,06.17.34.68,06.17.34,4,Illustration Styles,Compares or teaches stylistic approaches to digital or analog illustration.
+1.0,06.17.34.68.19,06.17.34.68,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,06.17.34.68.46,06.17.34.68,5,Showcase,"Displays the features or value of a single product, creation, or talent."
+1.0,06.17.35,06.17,3,Digital Art,Creation-focused digital art content using illustration software or design tools.
+1.0,06.17.35.69,06.17.35,4,Graphic Design,"Covers composition, layout, typography, and branding in design tools and platforms."
+1.0,06.17.35.69.13,06.17.35.69,5,Demo,"Explores a topic in high detail, usually beyond surface-level information."
+1.0,06.17.35.69.56,06.17.35.69,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,06.17.35.70,06.17.35,4,3D Modeling,Demonstrates how to create or manipulate three-dimensional objects in virtual space using software.
+1.0,06.17.35.70.03,06.17.35.70,5,Behind-the-Scenes,Reveals the process or preparation behind a finished product or performance.
+1.0,06.17.35.70.56,06.17.35.70,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,06.18,06,2,Music Creation,"Behind-the-scenes or tutorial-based content showing how music is written, recorded, or produced."
+1.0,06.18.36,06.18,3,Songwriting,"Shows the process of writing lyrics, melody, or full compositions for music."
+1.0,06.18.36.71,06.18.36,4,Lyric Writing,"Shows how lyrics are structured, drafted, or rewritten in different musical genres."
+1.0,06.18.36.71.52,06.18.36.71,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,06.18.36.71.56,06.18.36.71,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,06.18.36.72,06.18.36,4,Melody Crafting,"Breaks down how melodies are developed using voice, instrument, or digital tools."
+1.0,06.18.36.72.16,06.18.36.72,5,Experiment,"Tests a hypothesis or idea in real-time, usually with unexpected or educational results."
+1.0,06.18.36.72.19,06.18.36.72,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,06.18.37,06.18,3,Music Production,"Content focused on producing, mixing, or engineering music using digital tools."
+1.0,06.18.37.73,06.18.37,4,Beat Making,"Demonstrates rhythm creation, sampling, or drum programming using production software."
+1.0,06.18.37.73.13,06.18.37.73,5,Demo,"Explores a topic in high detail, usually beyond surface-level information."
+1.0,06.18.37.73.56,06.18.37.73,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,06.18.37.74,06.18.37,4,Mixing Techniques,"Shows how to balance and enhance recorded tracks for clarity, style, and polish."
+1.0,06.18.37.74.52,06.18.37.74,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,06.18.37.74.60,06.18.37.74,5,Walkthrough,"Leads the viewer through a process, system, or game with detailed explanation."
+1.0,06.19,06,2,Writing & Storytelling,"Content centered around narrative structure, fiction, prose, and literary development."
+1.0,06.19.38,06.19,3,Fiction Writing,"Story-driven writing content covering fiction techniques, structure, or worldbuilding."
+1.0,06.19.38.75,06.19.38,4,Short Stories,"Narrative fiction told in concise formats, often including structure, pacing, and theme breakdowns."
+1.0,06.19.38.75.26,06.19.38.75,5,Mini,Delivers a shorter or condensed version of a traditionally longer content type.
+1.0,06.19.38.75.48,06.19.38.75,5,Storytime,"Shares a personal or fictional narrative with a hook, pacing, and emotional arc."
+1.0,06.19.38.76,06.19.38,4,Novels,"Explores longform storytelling, plot arcs, and genre theory through reader or writer lenses."
+1.0,06.19.38.76.04,06.19.38.76,5,Breakdown,"Dissects a topic into parts for clarity, often using visuals or step-by-step commentary."
+1.0,06.19.38.76.19,06.19.38.76,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,06.19.39,06.19,3,Poetry,"Creative or instructional poetry content — includes writing, reading, and analysis."
+1.0,06.19.39.77,06.19.39,4,Spoken Word,"Performance poetry or narrative delivered aloud, often with rhythm, emotion, and social commentary."
+1.0,06.19.39.77.30,06.19.39.77,5,Performance,"Content where the creator performs music, art, theater, or physical feats for the audience."
+1.0,06.19.39.77.40,06.19.39.77,5,Recital,"Performs a formal presentation of art — often music, poetry, or theater."
+1.0,06.19.39.78,06.19.39,4,Written Verse,"Examines poetry through meter, metaphor, form, and interpretation as written text."
+1.0,06.19.39.78.24,06.19.39.78,5,Lists,"Presents a ranked or grouped set of recommendations, facts, or ideas."
+1.0,06.19.39.78.46,06.19.39.78,5,Showcase,"Displays the features or value of a single product, creation, or talent."
+1.0,07,,1,Gaming,"Game-focused content: let’s plays, walkthroughs, esports, game reviews. May include cultural commentary through games."
+1.0,07.20,07,2,Gameplay & Streams,Real-time or recorded playthroughs and livestreamed sessions of video games.
+1.0,07.20.40,07.20,3,Live Streams,"Unscripted, real-time video content often used for interaction or immersion."
+1.0,07.20.40.79,07.20.40,4,Competitive Play,"Highlights high-stakes or ranked gaming, including strategy, commentary, and stakes."
+1.0,07.20.40.79.25,07.20.40.79,5,Live,"Content streamed in real-time, often interactive or unedited."
+1.0,07.20.40.80,07.20.40,4,Casual Sessions,"Relaxed or recreational playthroughs that prioritize fun, exploration, or storytelling."
+1.0,07.20.40.80.59,07.20.40.80,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,07.20.41,07.20,3,Walkthroughs,Gameplay-oriented content guiding viewers through levels or strategies.
+1.0,07.20.41.81,07.20.41,4,Story Guides,"Explains plotlines, character arcs, or lore in narrative-driven games or media."
+1.0,07.20.41.81.19,07.20.41.81,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,07.20.41.81.60,07.20.41.81,5,Walkthrough,"Leads the viewer through a process, system, or game with detailed explanation."
+1.0,07.20.41.82,07.20.41,4,Puzzle Solutions,"Walks through logic, clues, or completion strategies for puzzles or challenge-based content."
+1.0,07.20.41.82.52,07.20.41.82,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,07.20.41.82.56,07.20.41.82,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,07.21,07,2,Game Culture,"Commentary, analysis, lore, fandom, and creative engagement with games beyond play."
+1.0,07.21.42,07.21,3,Game Reviews,Subjective or comparative video game content including opinion or performance.
+1.0,07.21.42.83,07.21.42,4,New Releases,"Reviews or previews just-launched games, features, or products with early impressions."
+1.0,07.21.42.83.18,07.21.42.83,5,First Impressions,"Initial reactions to a new product, trend, or experience — usually unfiltered."
+1.0,07.21.42.83.41,07.21.42.83,5,Reviews,"Evaluates and shares opinions on a product, service, or media item."
+1.0,07.21.42.84,07.21.42,4,Retro Games,"Covers gameplay, reviews, or analysis of older titles with historical or nostalgic framing."
+1.0,07.21.42.84.09,07.21.42.84,5,Comparison,"Contrasts two or more options, tools, products, or perspectives."
+1.0,07.21.42.84.38,07.21.42.84,5,Recap,"Summarizes key events, lessons, or takeaways from a larger experience or episode."
+1.0,07.21.43,07.21,3,Esports,"Competitive gaming content including matches, highlights, analysis, or commentary."
+1.0,07.21.43.85,07.21.43,4,Tournaments,"Documents competitive gaming events with match breakdowns, brackets, or highlight commentary."
+1.0,07.21.43.85.22,07.21.43.85,5,Highlight,Shows standout or peak moments from a longer piece of content or event.
+1.0,07.21.43.85.27,07.21.43.85,5,Montage,"A fast-paced edit showing a sequence of related visuals or actions, often set to music."
+1.0,07.21.43.86,07.21.43,4,Player Profiles,"Features notable players, their play style, background, and achievements in competitive spaces."
+1.0,07.21.43.86.03,07.21.43.86,5,Behind-the-Scenes,Reveals the process or preparation behind a finished product or performance.
+1.0,07.21.43.86.23,07.21.43.86,5,Interview,Features a conversation between host and guest(s) to extract insight or perspective.
+1.0,08,,1,Business & Finance,"Work, money, entrepreneurship. Includes investing, startup advice, product strategy, consumer behavior."
+1.0,08.22,08,2,Investing & Markets,"Strategic content around stocks, crypto, real estate, or market analysis."
+1.0,08.22.44,08.22,3,Stock Trading,"Content about buying, selling, or analyzing stock market and equity assets."
+1.0,08.22.44.87,08.22.44,4,Technical Analysis,"Evaluates financial markets using price patterns, charts, and historical behavior."
+1.0,08.22.44.87.02,08.22.44.87,5,Analysis,Evaluates or interprets a subject through critical reasoning or structured breakdown.
+1.0,08.22.44.87.52,08.22.44.87,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,08.22.44.88,08.22.44,4,Fundamental Analysis,Assesses the intrinsic value of stocks or assets using business metrics or financial data.
+1.0,08.22.44.88.04,08.22.44.88,5,Breakdown,"Dissects a topic into parts for clarity, often using visuals or step-by-step commentary."
+1.0,08.22.44.88.15,08.22.44.88,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,08.22.45,08.22,3,Cryptocurrency,"Content about cryptocurrency markets, trading tools, and economic implications."
+1.0,08.22.45.89,08.22.45,4,Crypto Trading,"Shows how to buy, sell, and interpret trends in digital currencies, often in real time."
+1.0,08.22.45.89.19,08.22.45.89,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,08.22.45.89.25,08.22.45.89,5,Live,"Content streamed in real-time, often interactive or unedited."
+1.0,08.22.45.90,08.22.45,4,NFT Markets,"Explores NFT platforms, collections, trends, and investment logic around digital assets."
+1.0,08.22.45.90.24,08.22.45.90,5,Lists,"Presents a ranked or grouped set of recommendations, facts, or ideas."
+1.0,08.22.45.90.41,08.22.45.90,5,Reviews,"Evaluates and shares opinions on a product, service, or media item."
+1.0,08.23,08,2,Entrepreneurship,"Content about starting or building businesses, products, or monetizable services."
+1.0,08.23.46,08.23,3,Startups,"Content about launching, scaling, or reflecting on early-stage businesses."
+1.0,08.23.46.91,08.23.46,4,Business Plans,"Breaks down or builds frameworks for startups, from mission to monetization."
+1.0,08.23.46.91.06,08.23.46.91,5,Case Study,Presents a real-world example to explain how something worked or failed.
+1.0,08.23.46.91.19,08.23.46.91,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,08.23.46.92,08.23.46,4,Funding Strategies,"Explains how founders raise capital, pitch investors, or structure early-stage financing."
+1.0,08.23.46.92.31,08.23.46.92,5,Pitch,"Proposes an idea, product, or plan in a persuasive and structured format."
+1.0,08.23.46.92.52,08.23.46.92,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,08.23.47,08.23,3,Business Skills,"Instructional content about workplace tools, soft skills, or operational processes."
+1.0,08.23.47.93,08.23.47,4,Marketing Tactics,"Shares tools and campaigns to acquire users, drive traffic, or increase engagement."
+1.0,08.23.47.93.20,08.23.47.93,5,Hack,Shows a shortcut or unconventional method to achieve a result quickly or efficiently.
+1.0,08.23.47.93.56,08.23.47.93,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,08.23.47.94,08.23.47,4,Leadership Training,"Offers skills and insights to develop leadership behavior, decision-making, and management."
+1.0,08.23.47.94.23,08.23.47.94,5,Interview,Features a conversation between host and guest(s) to extract insight or perspective.
+1.0,08.24,08,2,Digital Ventures,"Online product-building content — includes SaaS, tools, no-code, or startup projects."
+1.0,08.24.48,08.24,3,Online Businesses,"Content about monetizing digital products, platforms, or Creator businesses."
+1.0,08.24.48.95,08.24.48,4,E-Commerce,"Covers storefronts, product launches, fulfillment, and digital retail best practices."
+1.0,08.24.48.95.45,08.24.48.95,5,Setup,"Shows how tools, environments, or systems are arranged and optimized."
+1.0,08.24.48.95.56,08.24.48.95,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,08.24.48.96,08.24.48,4,Affiliate Marketing,Explains how creators or businesses earn income by linking or promoting third-party products.
+1.0,08.24.48.96.19,08.24.48.96,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,08.24.48.96.52,08.24.48.96,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,08.24.49,08.24,3,Content Monetization,"Teaches how to monetize digital content, platforms, or creator businesses."
+1.0,08.24.49.97,08.24.49,4,Ad Revenue,Shows how creators generate income through platform-based advertising models.
+1.0,08.24.49.97.02,08.24.49.97,5,Analysis,Evaluates or interprets a subject through critical reasoning or structured breakdown.
+1.0,08.24.49.97.20,08.24.49.97,5,Hack,Shows a shortcut or unconventional method to achieve a result quickly or efficiently.
+1.0,08.24.49.98,08.24.49,4,Subscriptions,Explores monetization through recurring payment models like Patreon or platform memberships.
+1.0,08.24.49.98.49,08.24.49.98,5,Strategy,"Outlines a structured plan of action to achieve a result, often in games or business."
+1.0,08.24.49.98.56,08.24.49.98,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,08.25,08,2,Personal Finance,"Money management content focused on budgeting, saving, debt, credit, and financial literacy."
+1.0,08.25.50,08.25,3,Budgeting,How-to or story-driven content on managing personal budgets and expenses.
+1.0,08.25.50.99,08.25.50,4,Expense Tracking,Teaches systems and tools for monitoring personal or business spending habits.
+1.0,08.25.50.99.52,08.25.50.99,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,08.25.50.99.59,08.25.50.99,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,08.25.51,08.25,3,Saving Strategies,"Savings strategies, systems, or personal finance habits shared or taught."
+1.0,09,,1,Health & Wellness,"Physical and mental wellness: workouts, therapy, routines, food as function, sleep, self-care."
+1.0,09.26,09,2,Physical Health,"Content about mobility, strength, recovery, and the maintenance of physical well-being."
+1.0,09.26.52,09.26,3,Nutrition,"Content about diet, food choice, meal planning, and body-health relationships."
+1.0,09.26.53,09.26,3,Exercise Routines,"Physical movement routines designed for wellness, performance, or therapy."
+1.0,09.27,09,2,Mental Health,"Content exploring therapy, trauma, emotions, stress management, and inner experience."
+1.0,09.27.54,09.27,3,Therapy Techniques,Guidance on therapy techniques used in clinical or personal mental health settings.
+1.0,09.27.55,09.27,3,Mindfulness Practices,"Exercises and practices for regulating thoughts, emotions, and awareness."
+1.0,09.28,09,2,Alternative Wellness,"Spiritual or non-medical practices like breathwork, energy healing, and ritual wellness."
+1.0,09.28.56,09.28,3,Holistic Healing,"Covers energy healing, herbal approaches, spiritual cleanses, or metaphysical wellness."
+1.0,09.28.57,09.28,3,Spiritual Wellness,"Explores spiritual identity, practice, and reflection through religious or cultural lenses."
+1.0,10,,1,Social & Community,"Content centered on identity, advocacy, social groups, activism, and shared values or struggles."
+1.0,10.29,10,2,Vlogs & Daily Life,"Personal narrative content capturing routine, identity, or ambient moments of life."
+1.0,10.29.58,10.29,3,Personal Vlogs,"Captures a person’s lifestyle, routines, or thoughts in a personal, day-in-the-life format."
+1.0,10.29.59,10.29,3,Family Vlogs,"Centers around family life, children, or household dynamics in a vlog or storytelling style."
+1.0,10.30,10,2,Activism & Causes,"Content centered on advocacy, protest, or systemic critique — personal or collective."
+1.0,10.30.60,10.30,3,Advocacy,"Raises awareness about social causes, injustice, or community transformation."
+1.0,10.30.61,10.30,3,Awareness Campaigns,"Supports collective or personal movements through education, stories, or calls to action."
+1.0,10.31,10,2,Fandoms & Groups,Content for and about niche communities and identity-driven fan cultures.
+1.0,10.31.62,10.31,3,Fan Content,"Creates content about and for fan communities, often tied to pop culture or shared identity."
+1.0,10.31.63,10.31,3,Community Discussions,"Engages in discussion, reflection, or commentary about group identity or culture."
+1.0,10.32,10,2,Social Media,"Content about growing, navigating, or critiquing platform mechanics and creator strategy."
+1.0,10.32.64,10.32,3,Platform Strategies,"Analyzes platform mechanics, growth strategy, or optimization methods for social media."
+1.0,10.32.65,10.32,3,Influencer Content,"Discusses creator economics, brand deals, and sponsorships from an influencer perspective."
+1.0,11,,1,Sports,"Physical competition and athleticism: analysis, fan content, technique breakdowns, team culture."
+1.0,11.33,11,2,Competitive Sports,"Coverage of athletic competition — includes commentary, highlights, or match analysis."
+1.0,11.33.66,11.33,3,Team Sports,"Shows drills, team routines, or technical breakdowns for traditional team-based sports."
+1.0,11.33.67,11.33,3,Individual Sports,"Focuses on individual sport techniques, achievements, and self-driven performance."
+1.0,11.34,11,2,Sports Training,"Performance training, technique drills, and skill-building in a specific sport."
+1.0,11.34.68,11.34,3,Fitness Training,"Teaches or improves technical athletic skill, often through drills or coaching."
+1.0,11.34.69,11.34,3,Skill Development,Demonstrates technique or learning strategies applied to acquiring a skill.
+1.0,12,,1,Pets & Animals,"Content featuring or focused on animals. Can be humorous, educational, or care-oriented."
+1.0,12.35,12,2,Pet Care,"Practical care content focused on feeding, grooming, health, and pet behavior."
+1.0,12.35.70,12.35,3,Pet Health,"Explains pet nutrition, health conditions, or veterinary routines for animals."
+1.0,12.35.71,12.35,3,Pet Grooming,"Demonstrates washing, clipping, or styling pets with grooming tools and products."
+1.0,12.36,12,2,Pet Life,"Content centered on animals as companions — vlogs, emotions, humor, and daily interactions."
+1.0,12.36.72,12.36,3,Pet Vlogs,"Centers pet personalities in daily life, adventures, or themed content."
+1.0,12.36.73,12.36,3,Pet Entertainment,"Shares humorous, playful, or emotional animal content meant for entertainment."
+1.0,10.31.62.124.15,10.31.62.124,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,10.31.62.123.56,10.31.62.123,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,10.31.62.123.46,10.31.62.123,5,Showcase,"Displays the features or value of a single product, creation, or talent."
+1.0,10.30.61.122.23,10.30.61.122,5,Interview,Features a conversation between host and guest(s) to extract insight or perspective.
+1.0,10.30.61.122.59,10.30.61.122,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,10.30.61.121.48,10.30.61.121,5,Storytime,"Shares a personal or fictional narrative with a hook, pacing, and emotional arc."
+1.0,10.30.60.120.05,10.30.60.120,5,Campaign,"Showcases a coordinated content effort, usually tied to a launch, cause, or partnership."
+1.0,10.30.60.119.11,10.30.60.119,5,Debate,Shows how to make or build something step by step using accessible materials.
+1.0,10.30.60.119.01,10.30.60.119,5,Advocacy,Content designed to raise awareness or drive action around social or political causes.
+1.0,10.29.59.118.20,10.29.59.118,5,Hack,Shows a shortcut or unconventional method to achieve a result quickly or efficiently.
+1.0,10.31.63.125.35,10.31.63.125,5,Q&A,Answers audience-submitted or pre-generated questions in a conversational tone.
+1.0,10.31.62.124.11,10.31.62.124,5,Debate,Shows how to make or build something step by step using accessible materials.
+1.0,10.30.60.120.15,10.30.60.120,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,05.15.91.182.48,05.15.91.182,5,Storytime,"Shares a personal or fictional narrative with a hook, pacing, and emotional arc."
+1.0,10.29.59.118.52,10.29.59.118,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,09.27.55.110.26,09.27.55.110,5,Mini,Delivers a shorter or condensed version of a traditionally longer content type.
+1.0,09.28.56.111.39,09.28.56.111,5,Recipes,"Teaches how to prepare a specific dish with ingredients, steps, and tips."
+1.0,09.28.56.111.14,09.28.56.111,5,DIY,"Demonstrates how a product or process works, often in real-time."
+1.0,09.28.56.112.44,09.28.56.112,5,Session,"Captures an unbroken time block of activity like music, drawing, or discussion."
+1.0,09.28.56.112.15,09.28.56.112,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,09.28.57.113.56,09.28.57.113,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,10.31.63.125.43,10.31.63.125,5,Roundup,"Aggregates several examples, trends, or pieces of news into one piece of content."
+1.0,09.28.57.113.59,09.28.57.113,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,10.29.58.115.59,10.29.58.115,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,10.29.58.115.53,10.29.58.115,5,Tour,"Takes the viewer through a space, platform, or experience step by step."
+1.0,10.29.58.116.58,10.29.58.116,5,Update,"Provides a status report or change log on an ongoing story, project, or journey."
+1.0,10.29.58.116.48,10.29.58.116,5,Storytime,"Shares a personal or fictional narrative with a hook, pacing, and emotional arc."
+1.0,10.29.59.117.59,10.29.59.117,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,10.29.59.117.27,10.29.59.117,5,Montage,"A fast-paced edit showing a sequence of related visuals or actions, often set to music."
+1.0,09.28.57.114.37,09.28.57.114,5,Reading,"Content involving someone reading aloud — books, comments, scripts, or essays."
+1.0,10.31.63.126.38,10.31.63.126,5,Recap,"Summarizes key events, lessons, or takeaways from a larger experience or episode."
+1.0,10.31.63.126.25,10.31.63.126,5,Live,"Content streamed in real-time, often interactive or unedited."
+1.0,10.32.64.127.52,10.32.64.127,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,11.34.69.138.19,11.34.69.138,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,11.34.69.138.02,11.34.69.138,5,Analysis,Evaluates or interprets a subject through critical reasoning or structured breakdown.
+1.0,12.35.70.139.52,12.35.70.139,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,12.35.70.139.19,12.35.70.139,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,12.35.70.140.15,12.35.70.140,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,12.35.70.140.35,12.35.70.140,5,Q&A,Answers audience-submitted or pre-generated questions in a conversational tone.
+1.0,12.35.71.141.56,12.35.71.141,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,12.35.71.141.59,12.35.71.141,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,12.35.71.142.52,12.35.71.142,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,12.35.71.142.13,12.35.71.142,5,Demo,"Explores a topic in high detail, usually beyond surface-level information."
+1.0,12.36.72.143.59,12.36.72.143,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,12.36.72.143.27,12.36.72.143,5,Montage,"A fast-paced edit showing a sequence of related visuals or actions, often set to music."
+1.0,12.36.72.144.53,12.36.72.144,5,Tour,"Takes the viewer through a space, platform, or experience step by step."
+1.0,12.36.72.144.48,12.36.72.144,5,Storytime,"Shares a personal or fictional narrative with a hook, pacing, and emotional arc."
+1.0,12.36.73.145.10,12.36.73.145,5,Compilation,Combines multiple short clips or moments into a single cohesive video.
+1.0,11.34.69.137.13,11.34.69.137,5,Demo,"Explores a topic in high detail, usually beyond surface-level information."
+1.0,11.34.69.137.56,11.34.69.137,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,11.34.68.136.50,11.34.68.136,5,Test,"Puts a product, method, or assumption through a structured trial to evaluate results."
+1.0,11.34.68.136.56,11.34.68.136,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,10.32.64.127.20,10.32.64.127,5,Hack,Shows a shortcut or unconventional method to achieve a result quickly or efficiently.
+1.0,10.32.64.128.19,10.32.64.128,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,10.32.64.128.56,10.32.64.128,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,10.32.65.129.59,10.32.65.129,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,10.32.65.129.46,10.32.65.129,5,Showcase,"Displays the features or value of a single product, creation, or talent."
+1.0,10.32.65.130.41,10.32.65.130,5,Reviews,"Evaluates and shares opinions on a product, service, or media item."
+1.0,10.32.65.130.21,10.32.65.130,5,Haul,"Displays and discusses items recently purchased, often with mini-reviews."
+1.0,09.27.55.110.56,09.27.55.110,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,11.33.66.131.22,11.33.66.131,5,Highlight,Shows standout or peak moments from a longer piece of content or event.
+1.0,11.33.66.132.04,11.33.66.132,5,Breakdown,"Dissects a topic into parts for clarity, often using visuals or step-by-step commentary."
+1.0,11.33.66.132.02,11.33.66.132,5,Analysis,Evaluates or interprets a subject through critical reasoning or structured breakdown.
+1.0,11.33.67.133.25,11.33.67.133,5,Live,"Content streamed in real-time, often interactive or unedited."
+1.0,11.33.67.133.38,11.33.67.133,5,Recap,"Summarizes key events, lessons, or takeaways from a larger experience or episode."
+1.0,11.33.67.134.56,11.33.67.134,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,11.33.67.134.52,11.33.67.134,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,11.34.68.135.59,11.34.68.135,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,11.33.66.131.27,11.33.66.131,5,Montage,"A fast-paced edit showing a sequence of related visuals or actions, often set to music."
+1.0,09.27.55.109.44,09.27.55.109,5,Session,"Captures an unbroken time block of activity like music, drawing, or discussion."
+1.0,09.27.54.107.15,09.27.54.107,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,09.27.54.108.44,09.27.54.108,5,Session,"Captures an unbroken time block of activity like music, drawing, or discussion."
+1.0,11.33.66.131,11.33.66,4,Soccer Highlights,"Edits or commentates on key plays, goals, or moments from recent or iconic soccer matches."
+1.0,10.32.65.130,10.32.65,4,Brand Collabs,Content showcasing or reviewing a sponsored partnership between creator and brand.
+1.0,10.32.65.129,10.32.65,4,Lifestyle Posts,Presents aspirational or everyday content reflecting a creator’s identity and routines.
+1.0,10.32.64.128,10.32.64,4,YouTube Growth,"Teaches optimization strategies for discoverability, retention, and monetization on YouTube."
+1.0,10.32.64.127,10.32.64,4,TikTok Tips,"Gives tactical advice for growth, visibility, or content success on TikTok."
+1.0,10.31.63.126,10.31.63,4,Group Events,"Recaps or plans events attended by online or IRL communities, often with social value."
+1.0,11.33.66.132,11.33.66,4,Basketball Plays,"Breaks down offensive or defensive strategies, key moves, or standout performances in basketball."
+1.0,10.31.63.125,10.31.63,4,Forum Chats,Captures or reenacts online conversations from group threads or message boards.
+1.0,10.31.62.123,10.31.62,4,Cosplay Creations,"Documents the design, build, and performance of character costumes from fandoms."
+1.0,10.30.61.122,10.30.61,4,Equality Drives,"Promotes access, rights, or representation for marginalized groups through campaigns or calls to action."
+1.0,10.30.61.121,10.30.61,4,Health Awareness,"Shares information on illness, conditions, or wellness campaigns to increase public understanding."
+1.0,10.30.60.120,10.30.60,4,Environmental Causes,"Highlights conservation, sustainability, or climate-focused education or activism."
+1.0,10.30.60.119,10.30.60,4,Social Justice,"Advocates for equality or systemic reform through storytelling, education, or direct action."
+1.0,10.29.59.118,10.29.59,4,Parenting Moments,"Captures daily life, reflections, or challenges of raising children."
+1.0,10.31.62.124,10.31.62,4,Fan Theories,"Analyzes fictional media to propose hidden meanings, predictions, or alternate interpretations."
+1.0,10.29.59.117,10.29.59,4,Kid Adventures,"Family-focused content showcasing play, learning, and outings from a child's perspective."
+1.0,11.33.67.133,11.33.67,4,Tennis Matches,"Shows full matches, rally highlights, or tactical breakdowns of pro or amateur tennis."
+1.0,11.34.68.135,11.34.68,4,Endurance Runs,"Covers long-distance running routines, training, and mental strategies for stamina."
+1.0,05.15.91.181.15,05.15.91.181,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,05.15.91.181.12,05.15.91.181,5,Deep Dive,"Presents two or more sides of an argument, often in direct or live conversation."
+1.0,12.36.73.145.34,12.36.73.145,5,Prank,Content where one party surprises or tricks another for comedic effect.
+1.0,12.36.73.146,12.36.73,4,Trick Shows,"Demonstrates trained animal behaviors, performance routines, or obedience challenges."
+1.0,12.36.73.145,12.36.73,4,Funny Moments,"Showcases humorous, unexpected, or charming clips involving pets or animals."
+1.0,12.36.72.144,12.36.72,4,Pet Adventures,Captures outdoor or travel-based experiences through the lens of a pet’s life.
+1.0,11.33.67.134,11.33.67,4,Golf Techniques,"Teaches grip, swing, aim, or short game fundamentals in golf instruction or analysis."
+1.0,12.36.72.143,12.36.72,4,Daily Routines,"Walks through an animal’s (often pet’s) schedule, habits, or personality-driven behaviors."
+1.0,12.35.71.141,12.35.71,4,Dog Grooming,"Demonstrates how to wash, trim, or maintain dogs’ coats, nails, and hygiene."
+1.0,12.35.70.140,12.35.70,4,Vet Tips,"Shares veterinary knowledge about animal care, illness, and best practices."
+1.0,12.35.70.139,12.35.70,4,Diet Advice,"Gives nutritional guidance tailored to lifestyle, goals, or health conditions."
+1.0,11.34.69.138,11.34.69,4,Swing Mechanics,"Explains or refines swinging technique in sports like baseball, golf, or tennis."
+1.0,11.34.69.137,11.34.69,4,Dribbling Drills,Teaches movement and control skills for sports like basketball or soccer through guided practice.
+1.0,11.34.68.136,11.34.68,4,Power Lifting,"Showcases strength-based lifts like squats, deadlifts, or bench press, often in training or competition."
+1.0,12.35.71.142,12.35.71,4,Cat Grooming,"Shows techniques and products for caring for feline fur, nails, or health."
+1.0,09.27.55.109.19,09.27.55.109,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,10.29.58.116,10.29.58,4,Life Updates,"Creator-led content reflecting on personal change, milestones, or ongoing life events."
+1.0,09.28.57.114,09.28.57,4,Astrology Insights,"Interprets charts, signs, or transits to give spiritual or personal growth commentary."
+1.0,08.25.51.101.32,08.25.51.101,5,Planning,"Content that walks through goal-setting, strategy, or logistical prep for future actions."
+1.0,08.25.51.101.15,08.25.51.101,5,Explained,Simplifies a topic or concept through accessible language and examples.
+1.0,08.25.51.102.52,08.25.51.102,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,08.25.51.102.07,08.25.51.102,5,Challenge,"Content built around a task, constraint, or dare, often designed to test limits or entertain."
+1.0,09.26.52.103.19,09.26.52.103,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,09.26.52.103.39,09.26.52.103,5,Recipes,"Teaches how to prepare a specific dish with ingredients, steps, and tips."
+1.0,08.25.50.100.17,08.25.50.100,5,FAQ,"Fan-edited footage focusing on a specific performer, moment, or angle during a live event."
+1.0,09.26.52.104.41,09.26.52.104,5,Reviews,"Evaluates and shares opinions on a product, service, or media item."
+1.0,09.26.53.105.56,09.26.53.105,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,09.26.53.106.59,09.26.53.106,5,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style."
+1.0,09.26.53.106.52,09.26.53.106,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,09.27.54.107.52,09.27.54.107,5,Tips,Gives bite-sized advice or insights on how to improve in a given area.
+1.0,05.15.91.182.11,05.15.91.182,5,Debate,Shows how to make or build something step by step using accessible materials.
+1.0,09.27.54.108.56,09.27.54.108,5,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction."
+1.0,09.26.52.104.09,09.26.52.104,5,Comparison,"Contrasts two or more options, tools, products, or perspectives."
+1.0,10.29.58.115,10.29.58,4,Travel Diaries,"Personal vlogs sharing travel experiences, thoughts, and cultural exploration in real time."
+1.0,08.25.50.100.19,08.25.50.100,5,Guide,"Walks the viewer through a task, platform, or system in a structured format."
+1.0,05.15.91.182,05.15.91,4,Event Mysteries,Investigates unexplained public events or phenomena through timelines and theories.
+1.0,09.28.57.113,09.28.57,4,Yoga Practices,Demonstrates physical sequences and breathwork tied to yoga traditions and styles.
+1.0,09.28.56.112,09.28.56,4,Energy Healing,"Covers reiki, chakras, aura cleansing, and other metaphysical or spiritual healing traditions."
+1.0,09.28.56.111,09.28.56,4,Herbal Remedies,"Explores plant-based health practices like tinctures, teas, and traditional healing methods."
+1.0,09.27.55.110,09.27.55,4,Breathing Exercises,"Teaches breath control and rhythm to reduce stress, increase awareness, or aid recovery."
+1.0,09.27.55.109,09.27.55,4,Meditation,Guides viewers through focused mindfulness practices or techniques to quiet the mind.
+1.0,09.27.54.108,09.27.54,4,Stress Relief,"Presents exercises, routines, or tools to manage daily tension and emotional overwhelm."
+1.0,05.15.91.181,05.15.91,4,Government Secrets,"Explores declassified documents, covert programs, or conspiracy-related theories."
+1.0,09.27.54.107,09.27.54,4,Counseling Tips,Offers mental health advice or therapy-informed guidance from licensed or experience-based perspectives.
+1.0,09.26.53.105,09.26.53,4,Cardio Workouts,"Demonstrates aerobic routines like running, cycling, or HIIT for endurance and heart health."
+1.0,09.26.52.104,09.26.52,4,Supplements,"Reviews or explains use of vitamins, powders, or wellness products to support physical health."
+1.0,09.26.52.103,09.26.52,4,Diet Plans,"Provides structured meal planning advice for health, weight, or lifestyle goals."
+1.0,08.25.51.102,08.25.51,4,Emergency Funds,"Teaches how to save, structure, and calculate short-term financial reserves for unexpected costs."
+1.0,08.25.51.101,08.25.51,4,Retirement Planning,"Explains how to build long-term financial plans for retirement, including accounts, timelines, and strategy."
+1.0,08.25.50.100,08.25.50,4,Debt Management,"Offers advice and frameworks for reducing, restructuring, or eliminating debt."
+1.0,09.26.53.106,09.26.53,4,Strength Programs,Shares planned fitness programs focused on building muscle through progressive overload.
+1.0,12.36.73.146.46,12.36.73.146,5,Showcase,"Displays the features or value of a single product, creation, or talent."

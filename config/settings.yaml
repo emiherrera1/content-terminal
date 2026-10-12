@@ -1,0 +1,12 @@
+# CTNCS sectors the MVP covers (level-1 codes from config/ctncs_codebook.csv).
+# Start with two or three where the fund has dealflow. Placeholders below; change them.
+#   01 Entertainment  02 Education  03 Lifestyle  04 Technology  05 News & Commentary
+#   06 Creative Arts  07 Gaming  08 Business & Finance  09 Health & Wellness
+#   10 Social & Community  11 Sports  12 Pets & Animals
+sectors:
+  - "03"
+  - "07"
+  - "08"
+
+# Recent uploads to track per channel each day (1 API unit per channel, plus videos in batches of 50).
+videos_per_channel: 15

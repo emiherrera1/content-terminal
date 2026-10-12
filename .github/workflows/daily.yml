@@ -1,0 +1,26 @@
+name: daily pull
+
+on:
+  schedule:
+    - cron: "17 11 * * *"   # 7:17 AM Eastern (EDT)
+  workflow_dispatch:
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m terminal daily
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          TERMINAL_DB: md:content_terminal
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exports
+          path: data/exports/

@@ -1,0 +1,97 @@
+"""Daily pulls from the official YouTube Data API v3.
+
+Quota (default 10,000 units/day): channels.list, playlistItems.list and videos.list
+cost 1 unit per call. Channels and videos go 50 per call; recent uploads are one call
+per channel. So ~3,000 channels costs roughly 60 + 3,000 + 60 x (recent videos / 50)
+units a day. Check the current quota and the API terms (data retention and display
+rules) in Google Cloud before scaling up.
+"""
+import datetime as dt
+import os
+import re
+import requests
+
+API = "https://www.googleapis.com/youtube/v3"
+
+
+def _key() -> str:
+    key = os.environ.get("YOUTUBE_API_KEY")
+    if not key:
+        raise SystemExit("Set YOUTUBE_API_KEY (Google Cloud > APIs > YouTube Data API v3 > Credentials).")
+    return key
+
+
+def _get(path: str, **params) -> dict:
+    r = requests.get(f"{API}/{path}", params={**params, "key": _key()}, timeout=30)
+    r.raise_for_status()
+    return r.json()
+
+
+def _chunks(items, n=50):
+    for i in range(0, len(items), n):
+        yield items[i:i + n]
+
+
+def _duration_s(iso: str) -> int:
+    m = re.fullmatch(r"P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", iso or "")
+    if not m:
+        return 0
+    d, h, mi, s = (int(x or 0) for x in m.groups())
+    return d * 86400 + h * 3600 + mi * 60 + s
+
+
+def resolve_handle(handle: str) -> str | None:
+    """@handle -> channel id (1 unit)."""
+    items = _get("channels", part="id", forHandle=handle.lstrip("@")).get("items", [])
+    return items[0]["id"] if items else None
+
+
+def pull_channels(con, channel_ids: list[str], today: dt.date) -> int:
+    n = 0
+    for batch in _chunks(channel_ids):
+        data = _get("channels", part="snippet,statistics,contentDetails", id=",".join(batch), maxResults=50)
+        for c in data.get("items", []):
+            sn, st = c["snippet"], c.get("statistics", {})
+            con.execute(
+                "INSERT OR REPLACE INTO channels (channel_id, title, description, country, published_at, uploads_playlist) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                [c["id"], sn.get("title"), sn.get("description"), sn.get("country"), sn.get("publishedAt"),
+                 c["contentDetails"]["relatedPlaylists"]["uploads"]],
+            )
+            con.execute(
+                "INSERT OR REPLACE INTO channel_snapshots VALUES (?, ?, ?, ?, ?)",
+                [today, c["id"], int(st.get("subscriberCount", 0)), int(st.get("viewCount", 0)),
+                 int(st.get("videoCount", 0))],
+            )
+            n += 1
+    return n
+
+
+def pull_recent_videos(con, today: dt.date, per_channel: int = 15) -> int:
+    """Latest uploads per channel, then current stats for each video."""
+    playlists = con.execute("SELECT channel_id, uploads_playlist FROM channels").fetchall()
+    video_ids = []
+    for channel_id, playlist in playlists:
+        try:
+            data = _get("playlistItems", part="contentDetails", playlistId=playlist, maxResults=per_channel)
+        except requests.HTTPError:
+            continue  # channel deleted or uploads hidden
+        video_ids += [i["contentDetails"]["videoId"] for i in data.get("items", [])]
+
+    n = 0
+    for batch in _chunks(video_ids):
+        data = _get("videos", part="snippet,statistics,contentDetails", id=",".join(batch), maxResults=50)
+        for v in data.get("items", []):
+            sn, st = v["snippet"], v.get("statistics", {})
+            con.execute(
+                "INSERT OR REPLACE INTO videos VALUES (?, ?, ?, ?, ?)",
+                [v["id"], sn["channelId"], sn.get("title"), sn.get("publishedAt"),
+                 _duration_s(v["contentDetails"].get("duration"))],
+            )
+            con.execute(
+                "INSERT OR REPLACE INTO video_snapshots VALUES (?, ?, ?, ?, ?)",
+                [today, v["id"], int(st.get("viewCount", 0)), int(st.get("likeCount", 0)),
+                 int(st.get("commentCount", 0))],
+            )
+            n += 1
+    return n
