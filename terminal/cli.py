@@ -6,7 +6,8 @@
   audit     print a random sample of classifications to check by hand
   compute   rebuild the metric views
   export    write niche index, momentum, screener and alerts to CSV
-  daily     pull + classify new channels + compute + export (what the schedule runs)
+  news      pull news feeds and tag new articles
+  daily     pull + classify new channels + news + compute + export (what the schedule runs)
 """
 import argparse
 import csv
@@ -15,7 +16,7 @@ from pathlib import Path
 
 import yaml
 
-from . import classify, metrics, store, youtube
+from . import classify, metrics, news, store, youtube
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -49,12 +50,13 @@ def pull(con):
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="terminal", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("command", choices=["seed", "pull", "classify", "audit", "compute", "export", "daily"])
+    p.add_argument("command", choices=["seed", "pull", "classify", "audit", "news", "compute", "export", "daily"])
     p.add_argument("--limit", type=int, help="classify at most this many channels")
     p.add_argument("--redo", action="store_true", help="reclassify channels nobody has reviewed yet")
     a = p.parse_args(argv)
 
     con = store.connect()
+    news.connect(con)
     sectors = [str(s).zfill(2) for s in _config()["sectors"]]
 
     if a.command == "seed":
@@ -66,6 +68,8 @@ def main(argv=None):
     elif a.command == "audit":
         for row in classify.audit_sample(con):
             print(" | ".join(str(x) for x in row))
+    elif a.command == "news":
+        print(f"articles: {news.pull(con)}, tagged: {news.tag(con, a.limit)}")
     elif a.command == "compute":
         metrics.build(con)
     elif a.command == "export":
@@ -74,5 +78,6 @@ def main(argv=None):
     elif a.command == "daily":
         pull(con)
         print(f"classified {classify.classify_channels(con, sectors)}")
+        print(f"articles: {news.pull(con)}, tagged: {news.tag(con)}")
         metrics.build(con)
         print("\n".join(metrics.export(con)))

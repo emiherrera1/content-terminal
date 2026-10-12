@@ -10,6 +10,7 @@ A first version of a Bloomberg-style terminal for content markets. It takes a da
 | `alerts` | Channels whose daily gain is 3+ standard deviations above their trailing 28 days and at least double their typical day |
 | `niche_opportunity` | The opportunity metrics per niche: TVE (content minutes, 28 days), SI (saturation, 0 to 1), NGP (growth ratio), CCOS (opportunity score), CHG% of CCOS over 7 days, TREND and RISK |
 | `niche_opportunity_daily` | The same per niche per day, for trend charts |
+| `news_ranked` | Articles from the feeds in `config/feeds.yaml`, tagged by Claude (category, platform, impact, sentiment, creators named) and ranked by impact and recency; creators are matched to tracked channels |
 
 Scope is deliberately narrow: YouTube only, two or three CTNCS sectors (set in `config/settings.yaml`), and daily refreshes. The open layer (codebook, niche index) is meant to sit with C-CPAR; the screener and alerts are the TerminalCo prototype.
 
@@ -38,6 +39,7 @@ cp .env.example .env   # add YOUTUBE_API_KEY and ANTHROPIC_API_KEY, then: set -a
 python -m terminal seed        # add the channels
 python -m terminal daily       # pull, classify new channels, compute, export
 python -m terminal audit       # 25 random classifications to check by hand
+python -m terminal news        # pull news feeds and tag new articles
 python -m pytest               # metric tests on synthetic data, no keys needed
 ```
 

@@ -1,0 +1,11 @@
+# RSS or Atom feeds for the NEWS view. Official platform sources first, then trade press.
+# Add or remove freely; each item keeps a link back to its source.
+feeds:
+  - name: YouTube Official Blog
+    url: https://blog.youtube/rss/
+  - name: Tubefilter
+    url: https://www.tubefilter.com/feed/
+  - name: TikTok Newsroom
+    url: https://newsroom.tiktok.com/en-us/rss
+  - name: Meta Newsroom
+    url: https://about.fb.com/feed/

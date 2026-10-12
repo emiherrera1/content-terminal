@@ -202,7 +202,7 @@ JOIN last ON o.snapshot_date = last.d
 LEFT JOIN risk r ON r.niche_code = o.niche_code;
 """
 
-EXPORTS = ["niche_daily", "niche_momentum", "screener", "alerts", "niche_opportunity", "niche_opportunity_daily"]
+EXPORTS = ["niche_daily", "niche_momentum", "screener", "alerts", "niche_opportunity", "niche_opportunity_daily", "news_ranked"]
 
 
 def build(con) -> None:
@@ -214,7 +214,10 @@ def export(con, out_dir: str = "data/exports") -> list[str]:
     import os
     os.makedirs(out_dir, exist_ok=True)
     paths = []
+    have = {r[0] for r in con.execute("SELECT table_name FROM information_schema.tables").fetchall()}
     for name in EXPORTS:
+        if name not in have:
+            continue
         path = f"{out_dir}/{name}.csv"
         con.execute(f"COPY (SELECT * FROM {name}) TO '{path}' (HEADER)")
         paths.append(path)
