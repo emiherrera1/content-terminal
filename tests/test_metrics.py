@@ -71,3 +71,16 @@ def test_codebook_subtree():
     book = ctncs.load()
     rows = ctncs.subtree(book, ["03"])
     assert rows and all(r["code"].startswith("03") and int(r["level"]) <= 3 for r in rows)
+
+
+def test_opportunity_metrics(con):
+    rows = {r[0]: r for r in con.execute(
+        "SELECT niche_code, si, ngp, ccos, trend, risk, tve FROM niche_opportunity").fetchall()}
+    assert set(rows) == {"03.01.01", "07.01.01"}  # unclassified channel left out
+    for code, si, ngp, ccos, trend, risk, tve in rows.values():
+        assert 0 <= si < 1  # a niche with no tracked uploads has no saturation
+        assert ccos == pytest.approx(20 * ngp * (1 - si))
+        assert trend in {"UP", "DOWN", "STABLE"} and risk in {"LOW", "MEDIUM", "HIGH"}
+    # cooking had a spike in the last week, gaming was flat
+    assert rows["03.01.01"][2] > rows["07.01.01"][2] == pytest.approx(1.0)
+    assert rows["03.01.01"][6] > 0 and rows["07.01.01"][6] == 0  # only cooking has tracked uploads

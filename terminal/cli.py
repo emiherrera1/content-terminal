@@ -44,7 +44,7 @@ def pull(con):
     today = dt.date.today()
     ids = [c for (c,) in con.execute("SELECT channel_id FROM channels").fetchall()]
     print(f"channels: {youtube.pull_channels(con, ids, today)}")
-    print(f"videos:   {youtube.pull_recent_videos(con, today, _config().get('videos_per_channel', 15))}")
+    print(f"videos:   {youtube.pull_recent_videos(con, today, _config().get('videos_per_channel', 50))}")
 
 
 def main(argv=None):

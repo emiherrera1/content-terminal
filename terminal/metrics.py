@@ -5,6 +5,8 @@ niche_momentum  last 7 days of gains vs the 7 before, per niche
 screener        each channel's 28-day growth against its niche's median
 alerts          channels whose daily gain is 3+ standard deviations above their trailing 28 days
                 and at least double their typical day
+niche_opportunity  per niche: TVE (content minutes, 28d), SI (saturation, 0-1), NGP (growth ratio),
+                   CCOS (opportunity score), CHG% of CCOS over 7 days, TREND, RISK
 
 Channels classified only to category (level 2) roll up under that code, and
 unclassified channels are left out of niche figures but stay in the screener.
@@ -123,9 +125,84 @@ WHERE s.days_history >= 7
   AND (s.views_gained - s.mean_28d) / nullif(s.sd_28d, 0) >= 3
   AND s.views_gained >= 2 * s.mean_28d   -- a real jump, not steady growth in a hot niche
   AND s.snapshot_date = (SELECT max(snapshot_date) FROM channel_snapshots);
+
+-- Opportunity metrics (measurable versions of the prototype's TVE, SI, NGP, CCOS, RISK).
+-- One row per niche per day once 14 days of history exist.
+CREATE OR REPLACE VIEW niche_opportunity_daily AS
+WITH up AS (
+    SELECT n.niche_code, CAST(v.published_at AS DATE) AS d,
+           count(*) AS uploads, sum(v.duration_s) / 60.0 AS minutes
+    FROM videos v JOIN channel_niche n USING (channel_id)
+    GROUP BY ALL
+),
+base AS (
+    SELECT nd.snapshot_date AS d, nd.niche_code, nd.views_gained,
+           coalesce(up.uploads, 0) AS uploads, coalesce(up.minutes, 0) AS minutes
+    FROM niche_daily nd LEFT JOIN up ON up.niche_code = nd.niche_code AND up.d = nd.snapshot_date
+),
+roll AS (
+    SELECT *,
+           sum(views_gained) OVER w7  AS views_7d,
+           sum(views_gained) OVER wp7 AS views_prev_7d,
+           sum(views_gained) OVER w28 AS views_28d,
+           sum(uploads)      OVER w28 AS uploads_28d,
+           sum(minutes)      OVER w28 AS minutes_28d,
+           count(*)          OVER w28 AS days_in_window
+    FROM base
+    WINDOW w7  AS (PARTITION BY niche_code ORDER BY d ROWS BETWEEN 6 PRECEDING AND CURRENT ROW),
+           wp7 AS (PARTITION BY niche_code ORDER BY d ROWS BETWEEN 13 PRECEDING AND 7 PRECEDING),
+           w28 AS (PARTITION BY niche_code ORDER BY d ROWS BETWEEN 27 PRECEDING AND CURRENT ROW)
+),
+supply AS (  -- uploads per 1,000 views gained: more videos chasing the same views = more crowded
+    SELECT *, uploads_28d / nullif(views_28d / 1000.0, 0) AS supply_ratio
+    FROM roll WHERE days_in_window >= 14
+),
+scored AS (
+    SELECT *,
+           -- SI: 0 to 1, where the median niche that day is 0.5
+           supply_ratio / nullif(supply_ratio + median(supply_ratio) OVER (PARTITION BY d), 0) AS si,
+           -- NGP: last 7 days of views over the 7 before (1.0 = flat)
+           views_7d / nullif(views_prev_7d, 0) AS ngp
+    FROM supply
+)
+SELECT d AS snapshot_date, niche_code, minutes_28d AS tve, uploads_28d, views_28d,
+       si, ngp,
+       20 * ngp * (1 - si) AS ccos,   -- trend and saturation each counted once; 20x puts the median niche near 10
+       20 * ngp * (1 - si) / nullif(lag(20 * ngp * (1 - si), 7) OVER (PARTITION BY niche_code ORDER BY d), 0) - 1 AS ccos_chg_7d
+FROM scored;
+
+CREATE OR REPLACE VIEW niche_opportunity AS
+WITH last AS (SELECT max(snapshot_date) AS d FROM niche_opportunity_daily),
+vol AS (   -- volatility of daily views over 28 days (coefficient of variation)
+    SELECT niche_code, stddev_samp(views_gained) / nullif(avg(views_gained), 0) AS volatility
+    FROM niche_daily, last WHERE snapshot_date > last.d - 28 GROUP BY niche_code
+),
+ch AS (
+    SELECT n.niche_code, d.channel_id, sum(d.views_gained) AS v
+    FROM channel_daily d JOIN channel_niche n USING (channel_id), last
+    WHERE d.snapshot_date > last.d - 28 AND d.views_gained IS NOT NULL
+    GROUP BY ALL
+),
+conc AS (  -- CR3: share of the niche's views from its top 3 channels
+    SELECT niche_code, sum(v) FILTER (WHERE rk <= 3) / nullif(sum(v), 0) AS cr3
+    FROM (SELECT *, row_number() OVER (PARTITION BY niche_code ORDER BY v DESC) AS rk FROM ch)
+    GROUP BY niche_code
+),
+risk AS (
+    SELECT v.niche_code, v.volatility, c.cr3,
+           (percent_rank() OVER (ORDER BY v.volatility) + percent_rank() OVER (ORDER BY c.cr3)) / 2 AS risk_score
+    FROM vol v JOIN conc c USING (niche_code)
+)
+SELECT o.niche_code, o.tve, o.uploads_28d, o.views_28d, o.si, o.ngp, o.ccos, o.ccos_chg_7d,
+       CASE WHEN o.ccos_chg_7d > 0.03 THEN 'UP' WHEN o.ccos_chg_7d < -0.03 THEN 'DOWN' ELSE 'STABLE' END AS trend,
+       r.volatility, r.cr3,
+       CASE ntile(3) OVER (ORDER BY r.risk_score) WHEN 1 THEN 'LOW' WHEN 2 THEN 'MEDIUM' ELSE 'HIGH' END AS risk
+FROM niche_opportunity_daily o
+JOIN last ON o.snapshot_date = last.d
+LEFT JOIN risk r ON r.niche_code = o.niche_code;
 """
 
-EXPORTS = ["niche_daily", "niche_momentum", "screener", "alerts"]
+EXPORTS = ["niche_daily", "niche_momentum", "screener", "alerts", "niche_opportunity", "niche_opportunity_daily"]
 
 
 def build(con) -> None:

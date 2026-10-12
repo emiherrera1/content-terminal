@@ -1,9 +1,9 @@
 """Daily pulls from the official YouTube Data API v3.
 
 Quota (default 10,000 units/day): channels.list, playlistItems.list and videos.list
-cost 1 unit per call. Channels and videos go 50 per call; recent uploads are one call
-per channel. So ~3,000 channels costs roughly 60 + 3,000 + 60 x (recent videos / 50)
-units a day. Check the current quota and the API terms (data retention and display
+cost 1 unit per call. Channels and videos go 50 per call; recent uploads (up to 50) are one
+call per channel. So ~3,000 channels at 50 uploads each costs roughly 60 + 3,000 + 3,000 =
+~6,000 units a day. Check the current quota and the API terms (data retention and display
 rules) in Google Cloud before scaling up.
 """
 import datetime as dt
@@ -67,7 +67,7 @@ def pull_channels(con, channel_ids: list[str], today: dt.date) -> int:
     return n
 
 
-def pull_recent_videos(con, today: dt.date, per_channel: int = 15) -> int:
+def pull_recent_videos(con, today: dt.date, per_channel: int = 50) -> int:
     """Latest uploads per channel, then current stats for each video."""
     playlists = con.execute("SELECT channel_id, uploads_playlist FROM channels").fetchall()
     video_ids = []

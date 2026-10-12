@@ -1,6 +1,6 @@
 # Content Terminal (MVP)
 
-A first version of a Bloomberg-style terminal for content markets. It takes a daily snapshot of a few thousand YouTube channels, classifies each one with the [CTNCS taxonomy](https://github.com/emiherrera1/ctncs), and computes four views:
+A first version of a Bloomberg-style terminal for content markets. It takes a daily snapshot of a few thousand YouTube channels, classifies each one with the [CTNCS taxonomy](https://github.com/emiherrera1/ctncs), and computes these views:
 
 | View | What it answers |
 | --- | --- |
@@ -8,6 +8,8 @@ A first version of a Bloomberg-style terminal for content markets. It takes a da
 | `niche_momentum` | Which niches are accelerating: last 7 days of gains vs the 7 before |
 | `screener` | Which creators are growing faster than their niche: 28-day growth, growth vs niche median, upload pace, outlier rate |
 | `alerts` | Channels whose daily gain is 3+ standard deviations above their trailing 28 days and at least double their typical day |
+| `niche_opportunity` | The opportunity metrics per niche: TVE (content minutes, 28 days), SI (saturation, 0 to 1), NGP (growth ratio), CCOS (opportunity score), CHG% of CCOS over 7 days, TREND and RISK |
+| `niche_opportunity_daily` | The same per niche per day, for trend charts |
 
 Scope is deliberately narrow: YouTube only, two or three CTNCS sectors (set in `config/settings.yaml`), and daily refreshes. The open layer (codebook, niche index) is meant to sit with C-CPAR; the screener and alerts are the TerminalCo prototype.
 
@@ -41,13 +43,26 @@ python -m pytest               # metric tests on synthetic data, no keys needed
 
 Momentum needs 14 days of snapshots, alerts 8, and the screener's 28-day growth fills in over its first month.
 
+## Opportunity metrics
+
+Measurable versions of the prototype terminal's columns, per CTNCS niche (`terminal/metrics.py`):
+
+- **TVE:** minutes of content published by tracked channels in the last 28 days (content supply)
+- **SI:** uploads per 1,000 views gained over 28 days, as x / (x + that day's median across niches). 0 to 1; the median niche is 0.5
+- **NGP:** views gained in the last 7 days ÷ the 7 days before (1.0 = flat)
+- **CCOS:** 20 × NGP × (1 − SI). Growth and saturation each count once; the median flat niche scores 10
+- **CHG% / TREND:** CCOS today vs 7 days ago; UP above +3%, DOWN below −3%, else STABLE
+- **RISK:** average percentile of volatility (coefficient of variation of daily views, 28 days) and CR3 (top 3 channels' share of niche views), split LOW / MEDIUM / HIGH by thirds
+
+SI and RISK are relative: they rank niches against the others being tracked.
+
 ## Daily schedule
 
 `.github/workflows/daily.yml` runs `python -m terminal daily` every morning. It needs three repository secrets: `YOUTUBE_API_KEY`, `ANTHROPIC_API_KEY` and `MOTHERDUCK_TOKEN` (GitHub runners don't keep files between runs, so the database lives in MotherDuck). It can also be run by hand from the Actions tab.
 
 ## Limits to check before scaling
 
-- **Quota:** the default YouTube quota is 10,000 units a day. Each channel costs about one unit for its uploads list; channel and video stats cost one unit per 50. A few thousand channels fits; more needs a quota increase from Google.
+- **Quota:** the default YouTube quota is 10,000 units a day. Each channel costs one unit for its uploads list (up to 50 uploads) and about one more for those videos' stats; channel stats cost one unit per 50 channels. About 3,000 channels uses ~6,000 units. More needs a quota increase from Google.
 - **Terms:** YouTube's API terms limit how long some data can be stored and how it is shown to others. Read them before showing data to design partners or keeping long history.
 - **Codebook version:** `config/ctncs_codebook.csv` is the public v1.0 (12 sectors). Replace it with the audited version when that is published.
 - **Classification quality:** audit a sample from each sector before trusting niche figures.
