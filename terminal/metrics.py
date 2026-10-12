@@ -4,6 +4,7 @@ niche_daily     views gained per CTNCS niche per day (the niche index)
 niche_momentum  last 7 days of gains vs the 7 before, per niche
 screener        each channel's 28-day growth against its niche's median
 alerts          channels whose daily gain is 3+ standard deviations above their trailing 28 days
+                and at least double their typical day
 
 Channels classified only to category (level 2) roll up under that code, and
 unclassified channels are left out of niche figures but stay in the screener.
@@ -120,6 +121,7 @@ JOIN channels c USING (channel_id)
 LEFT JOIN channel_niche n USING (channel_id)
 WHERE s.days_history >= 7
   AND (s.views_gained - s.mean_28d) / nullif(s.sd_28d, 0) >= 3
+  AND s.views_gained >= 2 * s.mean_28d   -- a real jump, not steady growth in a hot niche
   AND s.snapshot_date = (SELECT max(snapshot_date) FROM channel_snapshots);
 """
 

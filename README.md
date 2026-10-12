@@ -7,7 +7,7 @@ A first version of a Bloomberg-style terminal for content markets. It takes a da
 | `niche_daily` | Views gained per CTNCS niche per day (the niche index) |
 | `niche_momentum` | Which niches are accelerating: last 7 days of gains vs the 7 before |
 | `screener` | Which creators are growing faster than their niche: 28-day growth, growth vs niche median, upload pace, outlier rate |
-| `alerts` | Channels whose daily gain is 3+ standard deviations above their trailing 28 days |
+| `alerts` | Channels whose daily gain is 3+ standard deviations above their trailing 28 days and at least double their typical day |
 
 Scope is deliberately narrow: YouTube only, two or three CTNCS sectors (set in `config/settings.yaml`), and daily refreshes. The open layer (codebook, niche index) is meant to sit with C-CPAR; the screener and alerts are the TerminalCo prototype.
 
