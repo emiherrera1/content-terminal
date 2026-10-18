@@ -1,0 +1,77 @@
+# Discovery: find active, mid-size channels in each target niche from recent videos that are getting views.
+# `python -m terminal discover` runs every query below and writes config/channels_discovered.csv,
+# which `seed` reads alongside config/channels.csv.
+#
+# Quota: each search page costs 100 units (default daily quota is 10,000) and returns up to 50 videos.
+# One run of the queries below uses ~5,000 units and usually yields 1,000 to 1,500 channels after filters.
+# Run it on two or three days (quota resets daily) to reach ~3,000; each run merges into the same file.
+
+window_days: 60          # only videos published in the last N days, so the channel is active now
+region: US
+language: en
+pages_per_query: 1
+max_units: 6000          # stop before this many units, leaving room for the daily pull
+filters:
+  min_subscribers: 10000
+  max_subscribers: 2000000   # above this a channel is an incumbent; anchors in channels.csv cover them
+  min_videos: 20
+target_per_niche: 375        # 8 niches x 375 = 3,000
+
+# Queries are consumer-demand phrases: what people search when they're about to try, buy or change something.
+niches:
+  "03.07":   # Fitness
+    - pilates workout
+    - hyrox training
+    - home workout no equipment
+    - gym routine for beginners
+    - running training plan
+    - strength training for women
+  "03.08":   # Food & Cooking
+    - high protein recipes
+    - air fryer recipes
+    - easy dinner recipes
+    - meal prep for the week
+    - taste test review
+    - restaurant review
+  "03.09":   # Fashion & Beauty
+    - skincare routine
+    - makeup tutorial
+    - fragrance review
+    - outfit ideas
+    - thrift haul
+    - hair care routine
+  "04.10":   # Consumer Tech
+    - gadget review
+    - unboxing
+    - desk setup
+    - smart home setup
+    - headphones review
+    - phone review
+  "08.25":   # Personal Finance
+    - budgeting tips
+    - credit score
+    - buying a first home
+    - frugal living
+    - saving money tips
+    - paying off debt
+  "08.23":   # Entrepreneurship
+    - starting a small business
+    - small business vlog
+    - day in the life founder
+    - product launch
+    - ecommerce brand
+    - side hustle ideas
+  "09.26":   # Physical Health and nutrition
+    - gut health
+    - supplements review
+    - glp-1
+    - better sleep
+    - longevity routine
+    - weight loss journey
+  "09.27":   # Mental Health
+    - anxiety tips
+    - adhd adult
+    - burnout recovery
+    - therapist explains
+    - dopamine detox
+    - journaling routine

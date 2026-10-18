@@ -1,6 +1,7 @@
 """Command line: python -m terminal <command>
 
-  seed      add channels from config/channels.csv (ids or @handles)
+  discover  find active mid-size channels per niche (config/discovery.yaml) -> config/channels_discovered.csv
+  seed      add channels from config/channels.csv and config/channels_discovered.csv
   pull      today's snapshot of every channel and its recent videos
   classify  assign CTNCS codes to channels that don't have one
   audit     print a random sample of classifications to check by hand
@@ -16,7 +17,7 @@ from pathlib import Path
 
 import yaml
 
-from . import classify, metrics, news, store, youtube
+from . import classify, discover, metrics, news, store, youtube
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -25,18 +26,22 @@ def _config() -> dict:
     return yaml.safe_load((ROOT / "config" / "settings.yaml").read_text())
 
 
-def seed(con, path=ROOT / "config" / "channels.csv"):
+def seed(con, paths=(ROOT / "config" / "channels.csv", ROOT / "config" / "channels_discovered.csv")):
     ids = []
-    with open(path, newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            ref = (row.get("channel") or "").strip()
-            if not ref or ref.startswith("#"):
-                continue
-            cid = ref if ref.startswith("UC") else youtube.resolve_handle(ref)
-            if cid:
-                ids.append(cid)
-            else:
-                print(f"not found: {ref}")
+    for path in paths:
+        if not Path(path).exists():
+            continue
+        with open(path, newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                ref = (row.get("channel") or "").strip()
+                if not ref or ref.startswith("#"):
+                    continue
+                cid = ref if ref.startswith("UC") else youtube.resolve_handle(ref)
+                if cid:
+                    ids.append(cid)
+                else:
+                    print(f"not found: {ref}")
+    ids = list(dict.fromkeys(ids))
     n = youtube.pull_channels(con, ids, dt.date.today())
     print(f"seeded {n} channels")
 
@@ -50,7 +55,7 @@ def pull(con):
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="terminal", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("command", choices=["seed", "pull", "classify", "audit", "news", "compute", "export", "daily"])
+    p.add_argument("command", choices=["discover", "seed", "pull", "classify", "audit", "news", "compute", "export", "daily"])
     p.add_argument("--limit", type=int, help="classify at most this many channels")
     p.add_argument("--redo", action="store_true", help="reclassify channels nobody has reviewed yet")
     a = p.parse_args(argv)
@@ -59,7 +64,12 @@ def main(argv=None):
     news.connect(con)
     sectors = [str(s).zfill(2) for s in _config()["sectors"]]
 
-    if a.command == "seed":
+    if a.command == "discover":
+        r = discover.run()
+        print(f"units used: {r['units']}, channels seen: {r['channels_seen']}, added: {r['added']}, total: {r['total']}")
+        for niche, n in sorted(r["by_niche"].items()):
+            print(f"  {niche}: {n}")
+    elif a.command == "seed":
         seed(con)
     elif a.command == "pull":
         pull(con)

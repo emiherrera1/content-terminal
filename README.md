@@ -35,8 +35,9 @@ cp .env.example .env   # add YOUTUBE_API_KEY and ANTHROPIC_API_KEY, then: set -a
 ## Run
 
 ```bash
-# 1. Pick sectors in config/settings.yaml and list channels in config/channels.csv
-python -m terminal seed        # add the channels
+# 1. Sectors are in config/settings.yaml; anchor channels in config/channels.csv; niche queries in config/discovery.yaml
+python -m terminal discover    # find active mid-size channels per niche -> config/channels_discovered.csv
+python -m terminal seed        # add anchors + discovered channels
 python -m terminal daily       # pull, classify new channels, compute, export
 python -m terminal audit       # 25 random classifications to check by hand
 python -m terminal news        # pull news feeds and tag new articles
@@ -44,6 +45,15 @@ python -m pytest               # metric tests on synthetic data, no keys needed
 ```
 
 Momentum needs 14 days of snapshots, alerts 8, and the screener's 28-day growth fills in over its first month.
+
+## Building the channel list
+
+The list has two parts:
+
+- **Anchors** (`config/channels.csv`): about 100 established creators across eight consumer niches (fitness, food, fashion and beauty, consumer tech, personal finance, entrepreneurship, physical health, mental health). They benchmark each niche. Handles marked `verify` were written from memory; `seed` prints any that don't resolve.
+- **Discovered** (`config/channels_discovered.csv`): `discover` searches recent videos (last 60 days, most viewed first) for consumer-demand phrases in each niche, collects the channels behind them, and keeps those with 10K to 2M subscribers and at least 20 videos, up to 375 per niche. This is where early movement shows up.
+
+One discovery run uses about 5,000 units and usually adds 1,000 to 1,500 channels. Run it on two or three days before the daily schedule starts (quota resets daily; runs merge into the same file), then `seed`. Review the discovered file before seeding: drop brands, news outlets and anything off-niche.
 
 ## Opportunity metrics
 

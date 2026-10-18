@@ -1,2 +1,111 @@
-channel,note
-# One per line: a channel id (UC...) or an @handle. Seed from TubeLab niche/outlier searches.
+channel,niche,role,note
+# Anchor channels: established creators that benchmark each niche. Discovery (config/discovery.yaml) adds the
+# mid-size, active channels where early movement shows up. One per line: a channel id (UC...) or an @handle.
+# "verify" = handle written from memory; `python -m terminal seed` prints "not found" for any that don't resolve.
+# Fitness (03.07)
+@JeffNippard,03.07,anchor,
+@athleanx,03.07,anchor,
+@JeremyEthier,03.07,anchor,
+@ChloeTing,03.07,anchor,
+@blogilates,03.07,anchor,
+@PamelaRf1,03.07,anchor,
+@yogawithadriene,03.07,anchor,
+@MadFit,03.07,anchor,
+@RenaissancePeriodization,03.07,anchor,
+@GarageGymReviews,03.07,anchor,
+@NickBare,03.07,anchor,verify
+@SquatUniversity,03.07,anchor,verify
+@NatachaOceane,03.07,anchor,verify
+@HybridCalisthenics,03.07,anchor,verify
+# Food & Cooking (03.08)
+@JoshuaWeissman,03.08,anchor,
+@babishculinaryuniverse,03.08,anchor,
+@NickDiGiovanni,03.08,anchor,
+@EthanChlebowski,03.08,anchor,
+@aragusea,03.08,anchor,
+@JKenjiLopezAlt,03.08,anchor,
+@SORTEDfood,03.08,anchor,
+@Maangchi,03.08,anchor,
+@HotThaiKitchen,03.08,anchor,
+@ChineseCookingDemystified,03.08,anchor,
+@ProHomeCooks,03.08,anchor,
+@SauceStache,03.08,anchor,verify
+@BrianLagerstrom,03.08,anchor,
+@RecipeTinEats,03.08,anchor,verify
+@feelgoodfoodie,03.08,anchor,verify
+@rainbowplantlife,03.08,anchor,
+@Downshiftology,03.08,anchor,
+@MythicalKitchen,03.08,anchor,
+# Fashion & Beauty (03.09)
+@jamescharles,03.09,anchor,
+@NikkieTutorials,03.09,anchor,
+@jackieaina,03.09,anchor,
+@RobertWelsh,03.09,anchor,verify
+@tati,03.09,anchor,verify
+@WayneGoss,03.09,anchor,verify
+@DrDrayzday,03.09,anchor,
+@LabMuffinBeautyScience,03.09,anchor,
+@Hyram,03.09,anchor,verify
+@MixedMakeup,03.09,anchor,verify
+@JustineLeconte,03.09,anchor,verify
+@bestdressed,03.09,anchor,
+@emmachamberlain,03.09,anchor,
+@alpham,03.09,anchor,
+@RealMenRealStyle,03.09,anchor,verify
+# Consumer Tech (04.10)
+@mkbhd,04.10,anchor,
+@unboxtherapy,04.10,anchor,
+@LinusTechTips,04.10,anchor,
+@Mrwhosetheboss,04.10,anchor,
+@ijustine,04.10,anchor,
+@JerryRigEverything,04.10,anchor,
+@austinevans,04.10,anchor,
+@Dave2D,04.10,anchor,
+@SnazzyLabs,04.10,anchor,
+@UrAvgConsumer,04.10,anchor,verify
+@MrMobile,04.10,anchor,verify
+@ShortCircuit,04.10,anchor,
+# Personal Finance (08.25)
+@GrahamStephan,08.25,anchor,
+@AndreiJikh,08.25,anchor,
+@MinorityMindset,08.25,anchor,
+@TheFinancialDiet,08.25,anchor,
+@CalebHammer,08.25,anchor,
+@HumphreyYang,08.25,anchor,
+@NateOBrien,08.25,anchor,
+@moneyguyshow,08.25,anchor,verify
+@BenFelixCSI,08.25,anchor,
+@ThePlainBagel,08.25,anchor,
+@TheRamseyShow,08.25,anchor,
+@MarkTilbury,08.25,anchor,
+# Entrepreneurship and online business (08.23, 08.24)
+@aliabdaal,08.24,anchor,
+@AlexHormozi,08.23,anchor,
+@ColinandSamir,08.24,anchor,
+@garyvee,08.23,anchor,
+@CodieSanchez,08.23,anchor,
+@starterstory,08.23,anchor,
+@TheDiaryOfACEO,08.23,anchor,
+@MyFirstMillionPod,08.23,anchor,verify
+@NeilPatel,08.24,anchor,
+@PatFlynn,08.24,anchor,verify
+@NoahKagan,08.23,anchor,verify
+# Physical Health and nutrition (09.26)
+@hubermanlab,09.26,anchor,
+@PeterAttiaMD,09.26,anchor,
+@FoundMyFitness,09.26,anchor,
+@AbbeysKitchen,09.26,anchor,verify
+@Drberg,09.26,anchor,verify
+@ThomasDeLauerOfficial,09.26,anchor,
+@MindPumpTV,09.26,anchor,verify
+@DoctorMike,09.26,anchor,
+@DrBradStanfield,09.26,anchor,verify
+@NutritionFactsOrg,09.26,anchor,verify
+@pickuplimes,09.26,anchor,
+# Mental Health (09.27)
+@TherapyinaNutshell,09.27,anchor,
+@DrTraceyMarks,09.27,anchor,verify
+@Psych2Go,09.27,anchor,
+@HealthyGamerGG,09.27,anchor,
+@KatiMorton,09.27,anchor,
+@TheSchoolofLife,09.27,anchor,

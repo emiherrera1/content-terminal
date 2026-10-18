@@ -1,12 +1,15 @@
 # CTNCS sectors the MVP covers (level-1 codes from config/ctncs_codebook.csv).
-# Start with two or three where the fund has dealflow. Placeholders below; change them.
+# Pick the sectors where the fund looks for consumer demand and dealflow.
 #   01 Entertainment  02 Education  03 Lifestyle  04 Technology  05 News & Commentary
 #   06 Creative Arts  07 Gaming  08 Business & Finance  09 Health & Wellness
 #   10 Social & Community  11 Sports  12 Pets & Animals
+# Consumer-demand sectors: Lifestyle (fitness, food, fashion & beauty), Technology (consumer tech),
+# Business & Finance (personal finance, entrepreneurship), Health & Wellness.
 sectors:
   - "03"
-  - "07"
+  - "04"
   - "08"
+  - "09"
 
 # Recent uploads to track per channel each day. Up to 50 costs the same 1 API unit per channel;
 # fewer undercounts supply (TVE, SI) for channels that post daily. Video stats cost 1 unit per 50 videos.

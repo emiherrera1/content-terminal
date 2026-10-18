@@ -46,6 +46,32 @@ def resolve_handle(handle: str) -> str | None:
     return items[0]["id"] if items else None
 
 
+def search_recent_videos(query: str, published_after: dt.datetime, region: str | None = None,
+                         language: str | None = None, page_token: str | None = None) -> tuple[list[str], str | None]:
+    """Recent videos for a query, most viewed first (100 units per page). Returns (channel ids, next page token)."""
+    params = {"part": "snippet", "type": "video", "q": query, "order": "viewCount", "maxResults": 50,
+              "publishedAfter": published_after.strftime("%Y-%m-%dT%H:%M:%SZ")}
+    if region:
+        params["regionCode"] = region
+    if language:
+        params["relevanceLanguage"] = language
+    if page_token:
+        params["pageToken"] = page_token
+    data = _get("search", **params)
+    return [i["snippet"]["channelId"] for i in data.get("items", [])], data.get("nextPageToken")
+
+
+def channel_stats(channel_ids: list[str]) -> dict:
+    """Title, subscribers, video count for each channel (1 unit per 50), without writing to the database."""
+    out = {}
+    for batch in _chunks(channel_ids):
+        for c in _get("channels", part="snippet,statistics", id=",".join(batch), maxResults=50).get("items", []):
+            st = c.get("statistics", {})
+            out[c["id"]] = {"title": c["snippet"].get("title"), "subscribers": int(st.get("subscriberCount", 0)),
+                            "videos": int(st.get("videoCount", 0)), "hidden": st.get("hiddenSubscriberCount", False)}
+    return out
+
+
 def pull_channels(con, channel_ids: list[str], today: dt.date) -> int:
     n = 0
     for batch in _chunks(channel_ids):
