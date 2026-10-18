@@ -4,6 +4,7 @@ tagged by Claude, ranked by impact and recency.
 Every item keeps its source link. Nothing is written about a person unless a source
 article says it: the tags describe the article, they don't add to it.
 """
+from . import llm
 import datetime as dt
 import email.utils
 import json
@@ -133,7 +134,7 @@ def tag(con, limit: int | None = None) -> int:
     for url, source, title, summary in rows:
         msg = client.messages.create(model=model, max_tokens=200, messages=[{"role": "user", "content": PROMPT.format(
             source=source, title=title, summary=summary or "", categories=CATEGORIES, platforms=PLATFORMS)}])
-        text = msg.content[0].text
+        text = llm.reply_text(msg)
         try:
             t = json.loads(text[text.index("{"): text.rindex("}") + 1])
         except ValueError:

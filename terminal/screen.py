@@ -22,7 +22,7 @@ import json
 import os
 from pathlib import Path
 
-from . import discover, youtube
+from . import discover, youtube, llm
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "config" / "channels_screened.csv"
@@ -139,7 +139,7 @@ def run(info_fn=None, client=None, discovered=None, path=OUT, limit: int | None 
                 batch = ask[k:k + BATCH]
                 msg = client.messages.create(model=MODEL, max_tokens=60 * len(batch), system=system, messages=[
                     {"role": "user", "content": USER.format(channels=_block(batch, info))}])
-                for cid, (verdict, reason, note) in parse_reply(msg.content[0].text, [r["channel"] for r in batch]).items():
+                for cid, (verdict, reason, note) in parse_reply(llm.reply_text(msg), [r["channel"] for r in batch]).items():
                     done[cid] = {**base[cid], "verdict": verdict, "reason": reason, "note": note}
                 write(done, path)   # saved per batch: a rerun picks up where this one stopped
     counts = {}

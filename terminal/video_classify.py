@@ -11,7 +11,7 @@ import datetime as dt
 import json
 import os
 
-from . import ctncs
+from . import ctncs, llm
 
 MODEL = os.environ.get("VIDEO_CLASSIFIER_MODEL", "claude-haiku-5-5")
 BATCH = 25
@@ -119,7 +119,7 @@ def classify_videos(con, limit: int | None = None, days: int = 60, client=None) 
         batch = rows[i:i + BATCH]
         msg = client.messages.create(model=MODEL, max_tokens=120 * len(batch), system=system,
                                      messages=[{"role": "user", "content": USER.format(videos=_video_block(batch))}])
-        out = parse_reply(msg.content[0].text, [r[0] for r in batch], book)
+        out = parse_reply(llm.reply_text(msg), [r[0] for r in batch], book)
         save(con, out)
         n += len(out)
     return n
