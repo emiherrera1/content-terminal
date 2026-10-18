@@ -47,6 +47,23 @@ CREATE TABLE IF NOT EXISTS classifications (
     reviewed       BOOLEAN DEFAULT false,   -- true once a person has audited it
     classified_at  TIMESTAMP DEFAULT now()
 );
+-- Video-level classification: what each piece of content is about, independent of its channel.
+CREATE TABLE IF NOT EXISTS video_classifications (
+    video_id       VARCHAR PRIMARY KEY,
+    topic_code     VARCHAR,      -- deepest CTNCS topic assigned (up to level 4, e.g. 02.05.10.19 Woodworking)
+    sector         VARCHAR,      -- level 1
+    category       VARCHAR,      -- level 2
+    niche          VARCHAR,      -- level 3
+    subniche       VARCHAR,      -- level 4
+    format_id      VARCHAR,      -- CTNCS level-5 format id, e.g. 14 = DIY (same id in every niche)
+    format_label   VARCHAR,
+    confidence     DOUBLE,
+    model          VARCHAR,
+    reviewed       BOOLEAN DEFAULT false,
+    classified_at  TIMESTAMP DEFAULT now()
+);
+ALTER TABLE videos ADD COLUMN IF NOT EXISTS description VARCHAR;
+ALTER TABLE videos ADD COLUMN IF NOT EXISTS tags VARCHAR;
 """
 
 

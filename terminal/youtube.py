@@ -110,9 +110,11 @@ def pull_recent_videos(con, today: dt.date, per_channel: int = 50) -> int:
         for v in data.get("items", []):
             sn, st = v["snippet"], v.get("statistics", {})
             con.execute(
-                "INSERT OR REPLACE INTO videos VALUES (?, ?, ?, ?, ?)",
+                "INSERT OR REPLACE INTO videos (video_id, channel_id, title, published_at, duration_s, description, tags) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
                 [v["id"], sn["channelId"], sn.get("title"), sn.get("publishedAt"),
-                 _duration_s(v["contentDetails"].get("duration"))],
+                 _duration_s(v["contentDetails"].get("duration")), (sn.get("description") or "")[:1000],
+                 ", ".join(sn.get("tags", [])[:15]) or None],
             )
             con.execute(
                 "INSERT OR REPLACE INTO video_snapshots VALUES (?, ?, ?, ?, ?)",

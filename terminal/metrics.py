@@ -8,6 +8,11 @@ alerts          channels whose daily gain is 3+ standard deviations above their 
 niche_opportunity  per niche: TVE (content minutes, 28d), SI (saturation, 0-1), NGP (growth ratio),
                    CCOS (opportunity score), CHG% of CCOS over 7 days, TREND, RISK
 
+Content-level views (each video counted by its own topic, not its channel's):
+video_daily          views gained per video per day
+content_daily        views gained per CTNCS topic per day, at every level (sector, category, niche, sub-niche)
+content_format_daily the same split by format (Tutorials, Reviews, DIY...)
+
 Channels classified only to category (level 2) roll up under that code, and
 unclassified channels are left out of niche figures but stay in the screener.
 """
@@ -200,9 +205,52 @@ SELECT o.niche_code, o.tve, o.uploads_28d, o.views_28d, o.si, o.ngp, o.ccos, o.c
 FROM niche_opportunity_daily o
 JOIN last ON o.snapshot_date = last.d
 LEFT JOIN risk r ON r.niche_code = o.niche_code;
+-- Content level: each video counts toward its own topic, whatever its channel's niche.
+CREATE OR REPLACE VIEW video_daily AS
+WITH s AS (
+    SELECT *, lag(views) OVER w AS prev_views, lag(snapshot_date) OVER w AS prev_date
+    FROM video_snapshots
+    WINDOW w AS (PARTITION BY video_id ORDER BY snapshot_date)
+)
+SELECT s.snapshot_date, s.video_id, v.channel_id, v.published_at, v.duration_s, s.views,
+       CASE WHEN s.prev_date = s.snapshot_date - 1 THEN s.views - s.prev_views
+            -- first snapshot of a video uploaded since the last pull: all its views are new
+            WHEN s.prev_date IS NULL AND CAST(v.published_at AS DATE) >= s.snapshot_date - 1 THEN s.views
+       END AS views_gained
+FROM s JOIN videos v USING (video_id);
+
+CREATE OR REPLACE VIEW video_topic_daily AS
+SELECT d.*, c.topic_code, c.sector, c.category, c.niche, c.subniche, c.format_id, c.format_label,
+       coalesce(d.duration_s, 0) <= 180 AS is_short,
+       CAST(d.published_at AS DATE) = d.snapshot_date OR CAST(d.published_at AS DATE) = d.snapshot_date - 1 AS is_new
+FROM video_daily d JOIN video_classifications c USING (video_id)
+WHERE c.topic_code <> 'unclassified' AND d.views_gained IS NOT NULL;
+
+CREATE OR REPLACE VIEW content_daily AS
+SELECT snapshot_date, x.level AS level, x.code AS code,
+       sum(views_gained)                          AS views_gained,
+       count(*)                                   AS videos,
+       count(DISTINCT channel_id)                 AS channels,
+       count(*) FILTER (WHERE is_new)             AS new_videos,
+       sum(views_gained) FILTER (WHERE is_short)  AS short_views,
+       median(views_gained)                       AS median_video_gain
+FROM video_topic_daily,
+     unnest([struct_pack(level := 1, code := sector), struct_pack(level := 2, code := category),
+             struct_pack(level := 3, code := niche), struct_pack(level := 4, code := subniche)]) AS t(x)
+WHERE x.code IS NOT NULL
+GROUP BY snapshot_date, x.level, x.code;
+
+CREATE OR REPLACE VIEW content_format_daily AS
+SELECT snapshot_date, x.level AS level, x.code AS code, coalesce(format_label, 'Unspecified') AS format,
+       sum(views_gained) AS views_gained, count(*) AS videos
+FROM video_topic_daily,
+     unnest([struct_pack(level := 1, code := sector), struct_pack(level := 2, code := category),
+             struct_pack(level := 3, code := niche), struct_pack(level := 4, code := subniche)]) AS t(x)
+WHERE x.code IS NOT NULL
+GROUP BY ALL;
 """
 
-EXPORTS = ["niche_daily", "niche_momentum", "screener", "alerts", "niche_opportunity", "niche_opportunity_daily", "news_ranked"]
+EXPORTS = ["niche_daily", "niche_momentum", "screener", "alerts", "niche_opportunity", "niche_opportunity_daily", "content_daily", "content_format_daily", "news_ranked"]
 
 
 def build(con) -> None:

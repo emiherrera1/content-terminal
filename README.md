@@ -46,6 +46,23 @@ python -m pytest               # metric tests on synthetic data, no keys needed
 
 Momentum needs 14 days of snapshots, alerts 8, and the screener's 28-day growth fills in over its first month.
 
+## Content-level index ("how did woodworking do today")
+
+Every recent video is classified on its own, not by its channel: topic down to CTNCS level 4 (sector > category > niche > sub-niche) and format (the level-5 formats: Tutorials, Reviews, DIY...). A woodworking video from a home-renovation channel counts toward Woodworking.
+
+```bash
+python -m terminal classify-videos          # each new video once, in batches of 25 with the codebook cached
+python -m terminal index woodworking        # or a code: python -m terminal index 02.05.10.19 --date 2026-10-18
+```
+
+| View | What it answers |
+| --- | --- |
+| `video_daily` | Views gained per video per day (a video's first snapshot counts in full if it was uploaded since the last pull) |
+| `content_daily` | Views gained per topic per day at every level, with videos, channels, new uploads, Shorts views and the median video's gain |
+| `content_format_daily` | The same split by format |
+
+`index` prints the day's views gained, change vs yesterday and vs the 7-day average, the split by sub-topic and by format, and the top videos. It covers the tracked channels' recent uploads, so it is a sample (like a stock index's basket), not all of YouTube. Topic coverage is limited by the codebook: v1.0 has 146 level-4 sub-niches; topics it lacks (skincare, for example) need the audited CTNCS version. Classification uses `VIDEO_CLASSIFIER_MODEL` (default `claude-haiku-5-5`); `video_classify_daily_limit` in `config/settings.yaml` caps the daily run.
+
 ## Building the channel list
 
 The list has two parts:

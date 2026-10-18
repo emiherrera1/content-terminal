@@ -33,7 +33,7 @@ def con():
         con.execute("INSERT INTO channel_snapshots VALUES (?, 'UCd', 100, ?, 10)", [day, 10_000 + i * 100])
     # UCb: one video far above its median.
     for j, views in enumerate([100, 120, 110, 900]):
-        con.execute("INSERT INTO videos VALUES (?, 'UCb', 't', ?, 60)", [f"v{j}", dt.datetime(2026, 10, 1 + j)])
+        con.execute("INSERT INTO videos (video_id, channel_id, title, published_at, duration_s) VALUES (?, 'UCb', 't', ?, 60)", [f"v{j}", dt.datetime(2026, 10, 1 + j)])
         con.execute("INSERT INTO video_snapshots VALUES (?, ?, ?, 0, 0)", [TODAY, f"v{j}", views])
     metrics.build(con)
     return con
