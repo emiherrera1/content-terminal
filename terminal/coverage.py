@@ -31,7 +31,7 @@ def _label(code: str) -> str:
         return screen.NICHES[code]
     try:
         from . import ctncs
-        return ctncs.label_path(code).split(" > ")[-1]
+        return ctncs.label_path(ctncs.load(), code)[-1]
     except Exception:
         return code
 
@@ -45,8 +45,11 @@ def rows(con=None, screened: dict | None = None, anchors: dict | None = None, to
 
     tracked, added = Counter(), Counter()
     if con is not None:
-        for cid, added_at in con.execute("SELECT channel_id, added_at FROM channels").fetchall():
-            n = niche_of.get(cid, "unassigned")
+        # anchors listed by @handle get their niche from the channel's CTNCS classification
+        for cid, added_at, code in con.execute(
+                "SELECT c.channel_id, c.added_at, k.ctncs_code FROM channels c "
+                "LEFT JOIN classifications k USING (channel_id)").fetchall():
+            n = niche_of.get(cid) or (".".join(code.split(".")[:2]) if code else "unassigned")
             tracked[n] += 1
             if added_at and (today - (added_at.date() if hasattr(added_at, "date") else added_at)).days < 7:
                 added[n] += 1
