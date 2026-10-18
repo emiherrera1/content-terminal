@@ -49,3 +49,22 @@ intent_weights:              # 6.1 by CTNCS format label; unlisted formats get `
   Recipes: 0.6
   Setup: 0.6
   Guide: 0.6
+
+cvs:                         # 5.10-5.11 Creator Viability Score, from the Creator Watchlist Methodology
+  weights:
+    momentum: 25
+    consistency: 20
+    audience_depth: 20
+    market_opportunity: 20
+    hit_dependence: 15
+  gates:
+    min_subscribers: 25000
+    min_views_28d: 250000
+    max_days_since_upload: 30
+  tiers:                     # score, and how many consecutive days it must hold
+    watch: {score: 60, days: 1}
+    priority: {score: 75, days: 14}
+    diligence_ready: {score: 85, days: 28}   # also needs the manual gates (independent, clean record) confirmed
+  windows:
+    last_videos: 20
+    upload_days: 90

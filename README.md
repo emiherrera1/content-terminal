@@ -78,6 +78,16 @@ python -m terminal index woodworking        # or a code: python -m terminal inde
 
 `video_daily` now clips negative corrections to 0 and spreads gains over gaps of up to 7 days (flagged `corrected` and `imputed`). A creator counts as new to a topic only if the channel is young or it was already posting other topics before entering, so the edge of the tracking window isn't mistaken for a newcomer.
 
+## Creator watchlist and the call log
+
+`compute` also scores every tracked creator (`terminal/creators.py`, Formula Library 5.3-5.7 and 5.10-5.11): growth against their niche, upload cadence and regularity, consistency, hit dependence (top video's share and the Gini of recent videos), audience depth (median views per subscriber and relative engagement) and topic focus. These feed the Creator Viability Score: five pillars, each a percentile within the creator's niche, weighted 25/20/20/20/15 to total 100.
+
+- **Gates:** 25K+ subscribers, 250K+ views in 28 days and an upload in the last 30 days are checked automatically. "Independent" and "clean record" are confirmed by a person: `python -m terminal review --creator UC... --independent yes --clean yes --by Emily`.
+- **Tiers:** Watch at 60+, Priority at 75+ held for 14 computed days, Diligence-ready at 85+ held for 28 days with the manual gates confirmed. Scores are kept daily in `cvs_history`; tier changes land in `creator_alerts`.
+- `python -m terminal watchlist` lists creators by score.
+
+The call log lives in `calls/` (see `calls/README.md`). `python -m terminal call --topic woodworking --direction up --outcome "Google Trends: woodworking, US" --p 0.6` records the signal's value at that moment; `resolve` records the outcome; `calls` lists them and checks the log hasn't been edited. Each row carries the hash of the row before it, and committing the files gives every call a git timestamp.
+
 ## Building the channel list
 
 The list has two parts:

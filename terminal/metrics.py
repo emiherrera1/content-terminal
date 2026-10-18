@@ -268,14 +268,16 @@ GROUP BY ALL;
 """
 
 EXPORTS = ["niche_daily", "niche_momentum", "screener", "alerts", "niche_opportunity", "niche_opportunity_daily", "content_daily", "content_format_daily",
-           "topic_series", "topic_current", "topic_index", "topic_alerts", "video_metrics", "creator_coverage", "news_ranked"]
+           "topic_series", "topic_current", "topic_index", "topic_alerts", "video_metrics", "creator_coverage",
+           "creator_metrics", "creator_watchlist", "creator_alerts", "news_ranked"]
 
 
 def build(con) -> None:
     """Base views, then the Formula Library tables (terminal/formulas.py)."""
     con.execute(VIEWS)
-    from . import formulas
+    from . import creators, formulas
     formulas.build(con)
+    creators.build(con)
 
 
 def export(con, out_dir: str = "data/exports") -> list[str]:
