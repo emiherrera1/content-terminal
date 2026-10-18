@@ -41,7 +41,18 @@ def report(con, code: str, day: dt.date | None = None, top: int = 5) -> dict:
         "SELECT code, views_gained, videos FROM content_daily WHERE level = ? AND starts_with(code, ?) "
         "AND snapshot_date = ? ORDER BY views_gained DESC", [level + 1, code + ".", day]).fetchall() if level < 4 else []
 
+    cur = con.execute("SELECT share, share_change_28d, new_creator_share, hhi, cr3, dss, thin, views_per_minute, "
+                      "active_creators, breadth FROM topic_current WHERE code = ? AND d = ?", [code, day]).fetchone()
+    idx = con.execute("SELECT index_level, trend_level, relative_strength FROM topic_index WHERE code = ? AND d = ?",
+                      [code, day]).fetchone()
+    alerts = con.execute("SELECT kind, subject, value FROM topic_alerts WHERE code = ? AND d = ?", [code, day]).fetchall()
+    keys = ["share", "share_change_28d", "new_creator_share", "hhi", "cr3", "dss", "thin", "views_per_minute",
+            "active_creators", "breadth"]
+    extra = dict(zip(keys, cur)) if cur else {}
+    extra.update(dict(zip(["index_level", "trend_level", "relative_strength"], idx)) if idx else {})
+    extra["alerts"] = [{"kind": k, "subject": s, "value": v} for k, s, v in alerts]
     return {
+        **extra,
         "code": code, "label": " > ".join(ctncs.label_path(book, code)), "day": day,
         "views_gained": views, "videos": today[1] if today else 0, "channels": today[2] if today else 0,
         "new_videos": today[3] if today else 0,
@@ -67,6 +78,17 @@ def render(r: dict) -> str:
              f"vs 7-day avg {pct(r['vs_7day_avg'])}  ({r['days_of_history']} days of history)",
              f"videos {r['videos']:,} from {r['channels']:,} channels, {r['new_videos']:,} new; "
              f"Shorts share {pct(r['short_share']).lstrip('+')}; median video gained {r['median_video_gain'] or 0:,.0f}"]
+    if r.get("index_level") is not None:
+        lines.append(f"index {r['index_level']:,.1f} (trend {r['trend_level']:,.1f})   "
+                     f"relative strength {r['relative_strength'] or 0:,.1f}")
+    if r.get("share") is not None or r.get("dss") is not None:
+        def num(x, f):
+            return "n/a" if x is None else format(x, f)
+        lines.append(f"share of parent {num(r.get('share'), '.1%')} ({num(r.get('share_change_28d'), '+.1%')} in 28 days)   "
+                     f"new-creator share {num(r.get('new_creator_share'), '.0%')}   HHI {num(r.get('hhi'), ',.0f')}   "
+                     f"Demand Signal {num(r.get('dss'), '+.2f')}" + ("   THIN SAMPLE" if r.get("thin") else ""))
+    if r.get("alerts"):
+        lines.append("alerts: " + ", ".join(f"{a['kind']}{' ' + a['subject'] if a['subject'] else ''}" for a in r["alerts"]))
     if r["children"]:
         lines.append("\nby sub-topic")
         lines += [f"  {c['label']:<32} {c['views_gained']:>12,}  ({c['videos']} videos)" for c in r["children"]]

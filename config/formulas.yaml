@@ -1,0 +1,51 @@
+# Starting values for the Formula Library (Content Terminal: Formula Library, Google Drive).
+# None of these are tested yet; tune them once there is data, and log every change in git.
+
+windows:
+  baseline_videos: 30        # 2.2 creator baseline: the creator's last N videos
+  baseline_min: 5            # fewer comparable videos than this -> no age-adjusted score
+  max_age_days: 90           # ages used for age-matched baselines
+  new_creator_days: 90       # 3.13 a creator is "new" to a topic for this long after entering it
+  new_creator_channel_age_days: 365   # ... and only if the channel was created within this long before entering
+  new_creator_entry_gap_days: 30      # ... or it was posting other topics at least this long before entering
+  seasonal_days: 56          # 3.10 weekday factors over the last 8 weeks
+  z_history_days: 182        # 6.4 z-scores against the topic's own last 26 weeks
+  z_min_history: 28          # fewer prior days than this -> no DSS
+  gap_fill_max_days: 7       # 1.4 spread a gain over at most this many missed days
+
+thresholds:
+  breakout_outlier: 3        # 2.5 and 7.2
+  breakout_topic_pct: 0.9    # 2.5 topic percentile at the same age
+  min_videos: 30             # 3.20 THIN below this many videos with gains in 28 days
+  min_creators: 5            # 3.20 ... or this many creators
+  creator_cap: 0.10          # 4.5 max share of a topic's matched attention from one creator
+  cap_min_creators: 10       # 4.5 cap applies only when the topic has at least this many matched creators
+  surge_z: 3                 # 7.3
+  share_shift_sd: 2          # 7.4
+  dss_alert: 2               # 7.6 DSS at or above this ...
+  dss_alert_days: 5          # ... for this many consecutive days
+  newcomer_top: 10           # 7.5 a new creator entering the topic's top N by 7-day attention
+
+index:
+  base_date: null            # 4.8 null = each topic's first full day of data; set to e.g. 2026-11-02 once data starts
+
+dss_weights:                 # 6.4
+  intent_growth: 0.4
+  acceleration: 0.2
+  share_change: 0.2
+  new_creator_share: 0.2
+
+intent_weights:              # 6.1 by CTNCS format label; unlisted formats get `default`
+  default: 0.2
+  Reviews: 1.0
+  Comparison: 1.0
+  Unboxing: 1.0
+  Haul: 1.0
+  Try-On: 1.0
+  First Impressions: 1.0
+  Test: 1.0
+  Tutorials: 0.6
+  DIY: 0.6
+  Recipes: 0.6
+  Setup: 0.6
+  Guide: 0.6

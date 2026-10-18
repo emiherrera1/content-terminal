@@ -63,6 +63,21 @@ python -m terminal index woodworking        # or a code: python -m terminal inde
 
 `index` prints the day's views gained, change vs yesterday and vs the 7-day average, the split by sub-topic and by format, and the top videos. It covers the tracked channels' recent uploads, so it is a sample (like a stock index's basket), not all of YouTube. Topic coverage follows the codebook: CTNCS v2.0 has 17 sectors and about 350 sub-niches. Classification uses `VIDEO_CLASSIFIER_MODEL` (default `claude-haiku-5-5`); `video_classify_daily_limit` in `config/settings.yaml` caps the daily run.
 
+## Formula Library tables
+
+`compute` (and the daily job) also rebuilds the tables in `terminal/formulas.py`, which implement the "Next" set of the Formula Library (Google Drive: "Content Terminal: Formula Library"). Every threshold and weight is in `config/formulas.yaml`.
+
+| Table | Formulas | What it holds |
+| --- | --- | --- |
+| `video_metrics` | 2.1-2.5, 2.8-2.9 | Views at 1 and 7 days, outlier score against the creator's own videos at the same age, score against the topic, breakout flag, engagement and comment rates |
+| `creator_coverage` | 1.6-1.7 | Share of a creator's daily views the terminal attributes to topics, and back-catalog views |
+| `topic_series` | 3.1-3.10, 3.13, 3.15, 6.1, 6.4 | Per topic per day: attention, share of parent, growth, acceleration, weekday-adjusted attention, views per minute published, new-creator share, intent-weighted attention and the Demand Signal Score |
+| `topic_current` | 3.3, 3.11-3.12, 3.20 | Latest day: active creators, breadth, HHI, CR3 and the THIN flag |
+| `topic_index` | 4.1-4.7 | Chain-linked index (100 on the base date), trend index, relative strength against the parent topic |
+| `topic_alerts` | 7.2-7.6 | Latest day's topic surges, share shifts, demand signals, newcomer wins and video breakouts |
+
+`video_daily` now clips negative corrections to 0 and spreads gains over gaps of up to 7 days (flagged `corrected` and `imputed`). A creator counts as new to a topic only if the channel is young or it was already posting other topics before entering, so the edge of the tracking window isn't mistaken for a newcomer.
+
 ## Building the channel list
 
 The list has two parts:

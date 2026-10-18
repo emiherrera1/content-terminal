@@ -208,16 +208,33 @@ LEFT JOIN risk r ON r.niche_code = o.niche_code;
 -- Content level: each video counts toward its own topic, whatever its channel's niche.
 CREATE OR REPLACE VIEW video_daily AS
 WITH s AS (
-    SELECT *, lag(views) OVER w AS prev_views, lag(snapshot_date) OVER w AS prev_date
+    SELECT *, lag(views) OVER w AS prev_views, lag(likes) OVER w AS prev_likes, lag(comments) OVER w AS prev_comments,
+           lag(snapshot_date) OVER w AS prev_date
     FROM video_snapshots
     WINDOW w AS (PARTITION BY video_id ORDER BY snapshot_date)
+),
+g AS (
+    SELECT s.*, v.channel_id, v.published_at, v.duration_s,
+           s.snapshot_date - s.prev_date AS gap,
+           CASE WHEN s.prev_date IS NULL AND CAST(v.published_at AS DATE) >= s.snapshot_date - 1 THEN 1 END AS first_day
+    FROM s JOIN videos v USING (video_id)
 )
-SELECT s.snapshot_date, s.video_id, v.channel_id, v.published_at, v.duration_s, s.views,
-       CASE WHEN s.prev_date = s.snapshot_date - 1 THEN s.views - s.prev_views
-            -- first snapshot of a video uploaded since the last pull: all its views are new
-            WHEN s.prev_date IS NULL AND CAST(v.published_at AS DATE) >= s.snapshot_date - 1 THEN s.views
-       END AS views_gained
-FROM s JOIN videos v USING (video_id);
+SELECT snapshot_date, video_id, channel_id, published_at, duration_s, views,
+       -- 1.1 one day apart; 1.2 first snapshot of a new upload counts in full; 1.4 short gaps spread evenly;
+       -- 1.3 negative corrections (YouTube removing invalid views) clipped to 0
+       CASE WHEN gap = 1 THEN greatest(views - prev_views, 0)
+            WHEN gap BETWEEN 2 AND 7 THEN CAST(round(greatest(views - prev_views, 0) / gap) AS BIGINT)
+            WHEN first_day = 1 THEN views
+       END AS views_gained,
+       CASE WHEN gap = 1 THEN greatest(likes - prev_likes, 0)
+            WHEN gap BETWEEN 2 AND 7 THEN CAST(round(greatest(likes - prev_likes, 0) / gap) AS BIGINT)
+            WHEN first_day = 1 THEN likes END AS likes_gained,
+       CASE WHEN gap = 1 THEN greatest(comments - prev_comments, 0)
+            WHEN gap BETWEEN 2 AND 7 THEN CAST(round(greatest(comments - prev_comments, 0) / gap) AS BIGINT)
+            WHEN first_day = 1 THEN comments END AS comments_gained,
+       coalesce(gap BETWEEN 2 AND 7, false) AS imputed,
+       coalesce(views < prev_views, false) AS corrected
+FROM g;
 
 CREATE OR REPLACE VIEW video_topic_daily AS
 SELECT d.*, c.topic_code, c.sector, c.category, c.niche, c.subniche, c.format_id, c.format_label,
@@ -250,11 +267,15 @@ WHERE x.code IS NOT NULL
 GROUP BY ALL;
 """
 
-EXPORTS = ["niche_daily", "niche_momentum", "screener", "alerts", "niche_opportunity", "niche_opportunity_daily", "content_daily", "content_format_daily", "news_ranked"]
+EXPORTS = ["niche_daily", "niche_momentum", "screener", "alerts", "niche_opportunity", "niche_opportunity_daily", "content_daily", "content_format_daily",
+           "topic_series", "topic_current", "topic_index", "topic_alerts", "video_metrics", "creator_coverage", "news_ranked"]
 
 
 def build(con) -> None:
+    """Base views, then the Formula Library tables (terminal/formulas.py)."""
     con.execute(VIEWS)
+    from . import formulas
+    formulas.build(con)
 
 
 def export(con, out_dir: str = "data/exports") -> list[str]:
