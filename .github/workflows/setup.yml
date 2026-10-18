@@ -35,7 +35,7 @@ jobs:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
           TERMINAL_DB: md:content_terminal
       - name: Commit the channel lists
-        if: inputs.step == 'discover' || inputs.step == 'screen'
+        if: always() && (inputs.step == 'discover' || inputs.step == 'screen')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

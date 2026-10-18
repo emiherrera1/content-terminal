@@ -117,18 +117,19 @@ def run(info_fn=None, client=None, discovered=None, path=OUT, limit: int | None 
     if todo:
         info = (info_fn or youtube.channel_profiles)([r["channel"] for r in todo])
         today = dt.date.today().isoformat()
-        ask = []
+        ask, base = [], {}
         for r in todo:
             i = info.get(r["channel"])
-            base = {"channel": r["channel"], "niche": r["niche"], "title": r["title"],
-                    "subscribers": r["subscribers"], "country": (i or {}).get("country") or "", "screened_at": today}
+            base[r["channel"]] = {"channel": r["channel"], "niche": r["niche"], "title": r["title"],
+                                  "subscribers": r["subscribers"], "country": (i or {}).get("country") or "",
+                                  "screened_at": today}
             if i is None:
-                done[r["channel"]] = {**base, "verdict": "drop", "reason": "other", "note": "channel not found"}
+                done[r["channel"]] = {**base[r["channel"]], "verdict": "drop", "reason": "other", "note": "channel not found"}
             elif rule := country_rule(i.get("country")):
-                done[r["channel"]] = {**base, "verdict": rule[0], "reason": rule[1], "note": rule[2]}
+                done[r["channel"]] = {**base[r["channel"]], "verdict": rule[0], "reason": rule[1], "note": rule[2]}
             else:
-                done[r["channel"]] = {**base, "verdict": "review", "reason": "no answer", "note": ""}
                 ask.append(r)
+        write(done, path)   # country verdicts are saved even if the model step fails
         if ask:
             if client is None:
                 import anthropic
@@ -139,8 +140,8 @@ def run(info_fn=None, client=None, discovered=None, path=OUT, limit: int | None 
                 msg = client.messages.create(model=MODEL, max_tokens=60 * len(batch), system=system, messages=[
                     {"role": "user", "content": USER.format(channels=_block(batch, info))}])
                 for cid, (verdict, reason, note) in parse_reply(msg.content[0].text, [r["channel"] for r in batch]).items():
-                    done[cid].update(verdict=verdict, reason=reason, note=note)
-        write(done, path)
+                    done[cid] = {**base[cid], "verdict": verdict, "reason": reason, "note": note}
+                write(done, path)   # saved per batch: a rerun picks up where this one stopped
     counts = {}
     for r in done.values():
         counts[r["verdict"]] = counts.get(r["verdict"], 0) + 1
