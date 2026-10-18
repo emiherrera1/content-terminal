@@ -69,6 +69,17 @@ ALTER TABLE videos ADD COLUMN IF NOT EXISTS tags VARCHAR;
 
 def connect(path: str | None = None) -> duckdb.DuckDBPyConnection:
     path = path or os.environ.get("TERMINAL_DB", "data/terminal.duckdb")
-    con = duckdb.connect(path)
+    if path.startswith("md:"):
+        # MotherDuck: connect to the account, create the database on the first run, then use it
+        if not (os.environ.get("MOTHERDUCK_TOKEN") or os.environ.get("motherduck_token")):
+            raise SystemExit("Set MOTHERDUCK_TOKEN (motherduck.com > Settings > Access tokens) to use " + path)
+        name = path[3:] or "content_terminal"
+        con = duckdb.connect("md:")
+        con.execute(f'CREATE DATABASE IF NOT EXISTS "{name}"')
+        con.execute(f'USE "{name}"')
+    else:
+        if path != ":memory:":
+            os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        con = duckdb.connect(path)
     con.execute(SCHEMA)
     return con
