@@ -1,0 +1,42 @@
+name: setup (run by hand)
+
+# Actions tab > "setup (run by hand)" > Run workflow, then pick a step.
+#   discover: finds active mid-size channels per niche and commits config/channels_discovered.csv.
+#             Uses about 5,000 of the 10,000 daily YouTube units; run it on 2 or 3 different days.
+#   seed:     loads the anchors and the discovered channels into the database. Review the discovered
+#             file first (drop brands, news outlets and off-niche channels), then run this once.
+on:
+  workflow_dispatch:
+    inputs:
+      step:
+        description: "discover or seed"
+        required: true
+        type: choice
+        options: [discover, seed]
+
+permissions:
+  contents: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m terminal ${{ inputs.step }}
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          TERMINAL_DB: md:content_terminal
+      - name: Commit the discovered channel list
+        if: inputs.step == 'discover'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/channels_discovered.csv
+          git diff --cached --quiet || git commit -m "Discovery run $(date -u +%Y-%m-%d)"
+          git push
