@@ -54,7 +54,7 @@ code,parent_code,level,label,definition,status,common_formats,scope_note
 02.05.009.017,02.05.009,4,Web Development,"Teaches how to build websites through HTML, CSS, and JavaScript foundations.",v1.0,"56,60,71,52,09",
 02.05.009.018,02.05.009,4,App Coding,"Teaches beginners to build their first mobile apps, step by step from design to deployment.",v1.0,"15,52,56,71,60",
 02.05.010,02.05,3,Handcrafts,"Making objects and handmade goods by hand, taught step by step, such as woodworking and sewing.",v1.0,,"Step-by-step instruction for learners. Excludes the maker's process, finished work, and craft culture (06.45)."
-02.05.010.019,02.05.010,4,Woodworking,Walks through hands-on woodworking projects from materials to finishing techniques.,v1.0,"14,56,70,51,45",
+02.05.010.019,02.05.010,4,Woodworking,Walks through hands-on woodworking projects from materials to finishing techniques.,v1.0,"14,56,70,51,45",Step-by-step woodworking instruction. Woodwork done as part of renovating one's own home goes to 03.47.102. A maker's process and finished pieces go to 06.45.
 02.05.010.020,02.05.010,4,Sewing,"Covers sewing construction, stitching techniques, and fabric selection for garments and household items.",v1.0,"19,52,56,14,70,21",
 02.06,02,2,Science & Discovery,"Content exploring physical, natural, or theoretical phenomena with curiosity and explanation.",v1.0,,"Classroom-style science teaching for learners. Excludes research, discoveries, and science news (Sector 13)."
 02.06.011,02.06,3,Space Exploration,"Explores human and robotic exploration of space, astronomy, or rocketry.",v1.0,,
@@ -75,7 +75,7 @@ code,parent_code,level,label,definition,status,common_formats,scope_note
 02.59.137.276,02.59.137,4,Accent & Pronunciation,"Pronunciation coaching, accent comparisons, and accent challenges.",Approved,"50,56,09,07,66",
 03,,1,Lifestyle,"Personal identity content: routines, fashion, food, home, beauty. Often vlog-style or advice-driven.",v1.0,,
 03.07,03,2,Fitness,"Exercise for general health, strength, and appearance: workouts, programs, and form for non-competitive training.",v1.0,,"Excludes training to compete in a sport (11.34) and nutrition, sleep, and recovery (09.26)."
-03.07.013,03.07,3,Yoga,"Guided practices or routines designed to improve flexibility, balance, or breath control.",v1.0,,
+03.07.013,03.07,3,Yoga,"Guided practices or routines designed to improve flexibility, balance, or breath control.",v1.0,,Yoga as exercise. Yoga as a spiritual practice goes to 09.28.057.113. Excludes Pilates and barre (03.07.171).
 03.07.013.025,03.07.013,4,Beginner Yoga,"Covers introductory yoga movements, breathing, and alignment for new practitioners.",v1.0,"56,59,71,52,68",
 03.07.013.026,03.07.013,4,Advanced Yoga,"Covers advanced yoga sequences, inversions, arm balances, and strength-based flexibility work.",v1.0,"52,07,56,70,71",
 03.07.014,03.07,3,Strength Training,"Training routines designed to increase muscular strength, endurance, and performance.",v1.0,,
@@ -83,7 +83,7 @@ code,parent_code,level,label,definition,status,common_formats,scope_note
 03.07.014.028,03.07.014,4,Bodyweight Exercises,"Shows no-equipment exercises emphasizing core strength, mobility, and repetition sets.",v1.0,"16,56,71,07,52",
 03.07.014.106,03.07.014,4,Strength Programs,"Structured multi-week strength programs built on progressive overload, as opposed to single-lift form and technique.",Approved,"52,59,32,58,70",
 03.07.053,03.07,3,Cardio & Conditioning,"Cardio, HIIT, and follow-along workouts for endurance and general fitness.",Approved,,
-03.07.053.105,03.07.053,4,Endurance Cardio,"Covers running, cycling, rowing, and other aerobic training for endurance and heart health.",Approved,"56,07,32,59,52",
+03.07.053.105,03.07.053,4,Endurance Cardio,"Covers running, cycling, rowing, and other aerobic training for endurance and heart health.",Approved,"56,07,32,59,52",Running and cardio for general fitness. Training for a race goes to 11.34.068.135.
 03.07.053.336,03.07.053,4,Home HIIT & Conditioning,Covers high-intensity and conditioning workouts done at home with little or no equipment.,Approved,"71,07,56,26",
 03.08,03,2,Food & Cooking,"Content showcasing food prep, recipes, taste tests, cooking tips, and culinary storytelling.",v1.0,,
 03.08.015,03.08,3,Dishes & Meals,"What people cook: specific dishes, cuisines, diets, and meal types.",v1.0,,Excludes diet plans built around health goals (09.26.052) and allergen-free cooking (09.49.092).
@@ -96,7 +96,7 @@ code,parent_code,level,label,definition,status,common_formats,scope_note
 03.08.101.191,03.08.101,4,Household Essentials,"Covers shopping for cleaning products, paper goods, and other non-food household staples on grocery runs.",Approved,"21,52,09,24,41",
 03.08.127,03.08,3,Ready-Made Food,"Food bought rather than cooked at home: fast food, restaurant meals, and packaged products, tried and judged on taste.",Approved,,Excludes restaurant and food travel guides (14.42.086).
 03.08.127.253,03.08.127,4,Fast Food,"Covers fast-food chains and their menus, including oversized, secret, and novelty items.",Approved,"07,10,41,24,09",
-03.08.127.254,03.08.127,4,Restaurants & Packaged Foods,"Covers restaurants, menu items, and packaged grocery foods tried and judged on taste.",Approved,"18,41,09,24,50",
+03.08.127.254,03.08.127,4,Restaurants & Packaged Foods,"Covers restaurants, menu items, and packaged grocery foods tried and judged on taste.",Approved,"18,41,09,24,50","Includes snacks, candy, and packaged drinks tried and rated."
 03.09,03,2,Fashion & Beauty,"Aesthetic-focused content including makeup tutorials, hauls, styling, skincare, and reviews.",v1.0,,
 03.09.017,03.09,3,Makeup,"Makeup application, techniques, products, and transformations.",v1.0,,Excludes skincare (03.09.134) and cosmetic procedures (09.49.100).
 03.09.017.033,03.09.017,4,Everyday Makeup,"Covers natural, everyday makeup looks for work, school, and daily wear.",v1.0,"56,55,68,41,52",
@@ -112,7 +112,7 @@ code,parent_code,level,label,definition,status,common_formats,scope_note
 03.47,03,2,Home & Garden,"Functional or aesthetic content about living spaces — cleaning, decor, plants, repairs.",Approved,,
 03.47.094,03.47,3,Beekeeping,"Teaches beekeeping basics, hive care, and honey harvesting techniques.",Approved,,
 03.47.094.188,03.47.094,4,Hive Management,"Demonstrates beekeeping techniques including hive health, harvesting, and safety.",Approved,"56,59,28,45,52",
-03.47.102,03.47,3,Home Renovation,"Guides home improvement, interior updates, or repair and renovation tutorials.",Approved,,Renovating a home to live in. Excludes flipping homes for profit (08.62.148).
+03.47.102,03.47,3,Home Renovation,"Guides home improvement, interior updates, or repair and renovation tutorials.",Approved,,"Renovating a home to live in, including the carpentry it involves. Excludes flipping homes for profit (08.62.148), woodworking lessons (02.05.010.019), and decorating (03.47.185)."
 03.47.102.190,03.47.102,4,Room Renovations,"Covers do-it-yourself renovation of individual rooms such as kitchens, bathrooms, and bedrooms.",Approved,"14,51,70,56,53",
 03.47.103,03.47,3,Household Appliances,"Appliances and gadgets for running a home, such as vacuums, air fryers, and cleaning tools, judged on daily household use.",Approved,,Excludes connected and smart-home devices (04.10.020).
 03.47.103.189,03.47.103,4,Kitchen & Cleaning Appliances,"Covers kitchen and cleaning appliances such as air fryers, blenders, vacuums, and mops, judged on daily use.",Approved,"09,41,50,57,13",
@@ -300,7 +300,7 @@ code,parent_code,level,label,definition,status,common_formats,scope_note
 08.24.049,08.24,3,Content Monetization,"Teaches how to monetize digital content, platforms, or creator businesses.",v1.0,,Excludes platform growth tactics with no monetization focus (10.32.064).
 08.24.049.097,08.24.049,4,Ad Revenue,Shows how creators generate income through platform-based advertising models.,v1.0,"02,20,04,06",
 08.24.049.098,08.24.049,4,Subscriptions,Explores monetization through recurring payment models like Patreon or platform memberships.,v1.0,"49,56,06,09",
-08.25,08,2,Personal Finance,"Money management content focused on budgeting, saving, debt, credit, and financial literacy.",v1.0,,
+08.25,08,2,Personal Finance,"Money management content focused on budgeting, saving, debt, credit, and financial literacy.",v1.0,,"Excludes buying or renting a home, including mortgages (08.62.149), and investing (08.22)."
 08.25.050,08.25,3,Budgeting,How-to or story-driven content on managing personal budgets and expenses.,v1.0,,
 08.25.050.099,08.25.050,4,Expense Tracking,Teaches systems and tools for monitoring personal or business spending habits.,v1.0,"52,59,56,45",
 08.25.050.100,08.25.050,4,Debt Management,"Offers advice and frameworks for reducing, restructuring, or eliminating debt.",v1.0,"19,17,48,58",
@@ -341,7 +341,7 @@ code,parent_code,level,label,definition,status,common_formats,scope_note
 09.28.056.111,09.28.056,4,Herbal Remedies,"Explores plant-based health practices like tinctures, teas, and traditional healing methods.",v1.0,"39,14,15,41",
 09.28.056.112,09.28.056,4,Energy Healing,"Covers reiki, chakras, aura cleansing, and other metaphysical or spiritual healing traditions.",v1.0,"44,15,48,61",
 09.28.057,09.28,3,Spiritual Wellness,"Explores spiritual identity, practice, and reflection through non-religious or cultural lenses.",v1.0,,
-09.28.057.113,09.28.057,4,Yoga Practices,Demonstrates physical sequences and breathwork tied to yoga traditions and styles.,v1.0,"56,59,71,15",
+09.28.057.113,09.28.057,4,Yoga Practices,Demonstrates physical sequences and breathwork tied to yoga traditions and styles.,v1.0,"56,59,71,15",Yoga as a spiritual or traditional practice. Yoga as exercise goes to 03.07.013.
 09.28.057.245,09.28.057,4,Spiritual Reflection,"Non-religious reflection on meaning, purpose, and inner life, including prompts and personal practice.",Approved,"48,52,69,59",
 09.28.093,09.28,3,Astrology & Divination,"Astrology, tarot, and other divination practices: how they work, readings, and forecasts. Treated as non-religious spiritual practice; faith-tradition content belongs in Sector 16.",Approved,,
 09.28.093.114,09.28.093,4,Zodiac Signs & Planets,"Covers the zodiac signs, planets, houses, and aspects and how each functions in astrological interpretation.",Approved,"15,56,24,12",
@@ -384,7 +384,7 @@ code,parent_code,level,label,definition,status,common_formats,scope_note
 10.32.064.128,10.32.064,4,YouTube Growth,"Teaches optimization strategies for discoverability, retention, and audience growth on YouTube.",v1.0,"19,56,06,02",
 10.32.065,10.32,3,Influencer Content,"Discusses creator economics, brand deals, and sponsorships from an influencer perspective.",v1.0,,
 10.32.065.129,10.32.065,4,Influencer Life,"Covers the daily work, lifestyle, and personal brand of full-time influencers.",v1.0,"59,46,68,03",
-10.32.065.130,10.32.065,4,Brand Collabs,Content showcasing or reviewing a sponsored partnership between creator and brand.,v1.0,"21,41,57,03",
+10.32.065.130,10.32.065,4,Brand Collabs,Content showcasing or reviewing a sponsored partnership between creator and brand.,v1.0,"21,41,57,03","The sponsored content itself. Rates, pitching, and sponsorship income go to 08.24.049.402."
 11,,1,Sports,"Physical competition and athleticism: analysis, fan content, technique breakdowns, team culture.",v1.0,,
 11.33,11,2,Competitive Sports,"Coverage of athletic competition — includes commentary, highlights, or match analysis.",v1.0,,"The play itself. Excludes sports talk, fandom, and fantasy (11.63)."
 11.33.066,11.33,3,Team Sports,"Matches, players, and tactics in traditional team-based sports.",v1.0,,
@@ -400,7 +400,7 @@ code,parent_code,level,label,definition,status,common_formats,scope_note
 11.33.067.307,11.33.067,4,Track & Field,"Sprints, jumps, throws, and championship moments in athletics.",Approved,"22,27,04,38",
 11.34,11,2,Sports Training,"Performance training, technique drills, and skill-building in a specific sport.",v1.0,,
 11.34.068,11.34,3,Athletic Conditioning,"Training aimed at competing in a sport, such as race preparation, powerlifting meets, and sport-specific strength.",v1.0,,Training to compete. Excludes general fitness workouts (03.07).
-11.34.068.135,11.34.068,4,Distance Running,"Covers training for running races from 5Ks to marathons, including plans and race-day strategy.",v1.0,"59,32,07,52",
+11.34.068.135,11.34.068,4,Distance Running,"Covers training for running races from 5Ks to marathons, including plans and race-day strategy.",v1.0,"59,32,07,52",Training to race. Running for general fitness goes to 03.07.053.105.
 11.34.068.136,11.34.068,4,Powerlifting,"Covers competitive powerlifting, including squat, bench, and deadlift training for meets.",v1.0,"56,50,59,04",
 11.34.069,11.34,3,Skill Development,Demonstrates technique or learning strategies applied to acquiring a skill.,v1.0,,
 11.34.069.137,11.34.069,4,Ball Handling,Covers dribbling and ball-control skills in sports such as basketball and soccer.,v1.0,"56,13,71,52",
@@ -600,3 +600,100 @@ code,parent_code,level,label,definition,status,common_formats,scope_note
 11.66.167,11.66,3,Hunting & Shooting Sports,"Hunting, target shooting, and competitive shooting, including gear, technique, and field trips.",Approved,,Adds 17.56.126 to sensitive_topics.
 11.66.167.342,11.66.167,4,Hunting Trips,Hunts and field outings documented from preparation to result.,Approved,"59,56,65,45",
 11.66.167.343,11.66.167,4,Firearms & Shooting Gear,"Covers firearms, optics, and shooting gear, including selection and performance.",Approved,"41,09,50,57",
+03.07.171,03.07,3,Pilates & Barre,"Pilates, barre, and similar low-impact methods built on core strength and control.",Approved,,Excludes yoga (03.07.013).
+03.07.171.350,03.07.171,4,Mat Pilates,"Covers mat-based Pilates for core strength, control, and posture, at home or in class.",Approved,"71,56,07,52,70",
+03.07.171.351,03.07.171,4,Reformer Pilates & Barre,"Covers studio methods that use a reformer machine or ballet barre, including classes and studios.",Approved,"18,56,41,59,71",
+03.07.172,03.07,3,Functional & Hybrid Training,"Training that mixes strength and conditioning for general fitness, such as CrossFit and HYROX.",Approved,,Excludes home bodyweight HIIT (03.07.053.336) and training to compete in a traditional sport (11.34.068).
+03.07.172.352,03.07.172,4,CrossFit,"Covers CrossFit workouts, movements, benchmark tests, and gym culture.",Approved,"68,56,07,59,50",
+03.07.172.353,03.07.172,4,HYROX & Hybrid Racing,Covers training for and taking part in fitness races that combine running with functional workout stations.,Approved,"32,56,59,52,04",
+03.07.173,03.07,3,Home Gym & Equipment,"Building workout spaces and buying, testing, and comparing fitness equipment.",Approved,,Excludes fitness trackers and smartwatches (04.10.019.038). Workouts done in a home gym take their training Niche.
+03.07.173.354,03.07.173,4,Home Gym Builds,"Covers planning and building workout spaces in a garage, spare room, or apartment.",Approved,"45,53,70,32,14",
+03.07.173.355,03.07.173,4,Fitness Equipment,"Covers racks, weights, cardio machines, and connected fitness equipment as products.",Approved,"41,09,57,50,24",
+03.07.174,03.07,3,Walking & Low-Impact,"Walking and gentle, joint-friendly workouts for everyday fitness.",Approved,,Excludes running (03.07.053.105) and stretching and injury recovery (09.26.164.335).
+03.07.174.356,03.07.174,4,Walking Workouts,"Covers walking for fitness, including indoor walks, incline walking, rucking, and step goals.",Approved,"71,07,59,52",
+03.07.174.357,03.07.174,4,Gentle & Chair Workouts,"Covers low-impact workouts for beginners, older adults, and people protecting their joints, including chair and water workouts.",Approved,"71,56,68,52",
+03.08.015.358,03.08.015,4,Meal Prep,Covers cooking and portioning meals ahead of time for the week.,Approved,"32,56,20,39,24",
+03.08.015.359,03.08.015,4,High-Protein Meals,Covers everyday meals and snacks built around protein.,Approved,"39,20,24,68",Excludes diet plans built around health or weight goals (09.26.052.103) and protein supplements (09.26.052.104).
+03.08.175,03.08,3,World Cuisines,"Traditional dishes and cooking styles of particular countries, regions, and cultures.",Approved,,Cooking the food. Excludes eating and dining while traveling (14.42).
+03.08.175.360,03.08.175,4,Traditional & Home-Style Dishes,"Covers cooking a culture's traditional or family dishes, often with their history.",Approved,"39,56,48,15",
+03.08.175.361,03.08.175,4,Fusion Cooking,Covers combining ingredients and techniques from more than one cuisine.,Approved,"39,16,07,50",
+03.09.176,03.09,3,Haircare,"Caring for, styling, cutting, and coloring hair of all types.",Approved,,Excludes hair loss treatment and transplants (09.49.100).
+03.09.176.362,03.09.176,4,Hair Styling,"Covers styling techniques, heat tools, and hairstyles for daily wear and events.",Approved,"56,68,20,41,54",
+03.09.176.363,03.09.176,4,Hair Health & Color,"Covers caring for hair and scalp by hair type, and dyeing, bleaching, or cutting hair.",Approved,"70,52,15,14,41",
+03.09.177,03.09,3,Fragrance,"Perfume, cologne, and personal scent.",Approved,,
+03.09.177.364,03.09.177,4,Perfumes & Colognes,"Covers individual fragrances tried and rated, including dupes of popular scents.",Approved,"41,24,57,09,18",
+03.09.177.365,03.09.177,4,Fragrance Collecting,"Covers building a scent collection, layering scents, and how fragrances are made.",Approved,"53,52,15,46",
+03.09.178,03.09,3,Nails,"Manicures, pedicures, nail art, and nail care.",Approved,,
+03.09.178.366,03.09.178,4,Nail Art,"Covers nail designs and techniques, from simple patterns to salon-level art.",Approved,"56,46,54,07",
+03.09.178.367,03.09.178,4,At-Home Manicures,"Covers doing manicures and pedicures at home, including press-ons and gel kits, and keeping nails healthy.",Approved,"14,41,52,56",
+03.09.179,03.09,3,Men's Grooming,"Beards, shaving, and personal grooming practiced by or marketed to men.",Approved,,"Excludes skincare (03.09.134), haircuts and hair styling (03.09.176), and cologne (03.09.177)."
+03.09.179.368,03.09.179,4,Beards & Shaving,"Covers growing, shaping, and maintaining beards, and shaving methods and tools.",Approved,"56,41,68,09",
+03.09.179.369,03.09.179,4,Body Care & Grooming Kits,"Covers daily grooming, body care, and grooming kits and products.",Approved,"68,52,21,70",
+03.09.180,03.09,3,Personal Style,Putting together outfits and a wardrobe for everyday life.,Approved,,How people dress day to day. Excludes trend and designer coverage (03.09.018).
+03.09.180.370,03.09.180,4,Everyday Outfits,"Covers outfits for work, school, and daily life, and styling individual pieces.",Approved,"55,68,52,24,21",
+03.09.180.371,03.09.180,4,Capsule Wardrobes,Covers building small mix-and-match wardrobes and planning a closet.,Approved,"32,53,19,70",
+03.09.181,03.09,3,Secondhand & Resale Fashion,"Finding, buying, and reselling used and vintage clothing and accessories.",Approved,,Excludes running a resale store as a business (08.24.048.095).
+03.09.181.372,03.09.181,4,Thrifting,"Covers shopping thrift stores, charity shops, and flea markets, and upcycling finds.",Approved,"21,59,52,07,70",
+03.09.181.373,03.09.181,4,Resale Apps & Vintage,Covers buying and selling secondhand fashion on resale apps and at vintage markets.,Approved,"52,06,59,04",
+03.09.182,03.09,3,Jewelry & Accessories,"Wearing, styling, and buying jewelry, bags, watches, and other accessories.",Approved,,Excludes making jewelry (06.45.107) and smartwatches (04.10.019.038).
+03.09.182.374,03.09.182,4,Jewelry Styling,"Covers choosing, layering, and caring for jewelry.",Approved,"46,55,52,21",
+03.09.182.375,03.09.182,4,Bags & Watches,"Covers handbags, watches, and other accessories, including luxury pieces.",Approved,"41,57,53,09",
+03.47.183,03.47,3,Gardening,"Growing plants, flowers, and food at home.",Approved,,Excludes beekeeping (03.47.094).
+03.47.183.376,03.47.183,4,Vegetable Gardening,"Covers growing vegetables, herbs, and fruit in gardens, raised beds, and containers.",Approved,"56,51,32,59,52",
+03.47.183.377,03.47.183,4,Houseplants & Flowers,Covers caring for indoor plants and growing ornamental flowers and gardens.,Approved,"52,53,56,21",
+03.47.184,03.47,3,Cleaning & Organization,"Cleaning, decluttering, and organizing the home.",Approved,,Excludes cleaning appliances (03.47.103.189).
+03.47.184.378,03.47.184,4,Home Cleaning,"Covers cleaning routines, methods, and cleaning products.",Approved,"71,68,20,70,50",
+03.47.184.379,03.47.184,4,Decluttering & Storage,"Covers decluttering, storage systems, and organizing rooms and closets.",Approved,"70,52,53,21",
+03.47.185,03.47,3,Interior Design & Decor,"Designing, decorating, and styling living spaces.",Approved,,Excludes structural renovation (03.47.102).
+03.47.185.380,03.47.185,4,Room Decor,"Covers decorating and styling rooms with furniture, art, and accessories.",Approved,"70,53,21,14,24",
+03.47.185.381,03.47.185,4,Design Styles,"Covers interior design styles, color, layout, and the principles behind them.",Approved,"15,54,02,52",
+04.10.186,04.10,3,Audio,"Headphones, earbuds, speakers, and home audio equipment as consumer products.",Approved,,Excludes music production equipment (06.18.037).
+04.10.186.382,04.10.186,4,Headphones & Earbuds,"Covers headphones and earbuds, including noise cancellation and sound quality.",Approved,"41,09,50,57",
+04.10.186.383,04.10.186,4,Speakers & Home Audio,"Covers speakers, soundbars, turntables, and home theater audio.",Approved,"45,41,09,53",
+04.10.187,04.10,3,Computers & Laptops,"Laptops, desktops, tablets, and building computers.",Approved,,Excludes software development (04.11).
+04.10.187.384,04.10.187,4,Laptops & Tablets,"Covers laptops and tablets as products, from budget to professional models.",Approved,"41,09,57,18,24",
+04.10.187.385,04.10.187,4,PC Building & Desk Setups,Covers building desktop computers and setting up desks and workstations.,Approved,"56,45,53,50",
+04.10.188,04.10,3,Cameras & Creator Gear,"Cameras, lenses, lighting, and microphones reviewed as products.",Approved,,"The gear itself. Excludes how to film, edit, or podcast (04.12.024)."
+04.10.188.386,04.10.188,4,Cameras & Lenses,"Covers cameras, lenses, and action cameras for photo and video.",Approved,"41,09,50,57,52",
+04.10.188.387,04.10.188,4,Lighting & Microphones,"Covers lights, microphones, and accessories for recording at home or on location.",Approved,"45,41,09,24",
+08.23.192,08.23,3,Side Hustles,Earning extra income alongside a main job.,Approved,,Excludes earning from one's own content (08.24.049).
+08.23.192.396,08.23.192,4,Side Hustle Ideas,Covers ideas for extra income and what they earn in practice.,Approved,"24,06,16,04",
+08.23.192.397,08.23.192,4,Gig & Freelance Work,"Covers gig apps and freelance work such as delivery, rideshare, and freelance marketplaces.",Approved,"59,04,52,41",
+08.23.193,08.23,3,DTC & Consumer Brands,Building and growing direct-to-consumer product brands.,Approved,,Excludes the mechanics of running an online storefront (08.24.048.095) and products sold under a creator's name (08.24.049.403).
+08.23.193.398,08.23.193,4,Brand Building,"Covers founding, positioning, and growing a consumer product brand.",Approved,"03,06,48,49",
+08.23.193.399,08.23.193,4,Product Development,"Covers designing, sourcing, and manufacturing physical products.",Approved,"03,53,56,58",
+08.23.194,08.23,3,Small Business Life,Owning and running an independent or local small business.,Approved,,
+08.23.194.400,08.23.194,4,Daily Operations,"Covers the day-to-day running of a small business, from opening to fulfilling orders.",Approved,"59,03,68,52",
+08.23.194.401,08.23.194,4,Starting a Small Business,"Covers opening a small business, from licensing and funding to the first year.",Approved,"48,19,04,58",
+08.24.049.402,08.24.049,4,Brand Deals & Sponsorships,"Covers landing, pricing, and negotiating sponsorships as a source of creator income.",Approved,"04,52,49,06",The business of sponsorship. Sponsored content itself goes to Brand Collabs (10.32.065.130).
+08.24.049.403,08.24.049,4,Merch & Creator Products,"Covers designing, launching, and selling merchandise and products under a creator's brand.",Approved,"03,73,04,06",
+08.25.051.390,08.25.051,4,Frugal Living,"Covers spending less through everyday habits, no-spend challenges, and low-cost living.",Approved,"07,52,68,48",
+08.25.051.391,08.25.051,4,Deals & Discounts,"Covers finding sales, coupons, cash-back apps, and discounts.",Approved,"20,24,56,09",
+08.25.189,08.25,3,Credit & Credit Cards,"Credit scores and reports, and credit card products and rewards.",Approved,,Excludes paying down debt (08.25.050.100).
+08.25.189.388,08.25.189,4,Credit Scores,Covers how credit scores and reports work and how to build or repair credit.,Approved,"15,19,48,17",
+08.25.189.389,08.25.189,4,Credit Cards & Rewards,Covers choosing credit cards and earning and redeeming points and cash back.,Approved,"41,09,49,52",
+08.25.190,08.25,3,Taxes,Filing taxes and planning around them for individuals and the self-employed.,Approved,,Excludes corporate tax and accounting for companies (08.23.047).
+08.25.190.392,08.25.190,4,Tax Filing,Covers preparing and filing individual tax returns.,Approved,"56,19,17,60",
+08.25.190.393,08.25.190,4,Self-Employed Taxes,"Covers taxes for freelancers and creators, including deductions, quarterly payments, and business entities.",Approved,"15,52,04,35",
+08.25.191,08.25,3,Insurance,Choosing and using insurance as an individual or household.,Approved,,
+08.25.191.394,08.25.191,4,Health Insurance,"Covers health insurance plans, enrollment, and coverage.",Approved,"15,09,17,19",
+08.25.191.395,08.25.191,4,"Auto, Home & Life Insurance","Covers car, home, renters, and life insurance, including policies and claims.",Approved,"09,52,48,15",
+09.26.052.404,09.26.052,4,Gut Health,"Covers digestion, the microbiome, and foods for gut health.",Approved,"15,39,16,52",Diagnosed digestive conditions go to Medical Health (09.49).
+09.26.195,09.26,3,Weight Management,"Losing or managing body weight through diet, activity, and medical treatment.",Approved,,Excludes diet plans not centered on weight (09.26.052.103) and workouts (03.07). Disordered eating and body image content adds 17.52.122 to sensitive_topics.
+09.26.195.405,09.26.195,4,Weight Loss Journeys,"Covers personal weight loss experiences, progress, and habits.",Approved,"70,58,48,68",
+09.26.195.406,09.26.195,4,Weight-Loss Medications,"Covers GLP-1 drugs and other prescribed weight-loss treatments, including how they work and side effects.",Approved,"15,58,35,48",
+09.26.196,09.26,3,Longevity & Healthspan,"Staying healthy for longer as one ages, and the science and practices aimed at it.",Approved,,Excludes wearable devices as products (04.10.019.038).
+09.26.196.407,09.26.196,4,Aging Science,"Covers research on aging, lifespan, and healthspan.",Approved,"15,12,23,02",
+09.26.196.408,09.26.196,4,Biohacking & Health Tracking,"Covers self-experiments, lab testing, and tracking health data to improve health.",Approved,"68,16,04,58",
+09.27.198,09.27,3,Anxiety & Depression,"Living with and managing anxiety, depression, and related conditions.",Approved,,"Suicide, self-harm, and acute crisis content adds 17.52.121 to sensitive_topics."
+09.27.198.411,09.27.198,4,Anxiety,"Covers anxiety, panic, and related conditions, including lived experience and treatment.",Approved,"15,48,52,35",
+09.27.198.412,09.27.198,4,Depression,"Covers depression and low mood, including lived experience and treatment.",Approved,"48,15,52,23",
+09.27.199,09.27,3,Neurodivergence,"ADHD, autism, and other neurodivergent experiences across life.",Approved,,
+09.27.199.413,09.27.199,4,ADHD,"Covers ADHD in children and adults, including diagnosis, lived experience, and strategies.",Approved,"15,48,20,68",
+09.27.199.414,09.27.199,4,Autism,"Covers autism across the spectrum, including diagnosis, lived experience, and support.",Approved,"15,48,35,59",
+09.27.200,09.27,3,Burnout,"Exhaustion and loss of motivation from sustained work or creative pressure, and recovering from it.",Approved,,Excludes general stress relief (09.27.054.108).
+09.27.200.415,09.27.200,4,Workplace Burnout,"Covers burnout from jobs and careers, its signs, and recovery.",Approved,"48,15,52,58",
+09.27.200.416,09.27.200,4,Creator Burnout,"Covers burnout from making content, posting schedules, and audience pressure.",Approved,"48,73,23,52",
+09.49.197,09.49,3,Women's Health,"Menstrual, reproductive, and hormonal health across life stages.",Approved,,Pregnancy loss adds 17.52.118.222 to sensitive_topics.
+09.49.197.409,09.49.197,4,Menstrual & Hormonal Health,"Covers periods, the menstrual cycle, and hormonal conditions such as PCOS and endometriosis.",Approved,"15,52,48,35",
+09.49.197.410,09.49.197,4,"Fertility, Pregnancy & Menopause","Covers fertility, pregnancy, postpartum health, perimenopause, and menopause.",Approved,"15,58,48,17",

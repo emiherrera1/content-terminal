@@ -26,7 +26,8 @@ Topic codes (code | label | definition). Pick the most specific code that fits, 
 Formats (pick the one that best describes how the video is made):
 {formats}
 
-If no topic fits, use "unclassified". If no format fits, use null."""
+Follow each topic's "rule" when deciding between similar codes (for example yoga as exercise vs as a spiritual practice).
+If the video fits a niche but none of its sub-niches, use the niche code. If no topic fits, use "unclassified". If no format fits, use null."""
 
 USER = """Classify each video. Reply with a JSON list only, one object per video, in the same order:
 [{{"id": "...", "topic": "<code or unclassified>", "format": "<format label or null>", "confidence": 0.0-1.0}}]
@@ -39,7 +40,9 @@ def _system(book: dict) -> str:
 
     def line(r):
         common = [fmt[c] for c in (r.get("common_formats") or "").split(",") if c in fmt]
-        return f'{r["code"]} | {r["label"]} | {r["definition"]}' + (f' | common formats: {", ".join(common)}' if common else "")
+        return (f'{r["code"]} | {r["label"]} | {r["definition"]}'
+                + (f' | rule: {r["scope_note"]}' if r.get("scope_note") else "")
+                + (f' | common formats: {", ".join(common)}' if common else ""))
     topics = "\n".join(line(r) for r in ctncs.topics(book))
     formats = ", ".join(sorted(set(ctncs.formats(book).values())))
     return SYSTEM.format(topics=topics, formats=formats)
