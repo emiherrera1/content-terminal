@@ -113,7 +113,9 @@ def parse_reply(text: str, ids: list[str]) -> dict:
 def run(info_fn=None, client=None, discovered=None, path=OUT, limit: int | None = None) -> dict:
     discovered = discovered if discovered is not None else discover.load_existing()
     done = load(path)
-    todo = [r for cid, r in discovered.items() if cid not in done][: limit or None]
+    # rows the model never answered are screened again; every other verdict sticks
+    todo = [r for cid, r in discovered.items()
+            if cid not in done or done[cid].get("reason") == "no answer"][: limit or None]
     if todo:
         info = (info_fn or youtube.channel_profiles)([r["channel"] for r in todo])
         today = dt.date.today().isoformat()
@@ -137,8 +139,9 @@ def run(info_fn=None, client=None, discovered=None, path=OUT, limit: int | None 
             system = [{"type": "text", "text": SYSTEM, "cache_control": {"type": "ephemeral"}}]
             for k in range(0, len(ask), BATCH):
                 batch = ask[k:k + BATCH]
-                msg = client.messages.create(model=MODEL, max_tokens=60 * len(batch), system=system, messages=[
+                msg = client.messages.create(model=MODEL, max_tokens=4000 + 100 * len(batch), system=system, messages=[
                     {"role": "user", "content": USER.format(channels=_block(batch, info))}])
+                llm.warn_if_cut(msg, "screen")
                 for cid, (verdict, reason, note) in parse_reply(llm.reply_text(msg), [r["channel"] for r in batch]).items():
                     done[cid] = {**base[cid], "verdict": verdict, "reason": reason, "note": note}
                 write(done, path)   # saved per batch: a rerun picks up where this one stopped

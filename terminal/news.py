@@ -132,7 +132,7 @@ def tag(con, limit: int | None = None) -> int:
     rows = con.execute("SELECT url, source, title, summary FROM news WHERE category IS NULL ORDER BY published_at DESC").fetchall()[:limit]
     n = 0
     for url, source, title, summary in rows:
-        msg = client.messages.create(model=model, max_tokens=200, messages=[{"role": "user", "content": PROMPT.format(
+        msg = client.messages.create(model=model, max_tokens=2000, messages=[{"role": "user", "content": PROMPT.format(
             source=source, title=title, summary=summary or "", categories=CATEGORIES, platforms=PLATFORMS)}])
         text = llm.reply_text(msg)
         try:

@@ -117,8 +117,9 @@ def classify_videos(con, limit: int | None = None, days: int = 60, client=None) 
     n = 0
     for i in range(0, len(rows), BATCH):
         batch = rows[i:i + BATCH]
-        msg = client.messages.create(model=MODEL, max_tokens=120 * len(batch), system=system,
+        msg = client.messages.create(model=MODEL, max_tokens=4000 + 150 * len(batch), system=system,
                                      messages=[{"role": "user", "content": USER.format(videos=_video_block(batch))}])
+        llm.warn_if_cut(msg, "classify-videos")
         out = parse_reply(llm.reply_text(msg), [r[0] for r in batch], book)
         save(con, out)
         n += len(out)

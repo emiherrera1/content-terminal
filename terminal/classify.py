@@ -48,7 +48,7 @@ def classify_channels(con, sectors: list[str], limit: int | None = None, redo: b
         titles = [t for (t,) in con.execute(
             "SELECT title FROM videos WHERE channel_id = ? ORDER BY published_at DESC LIMIT 15", [channel_id]).fetchall()]
         msg = client.messages.create(
-            model=MODEL, max_tokens=300,
+            model=MODEL, max_tokens=2000,
             messages=[{"role": "user", "content": PROMPT.format(
                 codes=codes, title=title, description=(description or "")[:1500],
                 videos="\n".join(f"- {t}" for t in titles) or "- (none)")}],

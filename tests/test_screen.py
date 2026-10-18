@@ -43,3 +43,13 @@ def test_rules_model_and_sticky_edits(tmp_path):
 def test_bad_reply_falls_back_to_review():
     assert screen.parse_reply("not json", ["UCx"]) == {"UCx": ("review", "no answer", "")}
     assert screen.parse_reply('[{"id": "UCx", "verdict": "maybe"}]', ["UCx"])["UCx"][0] == "review"
+
+
+def test_unanswered_rows_are_retried(tmp_path):
+    out = tmp_path / "screened.csv"
+    one = {"UCus": DISC["UCus"]}
+    info = lambda ids: {i: INFO[i] for i in ids}
+    screen.run(info_fn=info, client=FakeClient("cut off before the json"), discovered=one, path=out)
+    assert screen.load(out)["UCus"]["reason"] == "no answer"
+    screen.run(info_fn=info, client=FakeClient('[{"id": "UCus", "verdict": "keep", "reason": "ok"}]'), discovered=one, path=out)
+    assert screen.kept(out) == {"UCus"}
