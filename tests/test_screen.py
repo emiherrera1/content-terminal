@@ -53,3 +53,18 @@ def test_unanswered_rows_are_retried(tmp_path):
     assert screen.load(out)["UCus"]["reason"] == "no answer"
     screen.run(info_fn=info, client=FakeClient('[{"id": "UCus", "verdict": "keep", "reason": "ok"}]'), discovered=one, path=out)
     assert screen.kept(out) == {"UCus"}
+
+
+def test_coverage_counts_per_niche():
+    import datetime as dt
+    from terminal import coverage, store
+    con = store.connect(":memory:")
+    con.execute("INSERT INTO channels (channel_id, title, added_at) VALUES ('UCus', 'a', ?), ('UCold', 'b', ?), ('UCanc', 'c', ?)",
+                [dt.datetime(2026, 10, 18), dt.datetime(2026, 9, 1), dt.datetime(2026, 10, 17)])
+    screened = {"UCus": {"niche": "03.07", "verdict": "keep", "reason": "ok"},
+                "UCold": {"niche": "03.07", "verdict": "keep", "reason": "ok"},
+                "UCin": {"niche": "03.07", "verdict": "drop", "reason": "non_us"},
+                "UCx": {"niche": "03.08", "verdict": "review", "reason": "other"}}
+    got = {r["niche_code"]: r for r in coverage.rows(con, screened, {"UCanc": "03.08"}, dt.date(2026, 10, 18))}
+    assert (got["03.07"]["tracked"], got["03.07"]["added_7d"], got["03.07"]["kept"], got["03.07"]["drop_non_us"]) == (2, 1, 2, 1)
+    assert (got["03.08"]["tracked"], got["03.08"]["anchors"], got["03.08"]["review"]) == (1, 1, 1)

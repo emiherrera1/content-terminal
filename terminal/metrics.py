@@ -292,4 +292,6 @@ def export(con, out_dir: str = "data/exports") -> list[str]:
         path = f"{out_dir}/{name}.csv"
         con.execute(f"COPY (SELECT * FROM {name}) TO '{path}' (HEADER)")
         paths.append(path)
+    from . import coverage
+    paths.append(coverage.write(con, f"{out_dir}/coverage.csv"))
     return paths
