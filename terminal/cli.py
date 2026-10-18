@@ -5,6 +5,7 @@
   pull      today's snapshot of every channel and its recent videos
   classify  assign CTNCS codes to channels that don't have one
   classify-videos  assign each recent video its own topic (to sub-niche) and format
+  migrate-ctncs  rewrite stored CTNCS v1.0 codes to v2.0 (one-time)
   index     how a topic did on a day, from video-level data: python -m terminal index woodworking [--date YYYY-MM-DD]
   audit     print a random sample of classifications to check by hand
   compute   rebuild the metric views
@@ -57,10 +58,10 @@ def pull(con):
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="terminal", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("command", choices=["discover", "seed", "pull", "classify", "classify-videos", "index", "audit", "news", "compute", "export", "daily"])
+    p.add_argument("command", choices=["discover", "seed", "pull", "classify", "classify-videos", "index", "migrate-ctncs", "audit", "news", "compute", "export", "daily"])
     p.add_argument("--limit", type=int, help="classify at most this many channels")
     p.add_argument("--redo", action="store_true", help="reclassify channels nobody has reviewed yet")
-    p.add_argument("query", nargs="*", help="index: a topic name or CTNCS code, e.g. woodworking or 02.05.10.19")
+    p.add_argument("query", nargs="*", help="index: a topic name or CTNCS code, e.g. woodworking or 02.05.010.019")
     p.add_argument("--date", help="index: the day to report (default: latest)")
     a = p.parse_args(argv)
 
@@ -85,11 +86,13 @@ def main(argv=None):
         metrics.build(con)
         hits = ctncs.resolve(ctncs.load(), " ".join(a.query)) if a.query else []
         if not hits:
-            raise SystemExit("No CTNCS topic matches that name. Try a code (02.05.10.19) or part of a label.")
+            raise SystemExit("No CTNCS topic matches that name. Try a code (02.05.010.019) or part of a label.")
         if len(hits) > 1:
             print("Several topics match; showing the first. Others: " + ", ".join(f"{h['label']} ({h['code']})" for h in hits[1:6]))
         day = dt.date.fromisoformat(a.date) if a.date else None
         print(content_index.render(content_index.report(con, hits[0]["code"], day)))
+    elif a.command == "migrate-ctncs":
+        print(f"rewrote v1.0 codes to v2.0: {ctncs.migrate(con)}")
     elif a.command == "audit":
         for row in classify.audit_sample(con):
             print(" | ".join(str(x) for x in row))

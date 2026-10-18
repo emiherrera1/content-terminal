@@ -7,8 +7,8 @@ import pytest
 from terminal import content_index, ctncs, metrics, store, video_classify
 
 DAY = dt.date(2026, 10, 18)
-WOOD = "02.05.10.19"          # Education > Skills & DIY > Crafting Guides > Woodworking
-FOOD = "03.08.15"             # Lifestyle > Food & Cooking > Recipes (a level-3 code)
+WOOD = "02.05.010.019"        # Education > Skills & DIY > Handcrafts > Woodworking
+FOOD = "03.08.015"            # Lifestyle > Food & Cooking > Dishes & Meals (a level-3 code)
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ def con():
     con.execute("INSERT INTO videos (video_id, channel_id, title, published_at, duration_s) VALUES "
                 "('w3', 'UCh', 'new build', ?, 1200)", [dt.datetime.combine(DAY - dt.timedelta(days=1), dt.time(18))])
     con.execute("INSERT INTO video_classifications (video_id, topic_code, sector, category, niche, subniche, format_id, "
-                "format_label, confidence) VALUES ('w3', ?, '02', '02.05', '02.05.10', ?, NULL, NULL, 0.8)", [WOOD, WOOD])
+                "format_label, confidence) VALUES ('w3', ?, '02', '02.05', '02.05.010', ?, NULL, NULL, 0.8)", [WOOD, WOOD])
     con.execute("INSERT INTO video_snapshots VALUES (?, 'w3', 4000, 0, 0)", [DAY])
     metrics.build(con)
     return con
@@ -57,7 +57,7 @@ def test_video_counts_toward_its_own_topic_not_its_channel(con):
 
 
 def test_rolls_up_every_level_and_skips_unclassified(con):
-    assert daily(con, "02.05.10")[0] == daily(con, WOOD)[0]
+    assert daily(con, "02.05.010")[0] == daily(con, WOOD)[0]
     assert daily(con, "02")[0] == daily(con, WOOD)[0]
     assert daily(con, FOOD)[0] == 300 and daily(con, "03")[0] == 300
     total = con.execute("SELECT sum(views_gained) FROM content_daily WHERE level = 1 AND snapshot_date = ?", [DAY]).fetchone()[0]
@@ -85,7 +85,7 @@ def test_index_report(con):
 
 def test_parse_reply_validates_codes_and_formats():
     book = ctncs.load()
-    text = 'Here: [{"id": "a", "topic": "02.05.10.19", "format": "tutorials", "confidence": 0.8},' \
+    text = 'Here: [{"id": "a", "topic": "02.05.010.019", "format": "tutorials", "confidence": 0.8},' \
            '{"id": "b", "topic": "99.99", "format": "Interpretive Dance", "confidence": 0.9}]'
     a, b, c = video_classify.parse_reply(text, ["a", "b", "c"], book)
     assert a["subniche"] == WOOD and a["format_label"] == "Tutorials"
@@ -116,3 +116,26 @@ def test_classify_videos_batches_and_caches_codebook():
     assert Fake.calls[0]["system"][0]["cache_control"] == {"type": "ephemeral"}
     assert con.execute("SELECT count(*) FROM video_classifications WHERE subniche = ?", [WOOD]).fetchone()[0] == 30
     assert video_classify.classify_videos(con, client=Fake) == 0   # each video is classified once
+
+
+def test_codebook_is_v2():
+    book = ctncs.load()
+    assert sum(1 for r in book.values() if r["level"] == "1") == 17
+    assert book["03.09.134"]["label"] == "Skincare"
+    fmt = ctncs.formats()
+    assert fmt["14"] == "DIY" and "25" not in fmt   # Live is retired in v2.0
+    assert ctncs.resolve(book, "02.05.10.19")[0]["code"] == WOOD   # v1.0 codes still resolve
+
+
+def test_migrate_rewrites_v1_codes():
+    con = store.connect(":memory:")
+    con.execute("INSERT INTO classifications (channel_id, ctncs_code, sector, category, niche) "
+                "VALUES ('UCa', '09.26.53', '09', '09.26', '09.26.53'), ('UCb', '03.08.15', '03', '03.08', '03.08.15')")
+    con.execute("INSERT INTO video_classifications (video_id, topic_code, sector, category, niche, subniche) "
+                "VALUES ('v1', '02.05.10.19', '02', '02.05', '02.05.10', '02.05.10.19'), ('v2', 'unclassified', NULL, NULL, NULL, NULL)")
+    assert ctncs.migrate(con) == {"classifications": 2, "video_classifications": 1}
+    assert con.execute("SELECT ctncs_code, sector, niche FROM classifications WHERE channel_id = 'UCa'").fetchone() \
+        == ("03.07.053", "03", "03.07.053")   # Exercise Routines moved to Fitness in v2.0
+    assert con.execute("SELECT topic_code, niche, subniche FROM video_classifications WHERE video_id = 'v1'").fetchone() \
+        == (WOOD, "02.05.010", WOOD)
+    assert ctncs.migrate(con) == {"classifications": 0, "video_classifications": 0}

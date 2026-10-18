@@ -48,11 +48,11 @@ Momentum needs 14 days of snapshots, alerts 8, and the screener's 28-day growth 
 
 ## Content-level index ("how did woodworking do today")
 
-Every recent video is classified on its own, not by its channel: topic down to CTNCS level 4 (sector > category > niche > sub-niche) and format (the level-5 formats: Tutorials, Reviews, DIY...). A woodworking video from a home-renovation channel counts toward Woodworking.
+Every recent video is classified on its own, not by its channel: topic down to CTNCS level 4 (sector > category > niche > sub-niche) and format (the CTNCS v2.0 format tag: Tutorials, Reviews, DIY...). A woodworking video from a home-renovation channel counts toward Woodworking.
 
 ```bash
 python -m terminal classify-videos          # each new video once, in batches of 25 with the codebook cached
-python -m terminal index woodworking        # or a code: python -m terminal index 02.05.10.19 --date 2026-10-18
+python -m terminal index woodworking        # or a code: python -m terminal index 02.05.010.019 --date 2026-10-18
 ```
 
 | View | What it answers |
@@ -61,7 +61,7 @@ python -m terminal index woodworking        # or a code: python -m terminal inde
 | `content_daily` | Views gained per topic per day at every level, with videos, channels, new uploads, Shorts views and the median video's gain |
 | `content_format_daily` | The same split by format |
 
-`index` prints the day's views gained, change vs yesterday and vs the 7-day average, the split by sub-topic and by format, and the top videos. It covers the tracked channels' recent uploads, so it is a sample (like a stock index's basket), not all of YouTube. Topic coverage is limited by the codebook: v1.0 has 146 level-4 sub-niches; topics it lacks (skincare, for example) need the audited CTNCS version. Classification uses `VIDEO_CLASSIFIER_MODEL` (default `claude-haiku-5-5`); `video_classify_daily_limit` in `config/settings.yaml` caps the daily run.
+`index` prints the day's views gained, change vs yesterday and vs the 7-day average, the split by sub-topic and by format, and the top videos. It covers the tracked channels' recent uploads, so it is a sample (like a stock index's basket), not all of YouTube. Topic coverage follows the codebook: CTNCS v2.0 has 17 sectors and about 350 sub-niches. Classification uses `VIDEO_CLASSIFIER_MODEL` (default `claude-haiku-5-5`); `video_classify_daily_limit` in `config/settings.yaml` caps the daily run.
 
 ## Building the channel list
 
@@ -93,7 +93,7 @@ SI and RISK are relative: they rank niches against the others being tracked.
 
 - **Quota:** the default YouTube quota is 10,000 units a day. Each channel costs one unit for its uploads list (up to 50 uploads) and about one more for those videos' stats; channel stats cost one unit per 50 channels. About 3,000 channels uses ~6,000 units. More needs a quota increase from Google.
 - **Terms:** YouTube's API terms limit how long some data can be stored and how it is shown to others. Read them before showing data to design partners or keeping long history.
-- **Codebook version:** `config/ctncs_codebook.csv` is the public v1.0 (12 sectors). Replace it with the audited version when that is published.
+- **Codebook version:** `config/ctncs/` holds CTNCS v2.0 (`topics.csv`, `formats.csv`), exported from the CTNCS codebook sheet. Re-export when the codebook changes; codes are never reused. `crosswalk_v1_v2.csv` maps v1.0 codes, and `python -m terminal migrate-ctncs` rewrites any stored v1.0 codes. v1.0 is kept in `config/ctncs/archive/`.
 - **Classification quality:** audit a sample from each sector before trusting niche figures.
 
 ## Next steps

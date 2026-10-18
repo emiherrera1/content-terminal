@@ -1,8 +1,8 @@
 """Classify each video by topic and format, independent of the channel that posted it.
 
 A woodworking video from a home-renovation channel counts toward Woodworking. Topic goes as
-deep as CTNCS level 4 (sector > category > niche > sub-niche); format is the CTNCS level-5
-format (Tutorials, Reviews, DIY...), whose id is the same in every niche.
+deep as CTNCS v2.0 level 4 (sector > category > niche > sub-niche); format is the CTNCS v2.0
+format tag (Tutorials, Reviews, DIY...), which is independent of topic.
 
 Videos are sent in batches with the codebook as a cached system prompt, so the per-video cost
 is mostly the video's own title and description. Each video is classified once.
@@ -35,7 +35,12 @@ USER = """Classify each video. Reply with a JSON list only, one object per video
 
 
 def _system(book: dict) -> str:
-    topics = "\n".join(f'{r["code"]} | {r["label"]} | {r["definition"]}' for r in ctncs.topics(book))
+    fmt = ctncs.formats()
+
+    def line(r):
+        common = [fmt[c] for c in (r.get("common_formats") or "").split(",") if c in fmt]
+        return f'{r["code"]} | {r["label"]} | {r["definition"]}' + (f' | common formats: {", ".join(common)}' if common else "")
+    topics = "\n".join(line(r) for r in ctncs.topics(book))
     formats = ", ".join(sorted(set(ctncs.formats(book).values())))
     return SYSTEM.format(topics=topics, formats=formats)
 

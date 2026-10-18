@@ -1,0 +1,75 @@
+code,label,definition,universal,retired
+01,Advocacy,"Content designed to raise awareness or drive action around social or political causes.",FALSE,FALSE
+02,Analysis,"Evaluates or interprets a subject through critical reasoning or structured breakdown.",FALSE,FALSE
+03,Behind-the-Scenes,"Reveals the process or preparation behind a finished product or performance.",FALSE,FALSE
+04,Breakdown,"Dissects a topic into parts for clarity, often using visuals or step-by-step commentary.",FALSE,FALSE
+05,Campaign,"Showcases a coordinated content effort, usually tied to a launch, cause, or partnership.",FALSE,FALSE
+06,Case Study,"Presents a real-world example to explain how something worked or failed.",FALSE,FALSE
+07,Challenge,"Content built around a task, constraint, or dare, often designed to test limits or entertain.",FALSE,FALSE
+08,Commentary,"Offers subjective opinion or interpretation of an existing event, work, or trend.",TRUE,FALSE
+09,Comparison,"Contrasts two or more options, tools, products, or perspectives.",FALSE,FALSE
+10,Compilation,"Combines multiple short clips or moments into a single cohesive video.",TRUE,FALSE
+11,Debate,"Presents two or more sides of an argument, often in direct or live conversation.",FALSE,FALSE
+12,Deep Dive,"Explores a topic in high detail, usually beyond surface-level information.",FALSE,FALSE
+13,Demo,"Demonstrates how a product or process works, often in real time.",FALSE,FALSE
+14,DIY,"Shows how to make or build something step by step using accessible materials.",FALSE,FALSE
+15,Explained,"Simplifies a topic or concept through accessible language and examples.",FALSE,FALSE
+16,Experiment,"Tests a hypothesis or open question with an uncertain outcome, in real time, usually with unexpected or educational results.",FALSE,FALSE
+17,FAQ,"Answers a set of frequently asked questions about a topic, product, or process.",FALSE,FALSE
+18,First Impressions,"Initial reactions to a new product, trend, or experience — usually unfiltered.",FALSE,FALSE
+19,Guide,"A reference-style walk-through of a task, platform, or system, organized for the viewer to follow or return to.",FALSE,FALSE
+20,Hack,"Shows a shortcut or unconventional method to achieve a result quickly or efficiently.",FALSE,FALSE
+21,Haul,"Displays and discusses items recently purchased, often with mini-reviews.",FALSE,FALSE
+22,Highlight,"Shows standout or peak moments from a longer piece of content or event.",TRUE,FALSE
+23,Interview,"Features a conversation between host and guest(s) to extract insight or perspective.",FALSE,FALSE
+24,Lists,"Presents a ranked or grouped set of recommendations, facts, or ideas.",FALSE,FALSE
+25,Live,"Retired in v2.0. Record live broadcast with release_mode = 1 (metadata) and choose the Format by structure.",FALSE,TRUE
+26,Mini,"Delivers a shorter or condensed version of a traditionally longer content type.",FALSE,FALSE
+27,Montage,"A fast-paced edit showing a sequence of related visuals or actions, often set to music.",FALSE,FALSE
+28,Observation,"Content based on quiet or neutral watching — often animals, environments, or processes.",FALSE,FALSE
+29,Overview,"Presents a broad explanation of a topic, usually without deep technical detail.",FALSE,FALSE
+30,Performance,"Content where the creator performs music, art, theater, or physical feats for the audience, informal or self-staged.",FALSE,FALSE
+31,Pitch,"Proposes an idea, product, or plan in a persuasive and structured format.",FALSE,FALSE
+32,Planning,"Content that walks through goal-setting, strategy, or logistical prep for future actions.",FALSE,FALSE
+33,Podcasts,"Long-form audio or video conversations, usually structured around topics or guests.",FALSE,FALSE
+34,Prank,"Content where one party surprises or tricks another for comedic effect.",FALSE,FALSE
+35,Q&A,"Answers audience-submitted or pre-generated questions in a conversational tone.",FALSE,FALSE
+36,Rant,"Expresses strong opinion or frustration in an unfiltered, emotional format.",FALSE,FALSE
+37,Reading,"Content involving someone reading aloud — books, comments, scripts, or essays.",FALSE,FALSE
+38,Recap,"Summarizes key events, lessons, or takeaways from a larger experience or episode.",FALSE,FALSE
+39,Recipes,"Teaches how to prepare a specific dish with ingredients, steps, and tips.",FALSE,FALSE
+40,Recital,"A formal, programmed performance of rehearsed repertoire, often classical music, poetry, or recitation.",FALSE,FALSE
+41,Reviews,"Evaluates and shares opinions on a product, service, or media item.",FALSE,FALSE
+42,Roasts,"Humorous critiques often designed to tease or mock with exaggeration.",FALSE,FALSE
+43,Roundup,"Aggregates several examples, trends, or pieces of news into one piece of content.",FALSE,FALSE
+44,Session,"Captures an unbroken time block of activity like music, drawing, or discussion.",FALSE,FALSE
+45,Setup,"Shows how tools, environments, or systems are arranged and optimized.",FALSE,FALSE
+46,Showcase,"Displays the features or value of a single product, creation, or talent.",FALSE,FALSE
+47,Speedruns,"Attempts to complete a task or game as quickly as possible under specific rules.",FALSE,FALSE
+48,Storytime,"Shares a personal or fictional narrative with a hook, pacing, and emotional arc.",FALSE,FALSE
+49,Strategy,"Outlines a structured plan of action to achieve a result, often in games or business.",FALSE,FALSE
+50,Test,"Puts a product or method through a structured trial to evaluate results.",FALSE,FALSE
+51,Timelapse,"Condenses hours or days into seconds using fast-forwarded footage.",FALSE,FALSE
+52,Tips,"Gives bite-sized advice or insights on how to improve in a given area.",FALSE,FALSE
+53,Tour,"Takes the viewer through a physical or virtual space, such as a home, venue, studio, or city.",FALSE,FALSE
+54,Trends,"Highlights popular styles, challenges, or behavior emerging within a timeframe.",FALSE,FALSE
+55,Try-On,"Models clothing or accessories while commenting on fit, feel, or quality.",FALSE,FALSE
+56,Tutorials,"Instructs the viewer on how to do something through guided, hands-on instruction.",FALSE,FALSE
+57,Unboxing,"Opens and explores a new product, often with commentary on packaging and first impressions.",FALSE,FALSE
+58,Update,"Provides a status report or change log on an ongoing story, project, or journey.",FALSE,FALSE
+59,Vlogs,"Captures daily life, travel, or thought processes in a casual, documentary style.",FALSE,FALSE
+60,Walkthrough,"Leads the viewer through completing a game or software flow in sequence, with detailed explanation; compare Playthrough (72), which is entertainment-led.",FALSE,FALSE
+61,ASMR,"Uses soft sounds or sensory triggers to create a calming or immersive experience.",FALSE,FALSE
+62,Mashups,"Combines elements from multiple sources into one edited piece for entertainment or commentary.",TRUE,FALSE
+63,Fancam,"Fan-shot footage of a live event, focused on a specific performer, moment, or angle.",FALSE,FALSE
+64,Skit,"Short scripted or semi-scripted scene performed for humor or storytelling, including POV skits.",FALSE,FALSE
+65,Documentary,"Long-form, reported or cinematic treatment of a real subject, built on footage, sourcing, and narration.",FALSE,FALSE
+66,Reaction,"Creator responds in real time to another piece of media, with the original shown on screen.",TRUE,FALSE
+67,Parody,"Imitates the structure of a known format or genre for comic or critical effect.",TRUE,FALSE
+68,Routine,"Shows a repeated sequence of personal tasks as it happens, such as a morning routine or Get Ready With Me, usually narrated over the activity.",FALSE,FALSE
+69,Essay,"Argues a single thesis in narrated or written form, built from evidence and reasoning; includes video essays and newsletter essays.",FALSE,FALSE
+70,Transformation,"Shows a subject before and after a change, such as a makeover, renovation, restoration, or glow-up.",FALSE,FALSE
+71,Follow-Along,"Invites the audience to do an activity in real time with the creator, such as a workout, code-along, or study session.",FALSE,FALSE
+72,Playthrough,"Records a creator playing through a game with entertainment-focused commentary (a Let's Play).",FALSE,FALSE
+73,Announcement,"Reveals news, a launch, or upcoming content, including trailers and teasers.",FALSE,FALSE
+74,Report,"Reports a single news story in an anchor or correspondent style, built on sourced facts.",FALSE,FALSE

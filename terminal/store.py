@@ -50,12 +50,12 @@ CREATE TABLE IF NOT EXISTS classifications (
 -- Video-level classification: what each piece of content is about, independent of its channel.
 CREATE TABLE IF NOT EXISTS video_classifications (
     video_id       VARCHAR PRIMARY KEY,
-    topic_code     VARCHAR,      -- deepest CTNCS topic assigned (up to level 4, e.g. 02.05.10.19 Woodworking)
+    topic_code     VARCHAR,      -- deepest CTNCS topic assigned (up to level 4, e.g. 02.05.010.019 Woodworking)
     sector         VARCHAR,      -- level 1
     category       VARCHAR,      -- level 2
     niche          VARCHAR,      -- level 3
     subniche       VARCHAR,      -- level 4
-    format_id      VARCHAR,      -- CTNCS level-5 format id, e.g. 14 = DIY (same id in every niche)
+    format_id      VARCHAR,      -- CTNCS v2.0 format code, e.g. 14 = DIY (independent of topic)
     format_label   VARCHAR,
     confidence     DOUBLE,
     model          VARCHAR,

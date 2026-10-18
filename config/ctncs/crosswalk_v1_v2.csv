@@ -1,0 +1,268 @@
+v1_code,v1_label,v2_code,change
+01,Entertainment,01,recoded
+01.01,Movies & TV,01.01,recoded
+01.01.01,Film Reviews,01.01.001,recoded
+01.01.01.01,Blockbuster Critiques,01.01.001.001,recoded
+01.01.01.02,Indie Film Analysis,01.01.001.002,recoded
+01.01.02,TV Recaps,01.01.002,recoded
+01.01.02.03,Episode Summaries,01.01.002.003,recoded
+01.01.02.04,Season Highlights,01.01.002.004,recoded
+01.02,Comedy,01.02,recoded
+01.02.03,Skits,01.02.003,recoded
+01.02.03.05,Short-Form Sketches,01.02.003.005,recoded
+01.02.03.06,Improv Scenes,01.02.003.006,recoded
+01.02.04,Stand-Up,01.02.004,recoded
+01.02.04.07,Live Routines,01.02.004.007,recoded
+01.02.04.08,Comedy Specials,01.02.004.008,recoded
+01.03,Music & Performance,01.03,recoded
+01.03.05,Music Videos,01.03.005,recoded
+01.03.05.09,Pop Releases,01.03.005.009,recoded
+01.03.05.10,Indie Clips,01.03.005.010,recoded
+01.03.06,Live Performances,01.03.006,recoded
+01.03.06.11,Concert Footage,01.03.006.011,recoded
+01.03.06.12,Street Shows,01.03.006.012,recoded
+02,Education,02,recoded
+02.04,Academic,02.04,recoded
+02.04.07,Math Lessons,02.04.007,recoded
+02.04.07.13,Algebra Basics,02.04.007.013,recoded
+02.04.07.14,Calculus Concepts,02.04.007.014,recoded
+02.04.08,History Lessons,02.04.008,recoded
+02.04.08.15,Ancient Civilizations,02.04.008.015,recoded
+02.04.08.16,Modern Events,02.04.008.016,recoded
+02.05,Skills & DIY,02.05,recoded
+02.05.09,Coding Tutorials,02.05.009,recoded
+02.05.09.17,Web Development,02.05.009.017,recoded
+02.05.09.18,App Coding,02.05.009.018,recoded
+02.05.10,Crafting Guides,02.05.010,recoded
+02.05.10.19,Woodworking,02.05.010.019,recoded
+02.05.10.20,Sewing Projects,02.05.010.020,recoded
+02.06,Science & Discovery,02.06,recoded
+02.06.11,Space Exploration,02.06.011,recoded
+02.06.11.21,Planetary Studies,02.06.011.021,recoded
+02.06.11.22,Space Missions,02.06.011.022,recoded
+02.06.12,Nature Studies,02.06.012,recoded
+02.06.12.23,Wildlife Behavior,02.06.012.023,recoded
+02.06.12.24,Ecosystem Analysis,02.06.012.024,recoded
+03,Lifestyle,03,recoded
+03.07,Fitness,03.07,recoded
+03.07.13,Yoga,03.07.013,recoded
+03.07.13.25,Beginner Flows,03.07.013.025,recoded
+03.07.13.26,Advanced Poses,03.07.013.026,recoded
+03.07.14,Strength Training,03.07.014,recoded
+03.07.14.27,Weightlifting,03.07.014.027,recoded
+03.07.14.28,Bodyweight Exercises,03.07.014.028,recoded
+03.08,Food & Cooking,03.08,recoded
+03.08.15,Recipes,03.08.015,recoded
+03.08.15.29,Vegan Dishes,03.08.015.029,recoded
+03.08.15.30,Quick Meals,03.08.015.030,recoded
+03.08.16,Cooking Techniques,03.08.016,recoded
+03.08.16.31,Baking Skills,03.08.016.031,recoded
+03.08.16.32,Grilling Tips,03.08.016.032,recoded
+03.09,Fashion & Beauty,03.09,recoded
+03.09.17,Makeup Tutorials,03.09.017,recoded
+03.09.17.33,Daily Looks,03.09.017.033,recoded
+03.09.17.34,Special Effects,03.09.017.034,recoded
+03.09.18,Fashion Trends,03.09.018,recoded
+03.09.18.35,Streetwear,03.09.018.035,recoded
+03.09.18.36,High Fashion,03.09.018.036,recoded
+04,Technology,04,recoded
+04.10,Consumer Tech,04.10,recoded
+04.10.19,Gadget Reviews,04.10.019,recoded
+04.10.19.37,Smartphones,04.10.019.037,recoded
+04.10.19.38,Wearables,04.10.019.038,recoded
+04.10.20,Smart Devices,04.10.020,recoded
+04.10.20.39,Home Automation,04.10.020.039,recoded
+04.10.20.40,IoT Gadgets,04.10.020.040,recoded
+04.11,Software & Coding,04.11,recoded
+04.11.21,App Development,04.11.021,recoded
+04.11.21.41,Mobile Apps,04.11.021.041,recoded
+04.11.21.42,Desktop Software,04.11.021.042,recoded
+04.11.22,Programming Skills,04.11.022,recoded
+04.11.22.43,Code Debugging,04.11.022.043,recoded
+04.11.22.44,Best Practices,04.11.022.044,recoded
+04.12,Digital Culture,04.12,recoded
+04.12.23,Internet Trends,04.12.023,recoded
+04.12.23.45,Social Media Shifts,04.12.023.045,recoded
+04.12.23.46,Meme Culture,04.12.023.046,recoded
+04.12.24,Digital Media,04.12.024,recoded
+04.12.24.47,Video Content,04.12.024.047,recoded
+04.12.24.48,Podcasts,04.12.024.048,recoded
+04.13,Emerging Tech,04.13,recoded
+04.13.25,AI Applications,04.13.025,recoded
+04.13.25.49,Chatbots,04.13.025.049,recoded
+04.13.25.50,Machine Learning,04.13.025.050,recoded
+04.13.26,Blockchain Tech,04.13.026,recoded
+04.13.26.51,Cryptocurrencies,04.13.026.051,recoded
+04.13.26.52,Smart Contracts,04.13.026.052,recoded
+05,News & Commentary,05,recoded
+05.14,Current Events,05.14,recoded
+05.14.27,Breaking News,05.14.027,recoded
+05.14.27.53,Live Updates,05.14.027.053,recoded
+05.14.27.54,Event Recaps,05.14.027.054,recoded
+05.14.28,Daily Updates,05.14.028,recoded
+05.14.28.55,News Briefs,05.14.028.055,recoded
+05.14.28.56,Morning Reports,05.14.028.056,recoded
+05.15,Politics & Opinion,05.15,recoded
+05.15.29,Debates,05.15.029,recoded
+05.15.29.57,Live Discussions,05.15.029.057,recoded
+05.15.29.58,Opinion Clashes,05.15.029.058,recoded
+05.15.30,Policy Analysis,05.15.030,recoded
+05.15.30.59,Legislation Reviews,05.15.030.059,recoded
+05.15.30.60,Election Insights,05.15.030.060,recoded
+05.15.91,Conspiracy Theories,05.15.091,recoded
+05.16,Culture & Society,05.16,recoded
+05.16.31,Social Issues,05.16.031,recoded
+05.16.31.61,Justice Topics,05.16.031.061,recoded
+05.16.31.62,Community Stories,05.16.031.062,recoded
+05.16.32,Cultural Trends,05.16.032,recoded
+05.16.32.63,Fashion Shifts,05.16.032.063,recoded
+05.16.32.64,Tech Impacts,05.16.032.064,recoded
+06,Creative Arts,06,recoded
+06.17,Visual Arts,06.17,recoded
+06.17.34,Drawing,06.17.034,recoded
+06.17.34.67,Sketching Techniques,06.17.034.067,recoded
+06.17.34.68,Illustration Styles,06.17.034.068,recoded
+06.17.35,Digital Art,06.17.035,recoded
+06.17.35.69,Graphic Design,06.17.035.069,recoded
+06.17.35.70,3D Modeling,06.17.035.070,recoded
+06.18,Music Creation,06.18,recoded
+06.18.36,Songwriting,06.18.036,recoded
+06.18.36.71,Lyric Writing,06.18.036.071,recoded
+06.18.36.72,Melody Crafting,06.18.036.072,recoded
+06.18.37,Music Production,06.18.037,recoded
+06.18.37.73,Beat Making,06.18.037.073,recoded
+06.18.37.74,Mixing Techniques,06.18.037.074,recoded
+06.19,Writing & Storytelling,06.19,recoded
+06.19.38,Fiction Writing,06.19.038,recoded
+06.19.38.75,Short Stories,06.19.038.075,recoded
+06.19.38.76,Novels,06.19.038.076,recoded
+06.19.39,Poetry,06.19.039,recoded
+06.19.39.77,Spoken Word,06.19.039.077,recoded
+06.19.39.78,Written Verse,06.19.039.078,recoded
+07,Gaming,07,recoded
+07.20,Gameplay & Streams,07.20,recoded
+07.20.40,Live Streams,07.20.040,recoded
+07.20.40.79,Competitive Play,07.20.040.079,recoded
+07.20.40.80,Casual Sessions,07.20.040.080,recoded
+07.20.41,Walkthroughs,07.20.041,recoded
+07.20.41.81,Story Guides,07.20.041.081,recoded
+07.20.41.82,Puzzle Solutions,07.20.041.082,recoded
+07.21,Game Culture,07.21,recoded
+07.21.42,Game Reviews,07.21.042,recoded
+07.21.42.83,New Releases,07.21.042.083,recoded
+07.21.42.84,Retro Games,07.21.042.084,recoded
+07.21.43,Esports,07.21.043,recoded
+07.21.43.85,Tournaments,07.21.043.085,recoded
+07.21.43.86,Player Profiles,07.21.043.086,recoded
+08,Business & Finance,08,recoded
+08.22,Investing & Markets,08.22,recoded
+08.22.44,Stock Trading,08.22.044,recoded
+08.22.44.87,Technical Analysis,08.22.044.087,recoded
+08.22.44.88,Fundamental Analysis,08.22.044.088,recoded
+08.22.45,Cryptocurrency,08.22.045,recoded
+08.22.45.89,Crypto Trading,08.22.045.089,recoded
+08.22.45.90,NFT Markets,08.22.045.090,recoded
+08.23,Entrepreneurship,08.23,recoded
+08.23.46,Startups,08.23.046,recoded
+08.23.46.91,Business Plans,08.23.046.091,recoded
+08.23.46.92,Funding Strategies,08.23.046.092,recoded
+08.23.47,Business Skills,08.23.047,recoded
+08.23.47.93,Marketing Tactics,08.23.047.093,recoded
+08.23.47.94,Leadership Training,08.23.047.094,recoded
+08.24,Digital Ventures,08.24,recoded
+08.24.48,Online Businesses,08.24.048,recoded
+08.24.48.95,E-Commerce,08.24.048.095,recoded
+08.24.48.96,Affiliate Marketing,08.24.048.096,recoded
+08.24.49,Content Monetization,08.24.049,recoded
+08.24.49.97,Ad Revenue,08.24.049.097,recoded
+08.24.49.98,Subscriptions,08.24.049.098,recoded
+08.25,Personal Finance,08.25,recoded
+08.25.50,Budgeting,08.25.050,recoded
+08.25.50.99,Expense Tracking,08.25.050.099,recoded
+08.25.51,Saving Strategies,08.25.051,recoded
+09,Health & Wellness,09,recoded
+09.26,Physical Health,09.26,recoded
+09.26.52,Nutrition,09.26.052,recoded
+09.26.53,Exercise Routines,03.07.053,moved
+09.27,Mental Health,09.27,recoded
+09.27.54,Therapy Techniques,09.27.054,recoded
+09.27.55,Mindfulness Practices,09.27.055,recoded
+09.28,Alternative Wellness,09.28,recoded
+09.28.56,Holistic Healing,09.28.056,recoded
+09.28.57,Spiritual Wellness,09.28.057,recoded
+10,Social & Community,10,recoded
+10.29,Vlogs & Daily Life,10.29,recoded
+10.29.58,Personal Vlogs,10.29.058,recoded
+10.29.59,Family Vlogs,10.29.059,recoded
+10.30,Activism & Causes,10.30,recoded
+10.30.60,Advocacy,10.30.060,recoded
+10.30.61,Awareness Campaigns,10.30.061,recoded
+10.31,Fandoms & Groups,10.31,recoded
+10.31.62,Fan Content,10.31.062,recoded
+10.31.63,Community Discussions,10.31.063,recoded
+10.32,Social Media,10.32,recoded
+10.32.64,Platform Strategies,10.32.064,recoded
+10.32.65,Influencer Content,10.32.065,recoded
+11,Sports,11,recoded
+11.33,Competitive Sports,11.33,recoded
+11.33.66,Team Sports,11.33.066,recoded
+11.33.67,Individual Sports,11.33.067,recoded
+11.34,Sports Training,11.34,recoded
+11.34.68,Fitness Training,11.34.068,recoded
+11.34.69,Skill Development,11.34.069,recoded
+12,Pets & Animals,12,recoded
+12.35,Pet Care,12.35,recoded
+12.35.70,Pet Health,12.35.070,recoded
+12.35.71,Pet Grooming,12.35.071,recoded
+12.36,Pet Life,12.36,recoded
+12.36.72,Pet Vlogs,12.36.072,recoded
+12.36.73,Pet Entertainment,12.36.073,recoded
+11.33.66.131,Soccer Highlights,11.33.066.131,recoded
+10.32.65.130,Brand Collabs,10.32.065.130,recoded
+10.32.65.129,Lifestyle Posts,10.32.065.129,recoded
+10.32.64.128,YouTube Growth,10.32.064.128,recoded
+10.32.64.127,TikTok Tips,10.32.064.127,recoded
+10.31.63.126,Group Events,10.31.063.126,recoded
+11.33.66.132,Basketball Plays,11.33.066.132,recoded
+10.31.63.125,Forum Chats,10.31.063.125,recoded
+10.31.62.123,Cosplay Creations,10.31.062.123,recoded
+10.30.61.122,Equality Drives,10.30.061.122,recoded
+10.30.61.121,Health Awareness,10.30.061.121,recoded
+10.30.60.120,Environmental Causes,10.30.060.120,recoded
+10.30.60.119,Social Justice,10.30.060.119,recoded
+10.29.59.118,Parenting Moments,10.29.059.118,recoded
+10.31.62.124,Fan Theories,10.31.062.124,recoded
+10.29.59.117,Kid Adventures,10.29.059.117,recoded
+11.33.67.133,Tennis Matches,11.33.067.133,recoded
+11.34.68.135,Endurance Runs,11.34.068.135,recoded
+12.36.73.146,Trick Shows,12.36.073.146,recoded
+12.36.73.145,Funny Moments,12.36.073.145,recoded
+12.36.72.144,Pet Adventures,12.36.072.144,recoded
+11.33.67.134,Golf Techniques,11.33.067.134,recoded
+12.36.72.143,Daily Routines,12.36.072.143,recoded
+12.35.71.141,Dog Grooming,12.35.071.141,recoded
+12.35.70.140,Vet Tips,12.35.070.140,recoded
+12.35.70.139,Diet Advice,12.35.070.139,recoded
+11.34.69.138,Swing Mechanics,11.34.069.138,recoded
+11.34.69.137,Dribbling Drills,11.34.069.137,recoded
+11.34.68.136,Power Lifting,11.34.068.136,recoded
+12.35.71.142,Cat Grooming,12.35.071.142,recoded
+10.29.58.116,Life Updates,10.29.058.116,recoded
+09.28.57.114,Astrology Insights,09.28.093.114,moved
+10.29.58.115,Travel Diaries,10.29.058.115,recoded
+05.15.91.182,Event Mysteries,05.15.091.182,recoded
+09.28.57.113,Yoga Practices,09.28.057.113,recoded
+09.28.56.112,Energy Healing,09.28.056.112,recoded
+09.28.56.111,Herbal Remedies,09.28.056.111,recoded
+09.27.55.110,Breathing Exercises,09.27.055.110,recoded
+09.27.55.109,Meditation,09.27.055.109,recoded
+09.27.54.108,Stress Relief,09.27.054.108,recoded
+05.15.91.181,Government Secrets,05.15.091.181,recoded
+09.27.54.107,Counseling Tips,09.27.054.107,recoded
+09.26.53.105,Cardio Workouts,03.07.053.105,moved
+09.26.52.104,Supplements,09.26.052.104,recoded
+09.26.52.103,Diet Plans,09.26.052.103,recoded
+08.25.51.102,Emergency Funds,08.25.051.102,recoded
+08.25.51.101,Retirement Planning,08.25.051.101,recoded
+08.25.50.100,Debt Management,08.25.050.100,recoded
+09.26.53.106,Strength Programs,03.07.014.106,moved

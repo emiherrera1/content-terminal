@@ -1,8 +1,9 @@
-# CTNCS sectors the MVP covers (level-1 codes from config/ctncs_codebook.csv).
+# CTNCS sectors the MVP covers (level-1 codes from config/ctncs/topics.csv, CTNCS v2.0).
 # Pick the sectors where the fund looks for consumer demand and dealflow.
 #   01 Entertainment  02 Education  03 Lifestyle  04 Technology  05 News & Commentary
 #   06 Creative Arts  07 Gaming  08 Business & Finance  09 Health & Wellness
-#   10 Social & Community  11 Sports  12 Pets & Animals
+#   10 Social & Community  11 Sports  12 Pets & Animals  13 Science  14 Travel
+#   15 Automotive  16 Religion & Spirituality  (17 Sensitive Topics is secondary-only)
 # Consumer-demand sectors: Lifestyle (fitness, food, fashion & beauty), Technology (consumer tech),
 # Business & Finance (personal finance, entrepreneurship), Health & Wellness.
 sectors:
