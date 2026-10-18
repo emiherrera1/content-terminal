@@ -68,7 +68,8 @@ def channel_stats(channel_ids: list[str]) -> dict:
         for c in _get("channels", part="snippet,statistics", id=",".join(batch), maxResults=50).get("items", []):
             st = c.get("statistics", {})
             out[c["id"]] = {"title": c["snippet"].get("title"), "subscribers": int(st.get("subscriberCount", 0)),
-                            "videos": int(st.get("videoCount", 0)), "hidden": st.get("hiddenSubscriberCount", False)}
+                            "videos": int(st.get("videoCount", 0)), "hidden": st.get("hiddenSubscriberCount", False),
+                            "country": c["snippet"].get("country")}
     return out
 
 

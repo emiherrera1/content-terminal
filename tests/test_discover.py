@@ -81,3 +81,15 @@ def test_seed_reads_both_lists_and_skips_comments(tmp_path, monkeypatch):
     monkeypatch.setattr(cli.youtube, "pull_channels", lambda con, ids, today: seen.setdefault("ids", ids) and len(ids))
     cli.seed(None, (a, b, tmp_path / "missing.csv"))
     assert seen["ids"] == ["UCone", "UCtwo", "UCthree"]
+
+
+def test_country_filter_and_dropped_channels_free_their_slot():
+    cfg = {"filters": {"countries": ["US"]}, "target_per_niche": 2}
+    hits = {"03.07": {"UCin": ["q"], "UCus": ["q"], "UCnone": ["q"]}}
+    st = lambda c: {"title": c, "subscribers": 50000, "videos": 100, "hidden": False}
+    stats = {"UCin": {**st("UCin"), "country": "IN"}, "UCus": {**st("UCus"), "country": "US"}, "UCnone": {**st("UCnone"), "country": None}}
+    existing = {"UCold": {"channel": "UCold", "niche": "03.07"}}
+    got = discover.select(hits, stats, cfg, existing, {"UCold": {"verdict": "drop"}})
+    assert sorted(r["channel"] for r in got) == ["UCnone", "UCus"]   # IN skipped; the dropped UCold doesn't use a slot
+    got = discover.select(hits, stats, cfg, existing, {})
+    assert len(got) == 1                                             # UCold still counts, one slot left

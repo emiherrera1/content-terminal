@@ -15,6 +15,7 @@ filters:
   min_subscribers: 10000
   max_subscribers: 2000000   # above this a channel is an incumbent; anchors in channels.csv cover them
   min_videos: 20
+  countries: [US, CA, GB, AU, IE, NZ]   # skip channels that list another country; channels with none set still pass
 target_per_niche: 375        # 8 niches x 375 = 3,000
 
 # Queries are consumer-demand phrases: what people search when they're about to try, buy or change something.

@@ -52,19 +52,24 @@ def search_hits(cfg: dict, search=None) -> tuple[dict, int]:
     return hits, units
 
 
-def select(hits: dict, stats: dict, cfg: dict, existing: dict) -> list[dict]:
+def select(hits: dict, stats: dict, cfg: dict, existing: dict, screened: dict | None = None) -> list[dict]:
     """Filter by size and activity, give each channel to the niche where it showed up most,
     and keep the top `target_per_niche` per niche (existing finds count toward the target)."""
     f = cfg.get("filters", {})
+    screened = screened or {}
     best = {}
     for niche, chans in hits.items():
         for cid, qs in chans.items():
             if cid not in best or len(qs) > len(best[cid][1]):
                 best[cid] = (niche, qs)
 
+    # only channels still in play count toward the per-niche target, so screened-out ones free their slot
+    dropped = {cid for cid, r in screened.items() if r.get("verdict") == "drop"}
     per_niche = defaultdict(int)
-    for row in existing.values():
-        per_niche[row["niche"]] += 1
+    for cid, row in existing.items():
+        if cid not in dropped:
+            per_niche[row["niche"]] += 1
+    allowed = {c.upper() for c in f.get("countries", [])}
 
     candidates = []
     for cid, (niche, qs) in best.items():
@@ -77,6 +82,8 @@ def select(hits: dict, stats: dict, cfg: dict, existing: dict) -> list[dict]:
             continue
         if s["videos"] < f.get("min_videos", 0):
             continue
+        if allowed and s.get("country") and s["country"].upper() not in allowed:
+            continue   # channel says it is based elsewhere (unset country passes; screening checks it)
         candidates.append({"channel": cid, "niche": niche, "title": s["title"], "subscribers": s["subscribers"],
                            "videos": s["videos"], "hits": len(qs), "first_found": dt.date.today().isoformat(),
                            "queries": "; ".join(sorted(set(qs)))})
@@ -107,7 +114,8 @@ def run(cfg=None, search=None, stats_fn=None, path=OUT) -> dict:
     ids = sorted({cid for chans in hits.values() for cid in chans})
     stats = (stats_fn or youtube.channel_stats)(ids)
     units += -(-len(ids) // 50)  # channels.list: 1 unit per 50 channels
-    new = select(hits, stats, cfg, existing)
+    from . import screen
+    new = select(hits, stats, cfg, existing, screen.load())
     total = write(new, existing, path)
     by_niche = defaultdict(int)
     for r in load_existing(path).values():
