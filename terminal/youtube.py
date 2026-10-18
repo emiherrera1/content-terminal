@@ -72,6 +72,25 @@ def channel_stats(channel_ids: list[str]) -> dict:
     return out
 
 
+def channel_profiles(channel_ids: list[str], recent: int = 10) -> dict:
+    """Country, language, description and recent upload titles, for screening (1 unit per 50 channels
+    plus 1 unit per channel). Channels that no longer exist are left out."""
+    out = {}
+    for batch in _chunks(channel_ids):
+        for c in _get("channels", part="snippet,contentDetails", id=",".join(batch), maxResults=50).get("items", []):
+            sn = c["snippet"]
+            out[c["id"]] = {"country": sn.get("country"), "language": sn.get("defaultLanguage"),
+                            "description": sn.get("description"), "recent_titles": [],
+                            "playlist": c["contentDetails"]["relatedPlaylists"]["uploads"]}
+    for cid, p in out.items():
+        try:
+            items = _get("playlistItems", part="snippet", playlistId=p["playlist"], maxResults=recent).get("items", [])
+            p["recent_titles"] = [i["snippet"].get("title") for i in items]
+        except requests.HTTPError:
+            pass
+    return out
+
+
 def pull_channels(con, channel_ids: list[str], today: dt.date) -> int:
     n = 0
     for batch in _chunks(channel_ids):

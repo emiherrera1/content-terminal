@@ -1,7 +1,8 @@
 """Command line: python -m terminal <command>
 
   discover  find active mid-size channels per niche (config/discovery.yaml) -> config/channels_discovered.csv
-  seed      add channels from config/channels.csv and config/channels_discovered.csv
+  screen    check discovered channels (country, recent uploads) -> config/channels_screened.csv
+  seed      add channels from config/channels.csv, plus discovered channels screened as keep
   pull      today's snapshot of every channel and its recent videos
   classify  assign CTNCS codes to channels that don't have one
   classify-videos  assign each recent video its own topic (to sub-niche) and format
@@ -25,7 +26,7 @@ from pathlib import Path
 
 import yaml
 
-from . import calls, classify, content_index, creators, ctncs, discover, metrics, news, store, video_classify, youtube
+from . import calls, classify, screen, content_index, creators, ctncs, discover, metrics, news, store, video_classify, youtube
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -35,14 +36,21 @@ def _config() -> dict:
 
 
 def seed(con, paths=(ROOT / "config" / "channels.csv", ROOT / "config" / "channels_discovered.csv")):
-    ids = []
+    """Anchors load as listed. Discovered channels load only once screened as keep (config/channels_screened.csv)."""
+    ids, keep = [], screen.kept()
     for path in paths:
+        discovered = Path(path).name == "channels_discovered.csv"
+        if discovered and not keep:
+            print("no screened channels yet: run `screen` first; loading anchors only")
+            continue
         if not Path(path).exists():
             continue
         with open(path, newline="", encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 ref = (row.get("channel") or "").strip()
                 if not ref or ref.startswith("#"):
+                    continue
+                if discovered and ref not in keep:
                     continue
                 cid = ref if ref.startswith("UC") else youtube.resolve_handle(ref)
                 if cid:
@@ -63,7 +71,7 @@ def pull(con):
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="terminal", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("command", choices=["discover", "seed", "pull", "classify", "classify-videos", "index", "watchlist", "review",
+    p.add_argument("command", choices=["discover", "screen", "seed", "pull", "classify", "classify-videos", "index", "watchlist", "review",
                                       "call", "resolve", "calls", "migrate-ctncs", "audit", "news", "compute", "export", "daily"])
     p.add_argument("--limit", type=int, help="classify at most this many channels")
     p.add_argument("--redo", action="store_true", help="reclassify channels nobody has reviewed yet")
@@ -92,6 +100,9 @@ def main(argv=None):
         print(f"units used: {r['units']}, channels seen: {r['channels_seen']}, added: {r['added']}, total: {r['total']}")
         for niche, n in sorted(r["by_niche"].items()):
             print(f"  {niche}: {n}")
+    elif a.command == "screen":
+        r = screen.run(limit=a.limit)
+        print(f"screened {r['screened']} new channels; {r['total']} in total: {r['counts']}")
     elif a.command == "seed":
         seed(con)
     elif a.command == "pull":

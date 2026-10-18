@@ -74,7 +74,8 @@ def test_seed_reads_both_lists_and_skips_comments(tmp_path, monkeypatch):
     a = tmp_path / "channels.csv"
     a.write_text("channel,niche,role,note\n# Fitness\n@one,03.07,anchor,\nUCtwo,03.08,anchor,\n")
     b = tmp_path / "channels_discovered.csv"
-    b.write_text("channel,niche\nUCtwo,03.08\nUCthree,03.07\n")
+    b.write_text("channel,niche\nUCtwo,03.08\nUCthree,03.07\nUCdropped,03.07\n")
+    monkeypatch.setattr(cli.screen, "kept", lambda: {"UCtwo", "UCthree"})   # UCdropped was screened out
     monkeypatch.setattr(cli.youtube, "resolve_handle", lambda h: "UCone" if h == "@one" else None)
     seen = {}
     monkeypatch.setattr(cli.youtube, "pull_channels", lambda con, ids, today: seen.setdefault("ids", ids) and len(ids))

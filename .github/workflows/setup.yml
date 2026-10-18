@@ -3,16 +3,18 @@ name: setup (run by hand)
 # Actions tab > "setup (run by hand)" > Run workflow, then pick a step.
 #   discover: finds active mid-size channels per niche and commits config/channels_discovered.csv.
 #             Uses about 5,000 of the 10,000 daily YouTube units; run it on 2 or 3 different days.
-#   seed:     loads the anchors and the discovered channels into the database. Review the discovered
-#             file first (drop brands, news outlets and off-niche channels), then run this once.
+#   screen:   checks each newly discovered channel (country, recent uploads) and marks it keep, drop or
+#             review in config/channels_screened.csv. About 1,200 YouTube units. Run after each discover.
+#   seed:     loads the anchors plus the discovered channels marked keep. Decide the review rows first
+#             (edit the verdict column in channels_screened.csv), then run this.
 on:
   workflow_dispatch:
     inputs:
       step:
-        description: "discover or seed"
+        description: "discover, screen or seed"
         required: true
         type: choice
-        options: [discover, seed]
+        options: [discover, screen, seed]
 
 permissions:
   contents: write
@@ -32,11 +34,12 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
           TERMINAL_DB: md:content_terminal
-      - name: Commit the discovered channel list
-        if: inputs.step == 'discover'
+      - name: Commit the channel lists
+        if: inputs.step == 'discover' || inputs.step == 'screen'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add config/channels_discovered.csv
-          git diff --cached --quiet || git commit -m "Discovery run $(date -u +%Y-%m-%d)"
+          if [ -f config/channels_screened.csv ]; then git add config/channels_screened.csv; fi
+          git diff --cached --quiet || git commit -m "${{ inputs.step }} run $(date -u +%Y-%m-%d)"
           git push
