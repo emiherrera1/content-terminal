@@ -22,7 +22,7 @@ class FakeClient:
 def test_rules_model_and_sticky_edits(tmp_path):
     out = tmp_path / "screened.csv"
     client = FakeClient('[{"id": "UCus", "verdict": "keep", "reason": "ok", "note": "pilates creator"},'
-                         {"id": "UCbr", "verdict": "drop", "reason": "brand", "note": "apparel company"},'
+                        ' {"id": "UCbr", "verdict": "drop", "reason": "brand", "note": "apparel company"},'
                         ' {"id": "UCgb", "verdict": "keep", "reason": "ok", "note": "UK fitness creator"}]')
     r = screen.run(info_fn=lambda ids: {i: INFO[i] for i in ids if i in INFO}, client=client, discovered=DISC, path=out)
     rows = screen.load(out)
