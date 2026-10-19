@@ -1,0 +1,17 @@
+id,label,pattern,status
+P01,Day in the Life,day in (the|my) life|a day with|24 hours (with|in),draft
+P02,Challenge,challenge|i tried .* for \d+ days|for \d+ days straight,draft
+P03,Ranking or Tier List,tier list|ranking|ranked|best to worst|top \d+,draft
+P04,Versus,\bvs\.?\b|\bversus\b,draft
+P05,Honest Review,honest review|is it worth|worth it\?|\breview\b,draft
+P06,Haul,\bhaul\b,draft
+P07,Get Ready With Me,\bgrwm\b|get ready with me,draft
+P08,Routine,what i eat|morning routine|night routine|\broutine\b,draft
+P09,Transformation,before (and|&) after|transformation|glow ?up|makeover,draft
+P10,Price Point,\$\d+|\bcheap\b|\bbudget\b|under \$|expensive,draft
+P11,Mistakes and Myths,mistakes|myths?\b|stop doing|you're doing it wrong,draft
+P12,Story Time,story ?time|what happened when|i got scammed,draft
+P13,Reaction,\breact(s|ing|ion)?\b,draft
+P14,How-To,\bhow to\b|tutorial|step by step|beginner'?s guide,draft
+P15,Question Title,\?\s*$,draft
+P99,Other,,draft

@@ -75,3 +75,36 @@ cvs:                         # 5.10-5.11 Creator Viability Score, from the Creat
   windows:
     last_videos: 20
     upload_days: 90
+
+later:                       # formulas that need months of history, outside data or more platforms
+  decay_min_points: 7        # 2.6 fit decay only with at least this many daily gains in days 1-30
+  decay_max_age: 30
+  evergreen_min_age: 90      # 2.7 evergreen share for videos older than this ...
+  evergreen_after_day: 30    # ... = views after this day / total views
+  flow_days: 90              # 3.19 compare a creator's upload mix over the last N days with the N before
+  flow_points: 0.20          # ... a shift of more than 20 points counts as moving in or out
+  bootstrap_samples: 1000    # 3.21
+  ci_low: 0.05
+  ci_high: 0.95
+  ci_max_level: 3            # bootstrap topics at sector, category and niche level
+  drift_days: 90             # 5.8 last 90 days of uploads against the same window a year earlier
+  lead_lag_max_weeks: 26     # 6.6
+  granger_lags: 4            # 6.7 weekly lags in each model
+  granger_test_share: 0.25   # ... last 25% of weeks held out
+  granger_p: 0.05
+  typical_move_weeks: 13     # 8.2 a hit = a move bigger than the series' typical 13-week move
+  base_rate_draws: 200       # 8.5 random topics drawn per call for the base rate
+  platform_z_weeks: 26       # 9.2
+
+# 5.9 RPM bands, USD per 1,000 views. PLACEHOLDERS until replaced with published benchmarks or creator data;
+# the earnings table carries rpm_source so a placeholder can never be read as a measured figure.
+rpm_bands:
+  source: placeholder
+  default: {long_low: 2.0, long_high: 6.0, shorts_low: 0.03, shorts_high: 0.08}
+  by_niche: {}
+
+comments:                    # 6.3 purchase-intent comments cost 1 API unit per video; off until switched on
+  enabled: false
+  topics: []                 # CTNCS codes to sample (a watchlist), e.g. ["03.07", "03.09"]
+  per_video: 100
+  max_videos_per_day: 50

@@ -115,7 +115,8 @@ def pull_channels(con, channel_ids: list[str], today: dt.date) -> int:
 
 def pull_recent_videos(con, today: dt.date, per_channel: int = 50) -> int:
     """Latest uploads per channel, then current stats for each video."""
-    playlists = con.execute("SELECT channel_id, uploads_playlist FROM channels").fetchall()
+    playlists = con.execute("SELECT channel_id, uploads_playlist FROM channels "
+                            "WHERE coalesce(platform, 'youtube') = 'youtube' AND uploads_playlist IS NOT NULL").fetchall()
     video_ids = []
     for channel_id, playlist in playlists:
         try:

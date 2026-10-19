@@ -18,3 +18,8 @@ videos_per_channel: 50
 
 # Videos classified per daily run (each video is classified once, at upload). Blank = all new videos.
 video_classify_daily_limit: 5000
+
+# Quality gates (terminal/pipeline.py): a day below these is logged as a warning in the run log, never dropped.
+quality:
+  min_pull_completeness: 0.95
+  max_unclassified_share: 0.25

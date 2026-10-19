@@ -1,0 +1,28 @@
+name: weekly
+
+on:
+  schedule:
+    - cron: "3 12 * * 1"    # Mondays 8:03 AM Eastern (EDT), after the daily pull
+  workflow_dispatch:
+
+jobs:
+  weekly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      # outcome series (Google Trends, CSVs in data/inputs), outside estimates, the stats, and a 25-video audit sheet
+      - run: python -m terminal run weekly
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          TERMINAL_DB: md:content_terminal
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly
+          path: |
+            data/exports/
+            data/audits/

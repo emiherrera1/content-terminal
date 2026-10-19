@@ -17,7 +17,11 @@
   compute   rebuild the metric views
   export    write niche index, momentum, screener and alerts to CSV
   news      pull news feeds and tag new articles
-  daily     pull + classify new channels + news + compute + export (what the schedule runs)
+  daily     the daily job (same as `run daily`)
+  run       run a job as logged stages: run daily | run weekly | run rebuild
+  health    is the data fresh and did the last runs pass (exit 1 if not)
+  dictionary  rewrite docs/DATA_DICTIONARY.md from the demo database's schema
+  demo      build a synthetic world in data/demo.duckdb and run every formula on it (never touches real data)
 """
 import argparse
 import csv
@@ -64,7 +68,7 @@ def seed(con, paths=(ROOT / "config" / "channels.csv", ROOT / "config" / "channe
 
 def pull(con):
     today = dt.date.today()
-    ids = [c for (c,) in con.execute("SELECT channel_id FROM channels").fetchall()]
+    ids = [c for (c,) in con.execute("SELECT channel_id FROM channels WHERE coalesce(platform, 'youtube') = 'youtube'").fetchall()]
     print(f"channels: {youtube.pull_channels(con, ids, today)}")
     print(f"videos:   {youtube.pull_recent_videos(con, today, _config().get('videos_per_channel', 50))}")
 
@@ -72,7 +76,7 @@ def pull(con):
 def main(argv=None):
     p = argparse.ArgumentParser(prog="terminal", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("command", choices=["discover", "screen", "seed", "pull", "classify", "classify-videos", "index", "watchlist", "review",
-                                      "call", "resolve", "calls", "migrate-ctncs", "audit", "news", "compute", "export", "daily"])
+                                      "call", "resolve", "calls", "migrate-ctncs", "audit", "news", "compute", "export", "daily", "run", "health", "demo", "dictionary"])
     p.add_argument("--limit", type=int, help="classify at most this many channels")
     p.add_argument("--redo", action="store_true", help="reclassify channels nobody has reviewed yet")
     p.add_argument("query", nargs="*", help="index: a topic name or CTNCS code, e.g. woodworking or 02.05.010.019")
@@ -92,6 +96,15 @@ def main(argv=None):
     p.add_argument("--videos", action="store_true", help="audit: sample video topics instead of channel codes")
     p.add_argument("--record", help="audit: load a filled audit sheet")
     a = p.parse_args(argv)
+
+    if a.command == "demo":      # synthetic world in its own database; never opens the real one
+        from . import demo
+        demo.main()
+        return
+    if a.command == "dictionary":
+        from . import demo, dictionary
+        print(dictionary.write(store.connect(str(demo.DB))))
+        return
 
     con = store.connect()
     news.connect(con)
@@ -171,14 +184,19 @@ def main(argv=None):
     elif a.command == "news":
         print(f"articles: {news.pull(con)}, tagged: {news.tag(con, a.limit)}")
     elif a.command == "compute":
-        metrics.build(con)
+        metrics.build_all(con)
     elif a.command == "export":
-        metrics.build(con)
+        metrics.build_all(con)
         print("\n".join(metrics.export(con)))
-    elif a.command == "daily":
-        pull(con)
-        print(f"classified {classify.classify_channels(con, sectors)}")
-        print(f"classified videos: {video_classify.classify_videos(con, _config().get('video_classify_daily_limit'))}")
-        print(f"articles: {news.pull(con)}, tagged: {news.tag(con)}")
-        metrics.build(con)
-        print("\n".join(metrics.export(con)))
+    elif a.command in ("daily", "run"):
+        from . import pipeline
+        job = "daily" if a.command == "daily" else (a.query[0] if a.query else "daily")
+        r = pipeline.run(con, job)
+        if not r["ok"]:
+            raise SystemExit(f"{job} failed at: {', '.join(r['failed'])}")
+    elif a.command == "health":
+        from . import pipeline
+        ok, lines = pipeline.health(con)
+        print("\n".join(lines))
+        if not ok:
+            raise SystemExit(1)

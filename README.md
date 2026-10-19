@@ -88,6 +88,24 @@ checked item is marked reviewed. Without `--videos` it samples channel codes ins
 
 `video_daily` now clips negative corrections to 0 and spreads gains over gaps of up to 7 days (flagged `corrected` and `imputed`). A creator counts as new to a topic only if the channel is young or it was already posting other topics before entering, so the edge of the tracking window isn't mistaken for a newcomer.
 
+## Everything else in the Formula Library
+
+`terminal/later.py` and `terminal/analytics.py` build the rest of the library: decay and half-life (2.6), evergreen
+share (2.7), packaging (2.11), creator flow (3.19), bootstrap confidence intervals (3.21), the equal-weight index
+(4.6, in `topic_index`), topic drift (5.8), earnings ranges (5.9), entity attention (6.2), purchase-intent comments
+(6.3), lead-lag (6.6), the predictive test (6.7), call scoring (8.2-8.5), the cross-platform tables (9.1-9.4) and
+basket coverage (10.4). Each runs every day and fills in as soon as its input exists; until then its table is empty.
+See `docs/DATA_DICTIONARY.md` for every table and `docs/RUNBOOK.md` for what feeds what.
+
+## Jobs, health and the demo world
+
+- `python -m terminal run daily | weekly | rebuild` runs a job as logged stages (`pipeline_runs`); only the YouTube
+  pull, compute and export can fail a job. Sources without keys or files are skipped with a note.
+- `python -m terminal health` exits 1 if data is stale or the last run failed.
+- `python -m terminal demo` builds a synthetic world in `data/demo.duckdb` (three platforms, 28 weeks, outcome
+  series, calls) and runs every stage on it. It never touches the real database or call log.
+- `python -m terminal dictionary` regenerates the data dictionary from the schema.
+
 ## Creator watchlist and the call log
 
 `compute` also scores every tracked creator (`terminal/creators.py`, Formula Library 5.3-5.7 and 5.10-5.11): growth against their niche, upload cadence and regularity, consistency, hit dependence (top video's share and the Gini of recent videos), audience depth (median views per subscriber and relative engagement) and topic focus. These feed the Creator Viability Score: five pillars, each a percentile within the creator's niche, weighted 25/20/20/20/15 to total 100.

@@ -338,7 +338,8 @@ capped AS (   -- 4.5 cap each creator's share when the topic has enough creators
     FROM pairs WINDOW k AS (PARTITION BY code, d)
 ),
 ratio AS (
-    SELECT d, level, code, count(*) AS matched_creators, sum(a_t_c) / nullif(sum(a_y_c), 0) AS ratio
+    SELECT d, level, code, count(*) AS matched_creators, sum(a_t_c) / nullif(sum(a_y_c), 0) AS ratio,
+           avg(a_t / a_y) FILTER (WHERE a_y > 0) AS eq_ratio                      -- 4.6 the typical creator's change
     FROM capped GROUP BY ALL
 ),
 based AS (
@@ -347,7 +348,9 @@ based AS (
 lvl AS (      -- 4.3 chain-link from the base date; a day with no valid ratio carries the level forward
     SELECT d, level, code, matched_creators, ratio, base_date,
            100 * exp(sum(CASE WHEN d > base_date AND ratio > 0 THEN ln(ratio) ELSE 0 END)
-                     OVER (PARTITION BY code ORDER BY d ROWS UNBOUNDED PRECEDING)) AS index_level
+                     OVER (PARTITION BY code ORDER BY d ROWS UNBOUNDED PRECEDING)) AS index_level,
+           100 * exp(sum(CASE WHEN d > base_date AND eq_ratio > 0 THEN ln(eq_ratio) ELSE 0 END)
+                     OVER (PARTITION BY code ORDER BY d ROWS UNBOUNDED PRECEDING)) AS index_equal_weight
     FROM based WHERE d >= base_date
 ),
 trend AS (    -- 4.4 geometric 7-day average of the daily level

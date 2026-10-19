@@ -270,7 +270,10 @@ GROUP BY ALL;
 EXPORTS = ["niche_daily", "niche_momentum", "screener", "alerts", "niche_opportunity", "niche_opportunity_daily", "content_daily", "content_format_daily",
            "topic_series", "topic_current", "topic_index", "topic_alerts", "video_metrics", "creator_coverage",
            "creator_metrics", "creator_watchlist", "creator_alerts", "news_ranked",
-           "creator_subs", "topic_breaks", "data_quality_daily", "audit_error_rate", "topic_crosswalk"]
+           "creator_subs", "topic_breaks", "data_quality_daily", "audit_error_rate", "topic_crosswalk",
+           "video_decay", "video_evergreen", "packaging_wins", "creator_flow", "creator_drift", "creator_earnings",
+           "entity_daily", "topic_purchase_intent", "platform_daily", "platform_z", "basket_coverage",
+           "topic_ci", "lead_lag", "predictive_tests", "call_scores", "call_summary", "composite_index", "platform_lead"]
 
 
 def build(con) -> None:
@@ -279,6 +282,14 @@ def build(con) -> None:
     from . import creators, formulas
     formulas.build(con)
     creators.build(con)
+
+
+def build_all(con, calls_paths: tuple | None = None) -> None:
+    """Everything: the core tables, then the Later set (terminal/later.py) and the statistics (terminal/analytics.py)."""
+    from . import analytics, later
+    build(con)
+    later.build(con)
+    analytics.build(con, None, *calls_paths) if calls_paths else analytics.build(con)
 
 
 def export(con, out_dir: str = "data/exports") -> list[str]:

@@ -74,6 +74,63 @@ CREATE TABLE IF NOT EXISTS classification_audits (
     auditor        VARCHAR,
     PRIMARY KEY (audited_on, kind, item_id)
 );
+-- cross-platform (9.x): every channel belongs to one platform; ids from other platforms carry a prefix (tt:, ig:)
+ALTER TABLE channels ADD COLUMN IF NOT EXISTS platform VARCHAR DEFAULT 'youtube';
+-- 6.6-6.7, 8.2-8.5 outcome series the terminal's signals are tested against (search interest, sales, revenue)
+CREATE TABLE IF NOT EXISTS outcome_series (
+    series_id      VARCHAR,      -- e.g. trends:03.07:US
+    source         VARCHAR,      -- google_trends | csv | synthetic
+    code           VARCHAR,      -- the CTNCS topic it belongs to
+    label          VARCHAR,
+    d              DATE,         -- week start
+    value          DOUBLE,
+    PRIMARY KEY (series_id, d)
+);
+-- 6.3 sampled comments and whether each asks where to buy, price, link or availability
+CREATE TABLE IF NOT EXISTS video_comments (
+    comment_id     VARCHAR PRIMARY KEY,
+    video_id       VARCHAR,
+    published_at   TIMESTAMP,
+    text           VARCHAR,
+    purchase_intent BOOLEAN,
+    tagged_by      VARCHAR,      -- rules | model
+    pulled_on      DATE
+);
+-- 6.2 brands, products and companies named in a video's title, description or tags
+CREATE TABLE IF NOT EXISTS video_entities (
+    video_id       VARCHAR,
+    entity         VARCHAR,
+    entity_type    VARCHAR,      -- brand | company | category
+    matched_in     VARCHAR,
+    PRIMARY KEY (video_id, entity)
+);
+-- 2.11 packaging format (draft CTNCS v3 codes in config/ctncs/packaging.csv)
+CREATE TABLE IF NOT EXISTS video_packaging (
+    video_id       VARCHAR PRIMARY KEY,
+    packaging_id   VARCHAR,
+    packaging_label VARCHAR,
+    tagged_by      VARCHAR
+);
+-- 10.4 outside estimates of a topic's total views, for basket coverage
+CREATE TABLE IF NOT EXISTS outside_estimates (
+    code           VARCHAR,
+    period_start   DATE,
+    period_end     DATE,
+    total_views    DOUBLE,
+    source         VARCHAR,
+    PRIMARY KEY (code, period_start)
+);
+-- orchestration: one row per stage per run
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+    run_id         VARCHAR,
+    job            VARCHAR,
+    stage          VARCHAR,
+    started_at     TIMESTAMP,
+    finished_at    TIMESTAMP,
+    status         VARCHAR,      -- ok | warn | failed | skipped
+    attempts       INTEGER,
+    detail         VARCHAR
+);
 ALTER TABLE videos ADD COLUMN IF NOT EXISTS description VARCHAR;
 ALTER TABLE videos ADD COLUMN IF NOT EXISTS tags VARCHAR;
 """

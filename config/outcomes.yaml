@@ -1,0 +1,13 @@
+# Outcome series the terminal's signals are tested against (6.6 lead-lag, 6.7 predictive test, 8.x call scoring).
+# Google Trends: weekly US search interest. These terms are SUGGESTIONS to make the pipeline run end to end;
+# replace them with the terms you would bet on for each niche. Each term becomes its own series:
+#   trends:<code>:<geo>:<term>   (use that id as --outcome when logging a call)
+google_trends:
+  - {code: "03.07", geo: US, terms: ["home gym", "pilates", "creatine"]}
+  - {code: "03.08", geo: US, terms: ["air fryer recipes", "protein recipes", "cottage cheese"]}
+  - {code: "03.09", geo: US, terms: ["skincare routine", "lip oil", "athleisure"]}
+  - {code: "04.10", geo: US, terms: ["smart ring", "mechanical keyboard", "handheld gaming pc"]}
+  - {code: "08.23", geo: US, terms: ["side hustle", "llc", "shopify store"]}
+  - {code: "08.25", geo: US, terms: ["high yield savings account", "roth ira", "budgeting app"]}
+  - {code: "09.26", geo: US, terms: ["electrolytes", "glp-1", "protein powder"]}
+  - {code: "09.27", geo: US, terms: ["therapy near me", "meditation app", "adhd test"]}
