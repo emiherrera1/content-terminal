@@ -22,22 +22,23 @@ class FakeClient:
 def test_rules_model_and_sticky_edits(tmp_path):
     out = tmp_path / "screened.csv"
     client = FakeClient('[{"id": "UCus", "verdict": "keep", "reason": "ok", "note": "pilates creator"},'
-                        ' {"id": "UCbr", "verdict": "drop", "reason": "brand", "note": "apparel company"}]')
+                         {"id": "UCbr", "verdict": "drop", "reason": "brand", "note": "apparel company"},'
+                        ' {"id": "UCgb", "verdict": "keep", "reason": "ok", "note": "UK fitness creator"}]')
     r = screen.run(info_fn=lambda ids: {i: INFO[i] for i in ids if i in INFO}, client=client, discovered=DISC, path=out)
     rows = screen.load(out)
     assert {c: (rows[c]["verdict"], rows[c]["reason"]) for c in rows} == {
         "UCus": ("keep", "ok"), "UCbr": ("drop", "brand"), "UCin": ("drop", "non_us"),
-        "UCgb": ("review", "non_us"), "UCgone": ("drop", "other")}
-    assert r["screened"] == 5 and client.calls == 1          # only US/unknown-country channels go to the model
-    assert screen.kept(out) == {"UCus"}
+        "UCgb": ("keep", "ok"), "UCgone": ("drop", "other")}
+    assert r["screened"] == 5 and client.calls == 1          # covered-market and unknown-country channels go to the model
+    assert screen.kept(out) == {"UCus", "UCgb"}
 
-    # a person flips the UK channel to keep; a second run doesn't touch it or re-screen anything
-    rows["UCgb"]["verdict"] = "keep"
+    # a person flips the Indian channel to keep; a second run doesn't touch it or re-screen anything
+    rows["UCin"]["verdict"] = "keep"
     screen.write(rows, out)
     client2 = FakeClient("[]")
     r2 = screen.run(info_fn=lambda ids: {}, client=client2, discovered=DISC, path=out)
     assert r2["screened"] == 0 and client2.calls == 0
-    assert screen.kept(out) == {"UCus", "UCgb"}
+    assert screen.kept(out) == {"UCus", "UCgb", "UCin"}
 
 
 def test_bad_reply_falls_back_to_review():

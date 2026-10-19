@@ -30,20 +30,19 @@ FIELDS = ["channel", "niche", "title", "subscribers", "country", "verdict", "rea
 MODEL = os.environ.get("SCREEN_MODEL", os.environ.get("VIDEO_CLASSIFIER_MODEL", "claude-haiku-5-5"))
 BATCH = 20
 
-HOME = {"US"}
-NEAR = {"CA", "GB", "AU", "IE", "NZ"}          # English-speaking: a person decides
+HOME = {"US", "CA", "GB", "AU", "IE", "NZ"}   # markets the fund covers; channels here go to the model
 REASONS = {"ok", "non_us", "non_english", "brand", "news_media", "off_niche", "kids", "reupload", "other"}
 
 NICHES = {"03.07": "Fitness", "03.08": "Food & Cooking", "03.09": "Fashion & Beauty", "04.10": "Consumer Tech",
           "08.23": "Entrepreneurship", "08.25": "Personal Finance", "09.26": "Physical Health & Nutrition",
           "09.27": "Mental Health"}
 
-SYSTEM = """You screen YouTube channels for a venture fund that backs independent creators in the United States.
+SYSTEM = """You screen YouTube channels for a venture fund that backs independent creators in the US, Canada, the UK, Ireland, Australia and New Zealand.
 
 For each channel decide:
-- keep: an individual creator or small creator-led team, making English-language content for a US audience, whose recent uploads fit the stated niche.
+- keep: an individual creator or small creator-led team, making English-language content for an audience in those countries, whose recent uploads fit the stated niche.
 - drop: clearly not that. Give one reason:
-  non_us (creator or audience is clearly outside the US: language, place names, currency, exams or institutions of another country),
+  non_us (creator or audience is clearly outside those six countries: language, place names, currency, exams or institutions of another country),
   non_english, brand (a company, retailer, app or product marketing its own goods), news_media (news outlet, magazine, TV network, publisher),
   off_niche (the niche match was incidental; most uploads are about something else), kids (made for children),
   reupload (clips, compilations, AI voiceover or re-uploaded content), other.
@@ -78,8 +77,6 @@ def country_rule(country: str | None):
     c = (country or "").upper()
     if not c or c in HOME:
         return None
-    if c in NEAR:
-        return ("review", "non_us", f"based in {c}")
     return ("drop", "non_us", f"based in {c}")
 
 
