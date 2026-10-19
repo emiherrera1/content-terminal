@@ -134,6 +134,13 @@ def _export(ctx):
     return f"{len(metrics.export(ctx.con))} files"
 
 
+def _site(ctx):
+    """Data files for the password-protected site; the workflow uploads them to Cloudflare Pages."""
+    from . import site
+    m = site.build(ctx.con)
+    return ", ".join(f"{k} {v}" for k, v in m["rows"].items())
+
+
 def _audit_sheet(ctx):
     from . import classify
     return classify.audit_sheet(ctx.con, "video", 25)
@@ -164,6 +171,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("later", _later),
         Stage("quality_gate", _quality_gate),
         Stage("export", _export, critical=True),
+        Stage("site", _site),
     ],
     "weekly": [
         Stage("google_trends", _trends, retries=2),
@@ -173,6 +181,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("later", _later),
         Stage("audit_sheet", _audit_sheet),
         Stage("export", _export, critical=True),
+        Stage("site", _site),
     ],
     # everything that needs no API: rebuild every table from what is stored (after a formula or config change)
     "rebuild": [

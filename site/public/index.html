@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Content Terminal</title>
+<style>html,body{margin:0;background:#000;color:#e8e4da} body{padding:8px} @media (max-width:600px){body{padding:0}}</style>
+<script src="vendor/d3.min.js"></script>
+<script>/* Stand-in for the dashboard runtime the terminal page was first built on.
+   Datasets come from data/<name>.json (written by `python -m terminal site`); calcs run in the browser. */
+window.dash = (() => {
+  const raw = {}, calcs = {}, loaders = {}, subs = [];
+  let meta = null, failed = null;
+  const memo = {};
+  function data(name) {
+    if (failed) return {status: 'error', error: failed};
+    if (name in memo) return memo[name];
+    let out;
+    if (calcs[name]) {
+      const ins = calcs[name].inputs.map(data);
+      const bad = ins.find(i => i.status !== 'ok');
+      if (bad) return bad;
+      try { out = {status: 'ok', data: calcs[name].fn(...ins.map(i => i.data))}; }
+      catch (e) { out = {status: 'error', error: String(e)}; }
+    } else if (name in raw) {
+      let v = raw[name];
+      if (loaders[name] && !Array.isArray(v)) {
+        try { v = loaders[name].fn(v).rows; } catch (e) { return memo[name] = {status: 'error', error: String(e)}; }
+      }
+      out = {status: 'ok', data: v};
+    } else {
+      return {status: 'loading'};
+    }
+    return memo[name] = out;
+  }
+  async function load() {
+    try {
+      const r = await fetch('data/manifest.json', {cache: 'no-store', credentials: 'same-origin'});
+      if (r.status === 401 || r.redirected) { location.href = '/login'; return; }
+      meta = await r.json();
+      await Promise.all(meta.datasets.map(async n => {
+        const d = await fetch('data/' + n + '.json', {cache: 'no-store', credentials: 'same-origin'});
+        raw[n] = d.ok ? await d.json() : [];
+      }));
+    } catch (e) { failed = String(e); }
+    for (const k in memo) delete memo[k];
+    document.dispatchEvent(new CustomEvent('terminal:meta', {detail: meta}));
+    subs.forEach(f => f());
+  }
+  return {
+    calc: (name, def) => { calcs[name] = def; },
+    loader: (name, def) => { loaders[name] = def; },
+    data,
+    meta: () => meta,
+    setLink: v => { try { history.replaceState(null, '', '#' + v); } catch (e) {} },
+    onData: f => { subs.push(f); f(); },
+    start: load,
+  };
+})();
+</script>
+</head><body>
+<style>
+#dash-root{--dash-gutter:0}
+.ct{--g:#3dff63;--gdk:#156b2b;--tx:#e8e4da;--tm:#8f8a80;--td:#6e6a62;--hl:#1c1a17;--acc:#ffb340;--line:#2a2724;--bg:#000;--panel:#0b0a09;--red:#ff4d4d;--amb:#ffc94d;
+  background:var(--bg);color:var(--tx);font-family:"Courier New",ui-monospace,Menlo,Consolas,monospace;font-size:12px;
+  text-transform:uppercase;letter-spacing:.03em;text-shadow:none;
+  border:1px solid var(--line);display:flex;flex-direction:column;container-type:inline-size;position:relative}
+.ct button{font:inherit;text-transform:inherit;letter-spacing:inherit}
+.ct .up{color:var(--g)} .ct .dn{color:var(--red)} .ct .fl{color:var(--tx)} .ct .dim{color:var(--tm)}
+/* tickers */
+.ct .tk{display:flex;border-bottom:1px solid var(--line);height:20px;align-items:center;overflow:hidden}
+.ct .tk .lab{flex:none;width:72px;font-weight:700;color:var(--bg);background:var(--acc);height:100%;display:flex;align-items:center;padding:0 6px;text-shadow:none;font-size:10px}
+.ct .tk .vp{flex:1;overflow:hidden;white-space:nowrap}
+.ct .tk .run{display:inline-flex;gap:28px;padding-left:16px;animation:tick 60s linear infinite}
+.ct .tk:nth-of-type(2) .run{animation-duration:75s} .ct .tk:nth-of-type(3) .run{animation-duration:50s}
+.ct .tk .it b{font-weight:700;margin-right:6px} .ct .tk .it span{margin-right:6px}
+@keyframes tick{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.ct .tk .run{animation:none}.ct .tk .vp{overflow-x:auto}}
+.ct .tk .vp:hover .run{animation-play-state:paused}
+/* function bar */
+.ct .fbar{display:flex;align-items:center;gap:4px;padding:6px 8px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ct .stamp{margin-right:10px;white-space:nowrap}
+.ct .fn{all:unset;cursor:pointer;padding:2px 8px;border:1px solid var(--line);color:var(--tx);white-space:nowrap}
+.ct .fn small{color:var(--td);margin-left:4px;font-size:9px}
+.ct .fn:hover{background:var(--hl)} .ct .fn[aria-selected=true]{background:var(--acc);color:var(--bg);text-shadow:none}
+.ct .fn[aria-selected=true] small{color:var(--bg)}
+.ct .fn[aria-disabled=true]{color:var(--td);cursor:not-allowed;border-style:dashed}
+.ct .clock{margin-left:auto;font-size:22px;font-weight:700;white-space:nowrap}
+.ct .search{margin:6px 8px;border:1px solid var(--line);display:flex}
+.ct .search input{all:unset;flex:1;padding:4px 8px;color:var(--tx);font-family:inherit;text-transform:uppercase}
+.ct .search input::placeholder{color:var(--td)}
+/* layout */
+.ct .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,22rem);gap:8px;padding:0 8px 8px}
+@container (max-width:900px){.ct .grid{grid-template-columns:minmax(0,1fr)}}
+.ct .panel{background:var(--panel);border:1px solid var(--line);min-width:0}
+.ct .ph{color:var(--acc);display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid var(--line);font-weight:700;font-size:11px}
+.ct .ph .meta{color:var(--td);font-weight:400;font-size:10px}
+.ct .pb{padding:6px 8px;max-height:30rem;overflow:auto}
+.ct table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.ct th{color:var(--tm);font-weight:400;text-align:right;padding:4px 6px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:10px;position:sticky;top:0;background:var(--panel)}
+.ct td{text-align:right;padding:4px 6px;border-bottom:1px solid #1a1816;white-space:nowrap}
+.ct th:first-child,.ct td:first-child{text-align:left}
+.ct tbody tr:hover td{background:var(--hl)}
+.ct .hidehead thead{visibility:collapse}
+.ct .sec{text-align:center;padding:8px 0 2px;border-top:1px solid var(--line)}
+.ct .sec:first-child{border-top:0}
+.ct .sec .nm{font-weight:700}
+.ct .sec .sub{font-size:10px;color:var(--tm);margin-top:3px}
+.ct .tick{border:1px solid var(--line);padding:0 4px;font-size:9px;color:var(--tm);margin-left:6px}
+.ct .tag{border:1px solid var(--line);color:var(--td);font-size:9px;padding:0 3px;margin-left:6px}
+.ct .narrow{} @container (max-width:640px){.ct .narrow{display:none}}
+/* metrics */
+.ct .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px}
+.ct .m{border:1px solid var(--line);padding:6px 8px;min-width:0}
+.ct .m .k{color:var(--td);font-size:10px} .ct .m .v{font-size:20px;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* chart */
+.ct .chart{position:relative;padding:6px 8px;min-height:190px}
+.ct .chart svg text{fill:var(--tm);font-size:9px;font-family:inherit}
+.ct .tip{position:absolute;pointer-events:none;background:#000;border:1px solid var(--tm);padding:4px 6px;font-size:10px;white-space:nowrap;display:none;z-index:2}
+.ct .legend{display:flex;flex-wrap:wrap;gap:4px 10px;padding:0 8px 8px;font-size:10px}
+.ct .legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:4px}
+/* command line + status */
+.ct .cl{margin:0 8px 8px}
+.ct .log{height:7rem;overflow:auto;white-space:pre-wrap;margin:0;padding:6px 8px 6px 80px}
+@container (max-width:640px){.ct .log{padding-left:8px}}
+.ct .prompt{display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding:6px 8px}
+.ct .prompt input{all:unset;flex:1;color:var(--tx);font-family:inherit;text-transform:uppercase;caret-color:var(--acc)}
+.ct .prompt input::placeholder{color:var(--td)}
+.ct .status{display:flex;gap:16px;flex-wrap:wrap;padding:5px 8px;border-top:1px solid var(--line);font-size:10px;color:var(--tm)}
+.ct .status .dot{color:var(--amb)} .ct .status .ver{margin-left:auto}
+.ct .help dl{margin:0} .ct .help dt{font-weight:700;margin-top:8px} .ct .help dd{margin:2px 0 0 12px;color:var(--tm);text-transform:none}
+.ct [hidden]{display:none!important}
+.ct .news{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px}
+@container (max-width:1100px){.ct .news{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container (max-width:600px){.ct .news{grid-template-columns:minmax(0,1fr)}}
+.ct .ncol{border:1px solid var(--line);min-width:0;display:flex;flex-direction:column}
+.ct .ncol h3{margin:0;padding:5px 8px;font-size:11px;border-bottom:1px solid var(--line);background:var(--hl)}
+.ct .ncol.dog h3{background:#2a0606;color:var(--red);border-color:#5a1010}
+.ct .nlist{max-height:26rem;overflow:auto;padding:6px;display:flex;flex-direction:column;gap:6px}
+.ct .card{border:1px solid var(--line);padding:6px 8px;background:#0e0d0c}
+.ct .ncol.dog .card{border-left:3px solid var(--red)}
+.ct .card .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:9px;color:var(--tm)}
+.ct .chip{border:1px solid var(--line);padding:0 4px}
+.ct .chip.hi{color:var(--amb);border-color:#5a4a10} .ct .chip.pos{background:var(--gdk);color:#000;text-shadow:none} .ct .chip.neg{background:#5a1010;color:#fff;text-shadow:none}
+.ct .card a{display:block;color:var(--tx);text-decoration:none;text-transform:none;margin:5px 0;line-height:1.35;font-size:12px}
+.ct .card a:hover{text-decoration:underline}
+.ct .card .src{font-size:9px;color:var(--td);text-transform:none}
+.ct .empty{color:var(--td);padding:8px;text-transform:none}
+.ct .fmt{display:grid;grid-template-columns:15rem minmax(0,1fr);gap:8px;padding:8px}
+@container (max-width:800px){.ct .fmt{grid-template-columns:minmax(0,1fr)}}
+.ct .fbox{border:1px solid var(--line);margin-bottom:8px}
+.ct .fbox h3{margin:0;padding:5px 8px;font-size:11px;border-bottom:1px solid var(--line)}
+.ct .kv{display:flex;justify-content:space-between;padding:3px 8px;font-size:11px}
+.ct .kv span:first-child{color:var(--tm)}
+.ct .perf{padding:5px 8px;border-left:3px solid var(--acc);margin:6px;font-size:11px}
+.ct .perf .r{font-size:9px;color:var(--tm)} .ct .perf .f{text-transform:none;margin:3px 0}
+.ct .fbar2{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 8px 0}
+.ct .fbar2 input{all:unset;flex:1;min-width:12rem;border:1px solid var(--line);padding:4px 8px;font-family:inherit;color:var(--tx);text-transform:uppercase}
+.ct .fbar2 input::placeholder{color:var(--td)}
+.ct .flt{all:unset;cursor:pointer;border:1px solid var(--line);padding:3px 8px;font-size:10px}
+.ct .flt[aria-pressed=true]{background:var(--acc);color:#000;text-shadow:none}
+.ct #fmt-table td.f{text-transform:none;white-space:normal;min-width:14rem}
+.ct #fmt-table td.t{text-transform:none;white-space:normal;color:var(--tm);text-align:left}
+.ct #fmt-table th button{all:unset;cursor:pointer}
+.ct .rt{font-size:10px;font-weight:700}
+.ct .rt.EXCELLENT{color:#00ff00}.ct .rt.STRONG{color:#88ff00}.ct .rt.GOOD{color:#ffff00}.ct .rt.FAIR{color:#ff8800}.ct .rt.WEAK{color:#ff3b3b}
+/* hover definitions */
+.ct .tipped{cursor:help;text-decoration:underline dotted var(--td);text-underline-offset:3px}
+.ct .deftip{position:absolute;z-index:5;max-width:17rem;background:#000;border:1px solid var(--acc);color:var(--tx);padding:6px 8px;
+  font-size:11px;line-height:1.4;text-transform:none;letter-spacing:0;pointer-events:none;display:none;white-space:normal;text-align:left}
+.ct .deftip b{display:block;color:var(--acc);text-transform:uppercase;letter-spacing:.03em;font-size:10px;margin-bottom:3px}
+/* DES */
+.ct .des{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:8px;padding:8px}
+@container (max-width:700px){.ct .des{grid-template-columns:minmax(0,1fr)}}
+.ct #des-list{max-height:30rem;overflow:auto;border:1px solid var(--line)}
+.ct #des-list td{text-align:left;cursor:pointer}
+.ct #des-list tr.on td{background:var(--acc);color:#000}
+.ct .dcard{border:1px solid var(--line);padding:10px 12px;min-width:0}
+.ct .dcard .dc{font-size:22px;font-weight:700;color:var(--acc)}
+.ct .dcard .dn{font-size:13px;margin:2px 0 10px}
+.ct .dcard dl{margin:0;display:grid;grid-template-columns:7rem minmax(0,1fr);gap:6px 10px}
+.ct .dcard dt{color:var(--tm);font-size:10px;padding-top:2px}
+.ct .dcard dd{margin:0;text-transform:none;line-height:1.4}
+.ct .dcard dd.f{font-size:13px;color:var(--tx);background:#0e0d0c;border-left:3px solid var(--acc);padding:6px 8px}
+/* coverage */
+.ct .cov-top{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px}
+@container (max-width:640px){.ct .cov-top{grid-template-columns:1fr 1fr}}
+.ct .cbar{display:flex;height:8px;min-width:90px;background:#1a1816}
+.ct .cbar i{display:block;height:100%}
+.ct .cbar .k{background:var(--g)} .ct .cbar .r{background:var(--amb)} .ct .cbar .d{background:#5a1010}
+.ct .ckey{display:flex;gap:12px;padding:0 8px 6px;font-size:10px;color:var(--tm)}
+.ct .ckey i{display:inline-block;width:10px;height:8px;margin-right:4px;vertical-align:middle}
+.ct .cnote{padding:6px 8px 10px;color:var(--tm);font-size:10px;text-transform:none}
+[data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
+</style>
+<div class="ct" id="terminal">
+  <div class="tk"><span class="lab">Niches</span><div class="vp" id="tk-niches" data-source="niches"><div class="run"></div></div></div>
+  <div class="tk"><span class="lab">Creators</span><div class="vp" id="tk-creators" data-source="screener"><div class="run"></div></div></div>
+  <div class="tk"><span class="lab">Index</span><div class="vp" id="tk-index" data-source="indices"><div class="run"></div></div></div>
+
+  <div class="fbar" role="tablist" aria-label="Functions">
+    <span class="stamp" id="stamp">—</span>
+    <button class="fn" role="tab" data-v="niche" aria-selected="true">Niche<small>F2</small></button>
+    <button class="fn" role="tab" data-v="trend">Trend<small>F3</small></button>
+    <button class="fn" role="tab" data-v="creator">Creator<small>F4</small></button>
+    <button class="fn" role="tab" data-v="alerts">Alerts<small>F5</small></button>
+    <button class="fn" data-act="analyze" title="Analyze the top niche, or type ANALYZE <niche>">Analyze</button>
+    <button class="fn" aria-disabled="true" title="Not built yet">Comp</button>
+    <button class="fn" aria-disabled="true" title="Not built yet: needs ~90 days of history">Forecast</button>
+    <button class="fn" aria-disabled="true" title="Not built yet">Platform</button>
+    <button class="fn" role="tab" data-v="news">News<small>F6</small></button>
+    <button class="fn" role="tab" data-v="formats">Formats<small>F7</small></button>
+    <button class="fn" role="tab" data-v="coverage">Coverage<small>F8</small></button>
+    <button class="fn" role="tab" data-v="des">DES<small>F9</small></button>
+    <button class="fn" aria-disabled="true" title="Not built yet">Watchlist</button>
+    <button class="fn" role="tab" data-v="help">Help<small>F1</small></button>
+    <span class="clock" id="clock">—</span>
+  </div>
+  <label class="search"><input id="search" type="search" placeholder="Search creators and niches..." aria-label="Search creators and niches" autocomplete="off"></label>
+
+  <div class="grid">
+    <div class="panel" id="main">
+      <section class="view" id="niche">
+        <div class="ph"><span>Niche market overview</span><span class="meta" data-source="summary" data-field="asOf" data-row="0">—</span></div>
+        <div class="pb" id="sectors"></div>
+      </section>
+      <section class="view" id="trend" hidden>
+        <div class="ph"><span>Trend analysis · index avg CCOS</span><span class="meta">daily</span></div>
+        <div class="chart" id="chart-big" data-source="index_daily" style="min-height:22rem"><div class="tip"></div></div>
+        <div class="legend" id="legend-big" data-source="index_daily"></div>
+      </section>
+      <section class="view" id="creator" hidden>
+        <div class="ph"><span>Creator screener</span><span class="meta" id="scr-note">sorted by vs niche</span></div>
+        <div class="pb">
+          <table data-source="screener" data-row-key="channel_id" id="scr">
+            <thead><tr>
+              <th data-field="channel">Creator</th><th data-field="niche" class="narrow">Niche</th>
+              <th data-field="subscribers">Subs</th><th data-field="view_growth_28d" class="narrow">Views 28D</th>
+              <th data-field="growth_vs_niche">Vs niche</th><th data-field="uploads_28d" class="narrow">Upl 28D</th>
+              <th data-field="outlier_rate" class="narrow">Outlier</th>
+            </tr></thead><tbody></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="view" id="alerts" hidden>
+        <div class="ph"><span>Spike alerts</span><span class="meta">3σ+ and 2x a typical day</span></div>
+        <div class="pb">
+          <table data-source="alerts" data-row-key="channel_id" id="alt">
+            <thead><tr>
+              <th data-field="channel">Creator</th><th data-field="niche" class="narrow">Niche</th>
+              <th data-field="views_today">Views today</th><th data-field="typical_daily_views">Typical</th><th data-field="z_score">σ</th>
+            </tr></thead><tbody></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="view" id="news" hidden>
+        <div class="ph"><span>News feed</span><span class="meta">YouTube Official Blog · Tubefilter · tagged by Claude</span></div>
+        <div class="news" data-source="news">
+          <div class="ncol"><h3>Top ranked news</h3><div class="nlist" id="n-top"></div></div>
+          <div class="ncol"><h3>Time ordered news</h3><div class="nlist" id="n-time"></div></div>
+          <div class="ncol"><h3>Creator-specific news</h3><div class="nlist" id="n-creator"></div></div>
+          <div class="ncol dog"><h3>Dog house</h3><div class="nlist" id="n-dog"></div></div>
+        </div>
+      </section>
+      <section class="view" id="formats" hidden>
+        <div class="ph"><span>Title formats analytics</span><span class="meta">Trending Formats sheet · refreshed daily</span></div>
+        <div class="fbar2">
+          <input id="fmt-q" type="search" placeholder="Search formulas, triggers..." aria-label="Search formulas and triggers" autocomplete="off">
+          <button class="flt" data-f="all" aria-pressed="true">All</button>
+          <button class="flt" data-f="top10" aria-pressed="false">Top 10%</button>
+          <button class="flt" data-f="change" aria-pressed="false">High change</button>
+          <button class="flt" data-f="outlier" aria-pressed="false">High outlier</button>
+          <button class="flt" data-f="multi" aria-pressed="false">Multi-trigger</button>
+        </div>
+        <div class="fmt">
+          <div>
+            <div class="fbox"><h3>Key metrics</h3>
+              <div class="kv"><span>Total formats</span><span data-source="format_stats" data-field="total" data-row="0">—</span></div>
+              <div class="kv"><span>Filtered</span><span id="fmt-filtered">—</span></div>
+              <div class="kv"><span>Avg change</span><span data-source="format_stats" data-field="avg_change" data-row="0">—</span></div>
+              <div class="kv"><span>Max change</span><span data-source="format_stats" data-field="max_change" data-row="0">—</span></div>
+              <div class="kv"><span>Avg outlier</span><span data-source="format_stats" data-field="avg_outlier" data-row="0">—</span></div>
+              <div class="kv"><span>Max outlier</span><span data-source="format_stats" data-field="max_outlier" data-row="0">—</span></div>
+              <div class="kv"><span>Avg performance</span><span data-source="format_stats" data-field="avg_performance" data-row="0">—</span></div>
+            </div>
+            <div class="fbox"><h3>Top performers</h3><div id="fmt-top" data-source="formats"></div></div>
+            <div class="fbox"><h3>Trigger analysis</h3>
+              <table data-source="triggers" data-row-key="trigger" id="trg-table">
+                <thead><tr><th data-field="trigger">Trigger</th><th data-field="formats">Uses</th><th data-field="avg_outlier">Avg out.</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="pb" style="max-height:40rem;padding:0">
+            <table data-source="formats" data-row-key="formula" id="fmt-table">
+              <thead><tr>
+                <th data-field="formula"><button data-k="formula">Formula</button></th>
+                <th data-field="change_pct"><button data-k="change_pct">Change %</button></th>
+                <th data-field="outlier"><button data-k="outlier">Outlier</button></th>
+                <th data-field="triggers" class="narrow" style="text-align:left">Triggers</th>
+                <th data-field="trigger_count" class="narrow"><button data-k="trigger_count">Count</button></th>
+                <th data-field="performance"><button data-k="performance">Performance</button></th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="view" id="coverage" hidden>
+        <div class="ph"><span>Coverage: channels behind the numbers</span><span class="meta">Real data · discovery run 1, Oct 18, 2026</span></div>
+        <div class="cov-top">
+          <div class="m"><div class="k">Tracked</div><div class="v" data-source="coverage_totals" data-field="tracked" data-row="0">—</div></div>
+          <div class="m"><div class="k">Added 7D</div><div class="v" data-source="coverage_totals" data-field="added_7d" data-row="0">—</div></div>
+          <div class="m"><div class="k">Kept by screen</div><div class="v up" data-source="coverage_totals" data-field="kept" data-row="0">—</div></div>
+          <div class="m"><div class="k">Awaiting review</div><div class="v" style="color:var(--amb)" data-source="coverage_totals" data-field="review" data-row="0">—</div></div>
+        </div>
+        <div class="ckey"><span><i style="background:var(--g)"></i>Kept</span><span><i style="background:var(--amb)"></i>Review</span><span><i style="background:#5a1010"></i>Dropped</span></div>
+        <div class="pb">
+          <table data-source="coverage" data-row-key="niche_code" id="cov">
+            <thead><tr>
+              <th data-field="niche_code">Niche</th><th data-field="tracked">Tracked</th><th data-field="anchors" class="narrow">Anchors</th>
+              <th data-field="added_7d" class="narrow">Added 7D</th><th data-field="screened">Screened</th><th data-field="kept">Kept</th>
+              <th data-field="review">Review</th><th data-field="dropped">Dropped</th><th class="narrow">Split</th>
+            </tr></thead><tbody></tbody>
+          </table>
+        </div>
+        <div class="ph"><span>Why channels were dropped</span><span class="meta">all niches</span></div>
+        <div class="pb">
+          <table data-source="drop_reasons" data-row-key="reason" id="cov-why">
+            <thead><tr><th data-field="reason">Reason</th><th data-field="channels">Channels</th><th data-field="share">Share</th></tr></thead><tbody></tbody>
+          </table>
+        </div>
+        <div class="cnote">Tracked counts channels loaded into the database; it stays at zero until the reviewed list is seeded. Anchors are the hand-picked channels in channels.csv. Screened channels come from discovery and are kept, held for review or dropped before seeding.</div>
+      </section>
+      <section class="view" id="des" hidden>
+        <div class="ph"><span>DES: metric definitions</span><span class="meta">Methodology Handbook v1.1 · type DES &lt;CODE&gt;</span></div>
+        <div class="des">
+          <div id="des-list">
+            <table data-source="methodology" data-row-key="code" id="des-tbl">
+              <thead><tr><th data-field="code">Code</th><th data-field="name">Name</th></tr></thead><tbody></tbody>
+            </table>
+          </div>
+          <div class="dcard" id="des-card">
+            <div class="dc" id="des-code">—</div><div class="dn" id="des-name">Pick a metric</div>
+            <dl>
+              <dt>Measures</dt><dd id="des-measures" data-source="methodology" data-field="measures">—</dd>
+              <dt>Formula</dt><dd class="f" id="des-formula" data-source="methodology" data-field="formula">—</dd>
+              <dt>Inputs</dt><dd id="des-inputs" data-source="methodology" data-field="inputs">—</dd>
+              <dt>Read it as</dt><dd id="des-read" data-source="methodology" data-field="read">—</dd>
+              <dt>Handbook</dt><dd id="des-section">—</dd>
+              <dt>Status</dt><dd id="des-status" data-source="methodology" data-field="status">—</dd>
+            </dl>
+          </div>
+        </div>
+      </section>
+      <section class="view help" id="help" hidden>
+        <div class="ph"><span>Help</span><span class="meta">F1</span></div>
+        <div class="pb"><dl>
+          <dt>Commands</dt>
+          <dd>NICHE · TREND · CREATOR [search] · ALERTS · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
+          <dd>$LIFE, $GAME, $FINX … one sector's index. SORT CCOS | SI | NGP | TVE | CHG on the niche table.</dd>
+          <dd>Tab completes a command. Esc goes back to the niche overview and clears the search.</dd>
+          <dt>TVE</dt><dd>Content supply: minutes published by tracked channels in the niche over 28 days.</dd>
+          <dt>SI</dt><dd>Saturation, 0 to 1: uploads per 1,000 views gained over 28 days, against the median niche (0.5).</dd>
+          <dt>NGP</dt><dd>Growth: views gained in the last 7 days ÷ the 7 before. 1.00 is flat.</dd>
+          <dt>CCOS</dt><dd>Opportunity score: 20 × NGP × (1 − SI). A flat, median-saturation niche scores 10.</dd>
+          <dt>CHG% / Trend</dt><dd>CCOS today vs 7 days ago. UP above +3%, DOWN below −3%, else STABLE.</dd>
+          <dt>Risk</dt><dd>Volatility of daily views plus the top 3 channels' share of niche views, split into thirds.</dd>
+          <dt>Index</dt><dd>Simple average CCOS of the sector's niches; its CHG% compares today with 7 days ago.</dd>
+          <dt>News rank</dt><dd>Impact (HIGH 3, MEDIUM 2, LOW 1), halving every 7 days. Tags come from Claude reading each headline; every item links to its source.</dd>
+          <dt>Dog house</dt><dd>Articles whose reporting is negative for creators. Sourced articles only; posts from X need the paid X API and aren't connected.</dd>
+          <dt>Formats</dt><dd>Refreshed from the Trending Formats sheet each morning. Performance = 60 × min(change ÷ 100%, 1) + 40 × min(outlier ÷ 10x, 1). EXCELLENT 80+, STRONG 60+, GOOD 40+, FAIR 20+, else WEAK. A change of "-" counts as 0. Filters: top 10% by performance, change 100%+, outlier 6x+, 3+ triggers.</dd>
+          <dt>Coverage</dt><dd>Per niche: channels tracked in the database, anchors, channels added in the last 7 days, and what screening did with every discovered channel (kept, held for review, dropped and why).</dd>
+          <dt>Definitions</dt><dd>Hover any underlined column or metric name for a one-line definition. DES &lt;code&gt; (for example DES CCOS) opens the full entry: formula, inputs, how to read it and its handbook section. Click an underlined name to open it there too.</dd>
+          <dt>Market temp</dt><dd>HOT above an average CCOS of 12, WARM above 8, else COOL.</dd>
+        </dl></div>
+      </section>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+      <div class="panel" id="trend-mini">
+        <div class="ph"><span>Trend analysis</span><span class="meta">index avg CCOS</span></div>
+        <div class="chart" id="chart-mini" data-source="index_daily"><div class="tip"></div></div>
+        <div class="legend" id="legend-mini" data-source="index_daily"></div>
+      </div>
+      <div class="panel" id="metrics">
+        <div class="ph"><span>Real-time metrics</span><span class="meta" data-source="summary" data-field="asOf" data-row="0">—</span></div>
+        <div class="mgrid">
+          <div class="m"><div class="k">Avg CCOS</div><div class="v" data-source="summary" data-field="avgCcos" data-row="0">—</div></div>
+          <div class="m"><div class="k">Market temp</div><div class="v" data-source="summary" data-field="temp" data-row="0">—</div></div>
+          <div class="m"><div class="k">Top niche</div><div class="v" data-source="summary" data-field="topNiche" data-row="0">—</div></div>
+          <div class="m"><div class="k">Spikes today</div><div class="v" data-source="summary" data-field="spikes" data-row="0">—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel cl" id="command-line">
+    <div class="ph"><span>Command line</span></div>
+    <pre class="log" id="log" aria-live="polite"></pre>
+    <label class="prompt"><b>CONTENT&gt;</b><input id="cmd" type="text" placeholder="Enter command..." autocomplete="off" spellcheck="false" aria-label="Command"></label>
+  </div>
+  <div class="status">
+    <span><span class="dot" id="src-dot">●</span> <span id="src-label">Loading</span></span><span>F1=Help</span><span>Esc=Close</span><span>Tab=Autocomplete</span>
+    <span>Data: daily, as of <span data-source="summary" data-field="asOf" data-row="0">—</span></span>
+    <span class="ver">Content terminal v0.5 · <a href="/logout" style="color:inherit">Log out</a></span>
+  </div>
+</div>
+<script>
+dash.calc('indices', {
+  title: 'Sector indices',
+  description: 'Each sector\'s average niche CCOS on the latest day, and its change from 7 days before.',
+  inputs: ['index_daily'],
+  fn: (index_daily) => {
+    const days = [...new Set(index_daily.map(r => r.day))].sort();
+    const last = days[days.length - 1], prev = days[days.length - 8];
+    const sectors = [...new Set(index_daily.map(r => r.sector))];
+    return sectors.map(sector => {
+      const now = index_daily.find(r => r.sector === sector && r.day === last);
+      const then = index_daily.find(r => r.sector === sector && r.day === prev);
+      const avg_ccos = now ? Number(now.avg_ccos) : null;
+      return {sector, avg_ccos, chg: now && then ? avg_ccos / Number(then.avg_ccos) - 1 : null};
+    });
+  }
+});
+dash.calc('summary', {
+  title: 'Real-time metrics',
+  description: 'Average niche CCOS, market temperature (HOT above 12, WARM above 8), top niche by CCOS, spike count and the latest day of data.',
+  inputs: ['niches', 'alerts', 'index_daily'],
+  fn: (niches, alerts, index_daily) => {
+    const avgCcos = niches.reduce((t, n) => t + Number(n.ccos), 0) / (niches.length || 1);
+    const top = niches.slice().sort((a, b) => Number(b.ccos) - Number(a.ccos))[0];
+    return [{avgCcos, temp: avgCcos > 12 ? 'HOT' : avgCcos > 8 ? 'WARM' : 'COOL', topNiche: top ? top.niche : '—',
+             spikes: alerts.length, asOf: index_daily.reduce((m, r) => r.day > m ? r.day : m, '')}];
+  }
+});
+</script>
+<script>
+dash.loader('formats_sheet', {
+  description: 'The sheet\'s rows as a table: first row as column names, "%" and "x" stripped so change and outlier are numbers, "-" as empty.',
+  fn: ({ answer }) => {
+    const a = typeof answer === 'string' ? JSON.parse(answer) : answer;
+    const v = (a && a.values) || [];
+    if (v.length < 2) throw new Error('The sheet returned no rows (range ' + ((a && a.range) || '?') + ')');
+    const toNum = (x, strip) => { const t = String(x == null ? '' : x).replace(strip, '').trim(); return t === '' || t === '-' ? null : Number(t); };
+    const rows = v.slice(1).filter(r => r[0]).map(r => ({
+      formula: String(r[0]).trim(), change_pct: toNum(r[1], /[%,\s]/g), outlier: toNum(r[2], /[x×\s]/g), triggers: String(r[3] || '').trim()
+    }));
+    return {columns: ['formula', 'change_pct', 'outlier', 'triggers'], rows};
+  }
+});
+dash.calc('formats', {
+  title: 'Format performance',
+  description: 'Each formula with its triggers counted and a performance score: 60 × min(change ÷ 100, 1) + 40 × min(outlier ÷ 10, 1), rated EXCELLENT 80+, STRONG 60+, GOOD 40+, FAIR 20+, else WEAK.',
+  inputs: ['formats_sheet'],
+  fn: (formats_sheet) => formats_sheet.map(r => {
+    const change = r.change_pct == null ? 0 : Number(r.change_pct), out = r.outlier == null ? 0 : Number(r.outlier);
+    const performance = Math.round(Math.min(change / 100, 1) * 60 + Math.min(out / 10, 1) * 40);
+    const list = r.triggers.split(',').map(t => t.trim()).filter(Boolean);
+    return {formula: r.formula, change_pct: r.change_pct, outlier: r.outlier, triggers: list.join(', '), trigger_count: list.length,
+            performance, rating: performance >= 80 ? 'EXCELLENT' : performance >= 60 ? 'STRONG' : performance >= 40 ? 'GOOD' : performance >= 20 ? 'FAIR' : 'WEAK'};
+  })
+});
+dash.calc('format_stats', {
+  title: 'Format key metrics',
+  description: 'Count of formulas, average and maximum change and outlier score, and average performance.',
+  inputs: ['formats'],
+  fn: (formats) => {
+    const ch = formats.filter(r => r.change_pct != null).map(r => Number(r.change_pct)), ou = formats.filter(r => r.outlier != null).map(r => Number(r.outlier));
+    const avg = a => a.reduce((t, x) => t + x, 0) / (a.length || 1);
+    const mx = a => a.length ? Math.max(...a) : null, av = a => a.length ? avg(a) : null;
+    return [{total: formats.length, avg_change: av(ch), max_change: mx(ch), avg_outlier: av(ou), max_outlier: mx(ou),
+             avg_performance: formats.length ? avg(formats.map(r => r.performance)) : null}];
+  }
+});
+dash.calc('triggers', {
+  title: 'Trigger analysis',
+  description: 'For each click trigger: how many formulas use it and their average outlier score.',
+  inputs: ['formats'],
+  fn: (formats) => {
+    const m = {};
+    formats.forEach(r => r.triggers.split(', ').filter(Boolean).forEach(t => {
+      const k = t;
+      m[k] = m[k] || {trigger: k, formats: 0, sum: 0, n: 0}; m[k].formats++;
+      if (r.outlier != null) { m[k].sum += Number(r.outlier); m[k].n++; }
+    }));
+    return Object.values(m).map(x => ({trigger: x.trigger, formats: x.formats, avg_outlier: x.n ? x.sum / x.n : null}))
+      .sort((a, b) => b.formats - a.formats);
+  }
+});
+</script>
+<script>
+dash.calc('coverage_totals', {
+  title: 'Coverage totals',
+  description: 'Sum of each coverage column across niches.',
+  inputs: ['coverage'],
+  fn: (coverage) => {
+    const sum = k => coverage.reduce((a, r) => a + Number(r[k] || 0), 0);
+    return [{tracked: sum('tracked'), added_7d: sum('added_7d'), kept: sum('kept'), review: sum('review'), dropped: sum('dropped')}];
+  }
+});
+dash.calc('drop_reasons', {
+  title: 'Drop reasons',
+  description: 'Dropped channels by reason, summed across niches, with each reason\'s share of all drops.',
+  inputs: ['coverage'],
+  fn: (coverage) => {
+    const names = {non_us: 'Based outside US', off_niche: 'Off-niche', non_english: 'Not in English', brand: 'Brand or company',
+      reupload: 'Re-uploads, clips, AI', news_media: 'News or media outlet', kids: 'Made for kids', other: 'Other or not found'};
+    const rows = Object.keys(names).map(k => ({reason: names[k], channels: coverage.reduce((a, r) => a + Number(r['drop_' + k] || 0), 0)}));
+    const total = rows.reduce((a, r) => a + r.channels, 0);
+    return rows.filter(r => r.channels > 0).map(r => ({...r, share: total ? r.channels / total : 0})).sort((a, b) => b.channels - a.channels);
+  }
+});
+</script>
+<script>
+(() => {
+  const TICK = {'Entertainment': '$ENTX', 'Education': '$EDU', 'Lifestyle': '$LIFE', 'Technology': '$TECH', 'News & Commentary': '$NEWS',
+    'Creative Arts': '$ARTS', 'Gaming': '$GAME', 'Business & Finance': '$FINX', 'Health & Wellness': '$WELL',
+    'Social & Community': '$SOCL', 'Sports': '$SPRT', 'Pets & Animals': '$PETS'};
+  const tk = s => TICK[s] || '$' + s.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase();
+  const N = Number, num = d3.format(','), f2 = d3.format('.2f'), f3 = d3.format('.3f');
+  const compact = v => Intl.NumberFormat('en', {notation: 'compact', maximumFractionDigits: 1}).format(v);
+  const spct = v => v == null || isNaN(v) ? '—' : (v > 0 ? '+' : '') + d3.format('.1%')(v), pct = d3.format('.0%');
+  const cls = v => v > 0.03 ? 'up' : v < -0.03 ? 'dn' : 'fl';
+  const tcls = t => t === 'UP' ? 'up' : t === 'DOWN' ? 'dn' : 'fl';
+  const rcls = r => r === 'HIGH' ? 'dn' : r === 'MEDIUM' ? 'fl' : 'up';
+  const MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const fmtDay = d => d ? `${MON.at(Number(d.slice(5, 7)) - 1)} ${Number(d.slice(8, 10))}, ${d.slice(0, 4)}` : '—';
+  const SORTS = {CCOS: 'ccos', SI: 'si', NGP: 'ngp', TVE: 'tve', CHG: 'chg'};
+  const COLORS = ['#ffb340', '#7dd3ff', '#e8e4da', '#ff8ad8', '#b39dff', '#4dd2c0'];
+  const st = {view: 'niche', sector: null, q: '', sort: 'ccos'};
+  const $ = id => document.getElementById(id);
+  const el = (tag, text, c) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (c) e.className = c; return e; };
+  const td = (tr, text, c) => { const x = tr.insertCell(); x.textContent = text; if (c) x.className = c; return x; };
+
+  // clock
+  const pad = n => String(n).padStart(2, '0');
+  const tickClock = () => { const d = new Date(); const t = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    $('clock').textContent = t; $('stamp').textContent = `${t} ${MON.at(d.getMonth())} ${d.getDate()}, ${d.getFullYear()}`; };
+  tickClock(); setInterval(tickClock, 1000);
+
+  // command log
+  const log = $('log'), input = $('cmd');
+  const say = t => { log.textContent += 'CONTENT> ' + t + '\n'; log.scrollTop = log.scrollHeight; };
+  say('Welcome to Content Terminal v0.5'); say("Type 'help' for available commands");
+
+  function show(v) {
+    st.view = v;
+    document.querySelectorAll('.ct .view').forEach(s => { s.hidden = s.id !== v; });
+    document.querySelectorAll('.ct .fn[data-v]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.v === v)));
+    dash.setLink(v); draw();
+  }
+  document.querySelectorAll('.ct .fn[data-v]').forEach(b => b.addEventListener('click', () => { if (b.dataset.v === 'niche') st.sector = null; show(b.dataset.v); }));
+  document.querySelectorAll('.ct .fn[aria-disabled=true]').forEach(b => b.addEventListener('click', () => say(b.textContent + ': not built yet')));
+  $('search').addEventListener('input', e => { st.q = e.target.value.trim().toLowerCase(); draw(); });
+
+  function fillTicker(id, items) {
+    const run = $(id).querySelector('.run'); run.textContent = '';
+    if (!items.length) return;
+    [0, 1].forEach(() => items.forEach(parts => {
+      const it = el('span', null, 'it');
+      parts.forEach(([t, c], i) => it.append(i === 0 ? Object.assign(el('b', t), c ? {className: c} : {}) : el('span', t, c)));
+      run.append(it);
+    }));
+  }
+
+  function drawSectors(niches, indices) {
+    const box = $('sectors'); box.textContent = '';
+    const q = st.q, k = st.sort;
+    const list = indices.filter(s => !st.sector || tk(s.sector) === st.sector);
+    let first = true;
+    list.forEach(s => {
+      const rows = niches.filter(n => n.sector === s.sector && (!q || n.niche.toLowerCase().includes(q)))
+        .sort((a, b) => N(b[k]) - N(a[k]));
+      if (!rows.length) return;
+      const head = el('div', null, 'sec');
+      const nm = el('div', null, 'nm'); nm.append(el('span', s.sector.toUpperCase()));
+      const sub = el('div', null, 'sub'); sub.append(el('span', s.sector + ' content index'), el('span', tk(s.sector), 'tick'));
+      const v = el('span', ' · avg CCOS ' + f2(s.avg_ccos) + ' ');
+      v.dataset.source = 'indices'; v.dataset.field = 'avg_ccos'; v.dataset.where = 'sector=' + encodeURIComponent(s.sector);
+      const c = el('span', spct(s.chg), cls(s.chg));
+      c.dataset.source = 'indices'; c.dataset.field = 'chg'; c.dataset.where = 'sector=' + encodeURIComponent(s.sector);
+      sub.append(v, c); head.append(nm, sub); box.append(head);
+      const t = el('table'); if (!first) t.className = 'hidehead'; first = false;
+      t.dataset.source = 'niches'; t.dataset.rowKey = 'niche_code';
+      const hr = t.createTHead().insertRow();
+      [['niche', 'Niche'], ['tve', 'TVE'], ['si', 'SI'], ['ngp', 'NGP'], ['ccos', 'CCOS'], ['chg', 'CHG%'], ['trend', 'Trend'], ['risk', 'Risk']].forEach(([f, l]) => {
+        const th = el('th', l, ['tve', 'si', 'ngp'].includes(f) ? 'narrow' : null); th.dataset.field = f; hr.append(th);
+      });
+      const tb = t.createTBody();
+      rows.forEach(n => {
+        const tr = tb.insertRow(); tr.dataset.key = n.niche_code;
+        const c0 = td(tr, n.niche.toUpperCase()); c0.append(el('span', n.tag, 'tag'));
+        td(tr, num(Math.round(N(n.tve))), 'narrow'); td(tr, f3(N(n.si)), 'narrow'); td(tr, f2(N(n.ngp)), 'narrow');
+        td(tr, f2(N(n.ccos))); td(tr, spct(N(n.chg)), cls(N(n.chg))); td(tr, n.trend, tcls(n.trend)); td(tr, n.risk, rcls(n.risk));
+      });
+      box.append(t);
+    });
+    if (!box.childElementCount) box.append(el('p', 'No niches match.'));
+  }
+
+  function drawChart(id, legendId, rows, h) {
+    const box = $(id); box.querySelectorAll('svg').forEach(s => s.remove());
+    const leg = $(legendId); leg.textContent = '';
+    if (!rows.length || !box.clientWidth) return;
+    const sectors = [...new Set(rows.map(r => r.sector))];
+    const ser = sectors.map((s, i) => ({s, c: COLORS[i % COLORS.length], pts: rows.filter(r => r.sector === s).map(r => ({d: new Date(r.day), day: r.day, v: N(r.avg_ccos)}))}));
+    const w = box.clientWidth - 16, m = {t: 8, r: 8, b: 18, l: 30};
+    const x = d3.scaleUtc(d3.extent(rows, r => new Date(r.day)), [m.l, w - m.r]);
+    const y = d3.scaleLinear(d3.extent(rows, r => N(r.avg_ccos)), [h - m.b, m.t]).nice();
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${w} ${h}`).attr('height', h);
+    svg.append('g').selectAll('line').data(y.ticks(5)).join('line').attr('x1', m.l).attr('x2', w - m.r)
+      .attr('y1', d => y(d)).attr('y2', d => y(d)).attr('stroke', '#2a2724');
+    svg.append('g').selectAll('text').data(y.ticks(5)).join('text').attr('x', m.l - 4).attr('y', d => y(d) + 3).attr('text-anchor', 'end').text(d => d3.format('.1f')(d));
+    svg.append('g').selectAll('text').data(x.ticks(Math.max(2, Math.floor(w / 90)))).join('text')
+      .attr('x', d => x(d)).attr('y', h - 4).attr('text-anchor', 'middle').text(d => `${MON.at(d.getUTCMonth())} ${d.getUTCDate()}`);
+    ser.forEach(s => svg.append('path').attr('d', d3.line(p => x(p.d), p => y(p.v))(s.pts)).attr('fill', 'none')
+      .attr('stroke', s.c).attr('stroke-width', 2).attr('stroke-linejoin', 'round').attr('stroke-linecap', 'round')
+      .style('filter', 'drop-shadow(0 0 2px ' + s.c + ')'));
+    const rule = svg.append('line').attr('y1', m.t).attr('y2', h - m.b).attr('stroke', '#8f8a80').attr('stroke-dasharray', '2 3').style('display', 'none');
+    const tip = box.querySelector('.tip');
+    const days = [...new Set(rows.map(r => r.day))].sort();
+    svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', w - m.l - m.r).attr('height', h - m.t - m.b).attr('fill', 'transparent')
+      .on('mousemove', ev => {
+        const [mx] = d3.pointer(ev); const t = x.invert(mx);
+        const day = days.reduce((a, b) => Math.abs(new Date(b) - t) < Math.abs(new Date(a) - t) ? b : a);
+        rule.attr('x1', x(new Date(day))).attr('x2', x(new Date(day))).style('display', null);
+        tip.textContent = '';
+        tip.append(el('div', fmtDay(day), 'dim'));
+        ser.forEach(s => { const p = s.pts.find(q => q.day === day); if (p) { const r = el('div'); const sw = el('span', '■ '); sw.style.color = s.c; r.append(sw, el('span', tk(s.s) + ' ' + f2(p.v))); tip.append(r); } });
+        tip.style.display = 'block';
+        const left = x(new Date(day)) + 14; tip.style.left = Math.min(left, w - tip.offsetWidth) + 'px'; tip.style.top = '8px';
+      })
+      .on('mouseleave', () => { rule.style('display', 'none'); tip.style.display = 'none'; });
+    ser.forEach(s => { const i = el('span'); const sw = el('i'); sw.style.background = s.c; i.append(sw, el('span', tk(s.s) + ' ' + s.s)); leg.append(i); });
+  }
+
+  function drawCreators(rows) {
+    const tb = $('scr').tBodies[0]; tb.textContent = '';
+    rows.filter(r => !st.q || (r.channel + ' ' + r.niche).toLowerCase().includes(st.q))
+      .sort((a, b) => N(b.growth_vs_niche) - N(a.growth_vs_niche))
+      .forEach(r => {
+        const tr = tb.insertRow(); tr.dataset.key = r.channel_id; const g = N(r.growth_vs_niche);
+        td(tr, r.channel.toUpperCase()); td(tr, r.niche.toUpperCase(), 'narrow'); td(tr, compact(N(r.subscribers)));
+        td(tr, spct(N(r.view_growth_28d)), 'narrow'); td(tr, spct(g), g >= 0 ? 'up' : 'dn');
+        td(tr, r.uploads_28d, 'narrow'); td(tr, pct(N(r.outlier_rate)), 'narrow');
+      });
+  }
+
+  function drawAlerts(rows) {
+    const tb = $('alt').tBodies[0]; tb.textContent = '';
+    rows.forEach(r => { const tr = tb.insertRow(); tr.dataset.key = r.channel_id;
+      td(tr, r.channel.toUpperCase()); td(tr, r.niche.toUpperCase(), 'narrow'); td(tr, num(N(r.views_today)), 'dn');
+      td(tr, num(N(r.typical_daily_views))); td(tr, d3.format('.1f')(N(r.z_score)), 'dn'); });
+  }
+
+  const fmtET = p => { const d = new Date(p.replace(' ', 'T') + ':00Z');
+    const f = new Intl.DateTimeFormat('en-US', {timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false}).format(d);
+    return f.toUpperCase() + ' ET'; };
+  function card(n) {
+    const c = el('div', null, 'card'); c.dataset.key = n.url;
+    const r = el('div', null, 'row');
+    r.append(el('span', fmtET(n.published)), el('span', n.category, 'chip'), el('span', n.platform, 'chip'), el('span', n.impact, 'chip' + (n.impact === 'HIGH' ? ' hi' : '')));
+    const a = el('a', n.title); a.href = n.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    const b = el('div', null, 'row');
+    b.append(el('span', n.sentiment, 'chip' + (n.sentiment === 'POSITIVE' ? ' pos' : n.sentiment === 'NEGATIVE' ? ' neg' : '')), el('span', n.source + (n.creators ? ' · ' + n.creators : ''), 'src'));
+    c.append(r, a, b); return c;
+  }
+  function fillList(id, items, empty) {
+    const box = $(id); box.textContent = '';
+    if (!items.length) { box.append(el('div', empty, 'empty')); return; }
+    items.forEach(n => box.append(card(n)));
+  }
+  function drawNews(rows) {
+    const q = st.q, f = rows.filter(n => !q || (n.title + ' ' + n.creators + ' ' + n.source).toLowerCase().includes(q));
+    fillList('n-top', f.slice().sort((a, b) => N(b.score) - N(a.score)), 'No articles.');
+    fillList('n-time', f.slice().sort((a, b) => b.published.localeCompare(a.published)), 'No articles.');
+    fillList('n-creator', f.filter(n => n.creators).sort((a, b) => b.published.localeCompare(a.published)), 'No articles name a creator.');
+    fillList('n-dog', f.filter(n => n.sentiment === 'NEGATIVE').sort((a, b) => b.published.localeCompare(a.published)), 'Nothing negative in the feed.');
+  }
+
+  function analyze(term) {
+    const d = dash.data('niches'), sc = dash.data('screener');
+    if (d.status !== 'ok') { say('Niche data not loaded yet'); return; }
+    const rows = d.data, t = (term || '').toLowerCase();
+    const n = t ? rows.find(r => r.niche.toLowerCase() === t) || rows.find(r => r.niche.toLowerCase().includes(t) || r.tag.toLowerCase() === t)
+                : rows.slice().sort((a, b) => N(b.ccos) - N(a.ccos))[0];
+    if (!n) { say("No niche matches '" + term.toUpperCase() + "'"); return; }
+    const top = sc.status === 'ok' ? sc.data.filter(r => r.niche === n.niche).sort((a, b) => N(b.growth_vs_niche) - N(a.growth_vs_niche)).slice(0, 3) : [];
+    const status = n.trend === 'UP' ? 'Growing' : n.trend === 'DOWN' ? 'Declining' : 'Stable';
+    const lines = ['', 'Analysis for ' + n.niche.toUpperCase() + ' (' + n.tag + ', ' + n.sector.toUpperCase() + ')', '------------------------',
+      'TVE:     ' + num(Math.round(N(n.tve))) + ' content minutes, 28d', 'SI:      ' + f3(N(n.si)), 'NGP:     ' + f2(N(n.ngp)),
+      'CCOS:    ' + f2(N(n.ccos)), 'Trend:   ' + n.trend, 'Risk:    ' + n.risk + ' (volatility ' + f3(N(n.volatility)) + ', top-3 share ' + pct(N(n.cr3)) + ')',
+      'Change:  ' + spct(N(n.chg)), '', 'Status: ' + status, 'Risk level: ' + n.risk];
+    if (top.length) { lines.push('', 'Fastest vs niche:'); top.forEach(r => lines.push('  ' + r.channel.toUpperCase() + '  ' + spct(N(r.growth_vs_niche)))); }
+    log.textContent += lines.join('\n') + '\n\n'; log.scrollTop = log.scrollHeight;
+  }
+  document.querySelector('.ct .fn[data-act=analyze]').addEventListener('click', () => { log.textContent += '> ANALYZE\n'; analyze(''); });
+
+  const fst = {f: 'all', k: 'performance', dir: -1, q: ''};
+  document.querySelectorAll('.ct .flt').forEach(b => b.addEventListener('click', () => {
+    fst.f = b.dataset.f; document.querySelectorAll('.ct .flt').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw(); }));
+  $('fmt-q').addEventListener('input', e => { fst.q = e.target.value.trim().toLowerCase(); draw(); });
+  document.querySelectorAll('#fmt-table th button').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.k; fst.dir = k === fst.k ? -fst.dir : (k === 'formula' ? 1 : -1); fst.k = k; draw(); }));
+  function drawFormats(rows, trg) {
+    const cut = rows.length ? rows.map(r => r.performance).sort((a, b) => b - a)[Math.max(0, Math.ceil(rows.length * 0.1) - 1)] : 0;
+    const pass = {all: () => true, top10: r => r.performance >= cut, change: r => N(r.change_pct) >= 100, outlier: r => N(r.outlier) >= 6, multi: r => r.trigger_count >= 3};
+    const q = fst.q || st.q;
+    const list = rows.filter(pass[fst.f]).filter(r => !q || (r.formula + ' ' + r.triggers).toLowerCase().includes(q));
+    const k = fst.k;
+    list.sort((a, b) => { const x = k === 'formula' ? a[k] : N(a[k] ?? -1), y = k === 'formula' ? b[k] : N(b[k] ?? -1); return (x < y ? -1 : x > y ? 1 : 0) * fst.dir; });
+    $('fmt-filtered').textContent = num(list.length);
+    const tb = $('fmt-table').tBodies[0]; tb.textContent = '';
+    if (!rows.length) { const c = tb.insertRow().insertCell(); c.colSpan = 6; c.className = 'dim'; c.textContent = 'The Trending Formats sheet is not connected to the site yet.'; }
+    list.forEach(r => {
+      const tr = tb.insertRow(); tr.dataset.key = r.formula;
+      td(tr, r.formula, 'f'); td(tr, r.change_pct == null ? '—' : num(N(r.change_pct)) + '%'); td(tr, r.outlier == null ? '—' : N(r.outlier) + 'x');
+      td(tr, r.triggers, 't narrow'); td(tr, r.trigger_count, 'narrow');
+      const c = tr.insertCell(); c.append(el('div', r.rating, 'rt ' + r.rating), el('div', r.performance, 'dim'));
+    });
+    const top = $('fmt-top'); top.textContent = '';
+    rows.slice().sort((a, b) => b.performance - a.performance).slice(0, 5).forEach((r, i) => {
+      const p = el('div', null, 'perf'); p.append(el('div', '#' + (i + 1) + ' ' + r.rating + ' · ' + r.performance, 'r'), el('div', r.formula, 'f'),
+        el('div', (r.change_pct == null ? '—' : num(N(r.change_pct)) + '%') + ' · ' + (r.outlier == null ? '—' : N(r.outlier) + 'x'), 'r'));
+      top.append(p);
+    });
+    const tt = $('trg-table').tBodies[0]; tt.textContent = '';
+    trg.slice(0, 15).forEach(r => { const tr = tt.insertRow(); tr.dataset.key = r.trigger;
+      td(tr, r.trigger); td(tr, r.formats); td(tr, r.avg_outlier == null ? '—' : d3.format('.1f')(r.avg_outlier) + 'x'); });
+  }
+
+  function drawCoverage(rows, why) {
+    const tb = $('cov').tBodies[0]; tb.textContent = '';
+    rows.forEach(r => {
+      const tr = tb.insertRow(); tr.dataset.key = r.niche_code;
+      const sc = N(r.screened);
+      const c0 = td(tr, r.niche_code); c0.append(el('span', ' ' + String(r.niche).toUpperCase(), 'dim'));
+      td(tr, num(N(r.tracked))); td(tr, num(N(r.anchors)), 'narrow'); td(tr, num(N(r.added_7d)), 'narrow');
+      td(tr, num(sc)); td(tr, num(N(r.kept)), 'up'); td(tr, num(N(r.review))); td(tr, num(N(r.dropped)), 'dn');
+      const cell = td(tr, '', 'narrow'), bar = el('div', null, 'cbar'); cell.append(bar);
+      if (sc) [['k', r.kept], ['r', r.review], ['d', r.dropped]].forEach(([c, v]) => { const i = el('i', null, c); i.style.width = (N(v) / sc * 100) + '%'; bar.append(i); });
+    });
+    const tw = $('cov-why').tBodies[0]; tw.textContent = '';
+    (why || []).forEach(r => { const tr = tw.insertRow(); tr.dataset.key = r.reason;
+      td(tr, r.reason); td(tr, num(r.channels)); td(tr, pct(r.share)); });
+  }
+
+  // hover definitions: one line on what each column or metric is and how it's worked out
+  const TIPS = {
+    'TVE': 'Content supply. Minutes of video published by tracked channels in the niche over the last 28 days.',
+    'SI': 'Saturation, 0 to 1. Uploads per 1,000 views gained over 28 days, scaled so the median niche is 0.5. Higher means more supply per view.',
+    'NGP': 'Growth. Views gained in the last 7 days ÷ the 7 days before. 1.00 is flat.',
+    'CCOS': 'Opportunity score. 20 × NGP × (1 − SI). A flat niche at median saturation scores 10.',
+    'CHG%': 'CCOS today vs 7 days ago.',
+    'Trend': 'UP if CCOS rose more than 3% in 7 days, DOWN if it fell more than 3%, else STABLE.',
+    'Risk': 'Volatility of daily views plus the top 3 channels\' share of niche views, split into thirds: LOW, MEDIUM, HIGH.',
+    'Subs': 'Subscribers today.',
+    'Views 28D': 'Views gained in the last 28 days vs the 28 days before.',
+    'Vs niche': 'The creator\'s 28-day view growth minus the median growth in its niche. Positive means outgrowing the niche.',
+    'Upl 28D': 'Videos uploaded in the last 28 days.',
+    'Outlier': 'Share of recent videos with at least 3× the creator\'s typical views at the same age.',
+    'Views today': 'Views the channel gained today across all its videos.',
+    'Typical': 'Average daily views gained over the last 28 days.',
+    'σ': 'How many standard deviations today is above the last 28 days. An alert needs 3σ or more and at least 2× a typical day.',
+    'Uses': 'Title formats in the sheet that use this trigger.',
+    'Avg out.': 'Average outlier score (views vs the channel\'s norm) of the formats using this trigger.',
+    'Triggers': 'The click triggers in the title formula.',
+    'Avg CCOS': 'Simple average CCOS across all niches today.',
+    'Market temp': 'HOT above an average CCOS of 12, WARM above 8, else COOL.',
+    'Top niche': 'The niche with the highest CCOS today.',
+    'Spikes today': 'Channels with a spike alert today (3σ+ and 2× a typical day).',
+    'Tracked': 'Channels loaded into the database and pulled daily. Zero until the reviewed list is seeded.',
+    'Anchors': 'Hand-picked channels from channels.csv, loaded alongside discovered ones.',
+    'Added 7D': 'Channels added to the database in the last 7 days.',
+    'Screened': 'Channels found by discovery and checked by screening (country, recent uploads, model verdict).',
+    'Kept': 'Screened as an independent US creator who fits the niche. These load at seed.',
+    'Kept by screen': 'Screened as an independent US creator who fits the niche. These load at seed.',
+    'Review': 'Borderline: waiting for a person to decide keep or drop.',
+    'Awaiting review': 'Borderline: waiting for a person to decide keep or drop.',
+    'Dropped': 'Screened out: not US-based, not English, off-niche, a brand, a news outlet, re-uploads or made for kids.',
+    'Split': 'Kept, review and dropped as shares of the channels screened in the niche.',
+    'Reason': 'Why screening dropped the channel.',
+    'Channels': 'Dropped channels with this reason, all niches.',
+    'Share': 'This reason\'s share of all dropped channels.'
+  };
+  const tipEl = el('div', null, 'deftip'); $('terminal').append(tipEl);
+  const tipKey = e => (e.firstChild && e.firstChild.nodeType === 3 ? e.firstChild.nodeValue : e.textContent).trim();
+  function markTips() {
+    document.querySelectorAll('.ct th, .ct .m .k').forEach(e => { if (TIPS[tipKey(e)]) e.classList.add('tipped'); });
+  }
+  $('terminal').addEventListener('mouseover', e => {
+    const t = e.target.closest('.tipped'); if (!t) { tipEl.style.display = 'none'; return; }
+    const k = tipKey(t); tipEl.textContent = ''; tipEl.append(el('b', k), document.createTextNode(TIPS[k]));
+    tipEl.style.display = 'block';
+    const box = $('terminal').getBoundingClientRect(), r = t.getBoundingClientRect();
+    let left = r.left - box.left; const w = tipEl.offsetWidth;
+    left = Math.max(4, Math.min(left, box.width - w - 4));
+    let top = r.bottom - box.top + 4;
+    if (top + tipEl.offsetHeight > box.height - 4) top = r.top - box.top - tipEl.offsetHeight - 4;
+    tipEl.style.left = left + 'px'; tipEl.style.top = top + 'px';
+  });
+  $('terminal').addEventListener('mouseleave', () => { tipEl.style.display = 'none'; });
+  const DESMAP = {'TVE': 'TVE', 'SI': 'SI', 'NGP': 'NGP', 'CCOS': 'CCOS', 'CHG%': 'CHG', 'Risk': 'RISK', 'Vs niche': 'VSNICHE',
+    'Outlier': 'OUTLIER', 'σ': 'SPIKE', 'Avg CCOS': 'CCOS', 'Market temp': 'TEMP', 'Tracked': 'COVER', 'Screened': 'COVER'};
+  $('terminal').addEventListener('click', e => {
+    const t = e.target.closest('.tipped'); if (!t) return;
+    const code = DESMAP[tipKey(t)]; if (!code) return;
+    st.des = code; tipEl.style.display = 'none'; show('des'); say('DES ' + code);
+  });
+
+  st.des = 'CCOS';
+  function drawDes(rows) {
+    const tb = $('des-tbl').tBodies[0]; tb.textContent = '';
+    rows.forEach(r => { const tr = tb.insertRow(); tr.dataset.key = r.code; if (r.code === st.des) tr.className = 'on';
+      td(tr, r.code); td(tr, r.name); tr.addEventListener('click', () => { st.des = r.code; draw(); }); });
+    const r = rows.find(x => x.code === st.des);
+    const set = (id, v) => { $(id).textContent = v || '—'; };
+    set('des-code', r && r.code); set('des-name', r ? r.name : 'Pick a metric'); set('des-measures', r && r.measures);
+    set('des-formula', r && r.formula); set('des-inputs', r && r.inputs); set('des-read', r && r.read);
+    set('des-section', r && (r.section + (r.ref && r.ref !== '—' ? ' · Formula Library ' + r.ref : '')));
+    set('des-status', r && r.status);
+    ['measures', 'formula', 'inputs', 'read', 'status'].forEach(f => { $('des-' + f).dataset.where = r ? 'code=' + encodeURIComponent(r.code) : ''; });
+  }
+
+  function draw() {
+    const ni = dash.data('niches'), ix = dash.data('indices'), id = dash.data('index_daily'), sc = dash.data('screener'),
+          al = dash.data('alerts'), su = dash.data('summary');
+    const s = su.status === 'ok' ? su.data[0] : null;
+    document.querySelectorAll('[data-source="summary"][data-field]').forEach(e => {
+      const f = e.dataset.field, v = s ? s[f] : null;
+      e.textContent = v == null ? '—' : f === 'asOf' ? fmtDay(v) : f === 'avgCcos' ? f2(v) : typeof v === 'number' ? num(v) : String(v).toUpperCase();
+      e.className = e.className.replace(/\b(up|dn|fl)\b/g, '').trim();
+      if (s && f === 'temp') e.classList.add(v === 'HOT' ? 'up' : v === 'WARM' ? 'fl' : 'dn');
+    });
+    if (ni.status === 'ok') fillTicker('tk-niches', ni.data.slice().sort((a, b) => N(b.ccos) - N(a.ccos)).map(n =>
+      [[n.niche.toUpperCase()], [n.tag, 'dim'], ['CCOS ' + f2(N(n.ccos))], [spct(N(n.chg)), cls(N(n.chg))]]));
+    if (sc.status === 'ok') fillTicker('tk-creators', sc.data.slice(0, 15).map(r =>
+      [[r.channel.toUpperCase()], [compact(N(r.subscribers)) + ' subs', 'dim'], [spct(N(r.view_growth_28d)) + ' views 28D', N(r.view_growth_28d) >= 0 ? 'up' : 'dn']]));
+    if (ix.status === 'ok') fillTicker('tk-index', ix.data.map(r =>
+      [[r.sector.toUpperCase() + ' INDEX'], [tk(r.sector), 'dim'], ['AVG CCOS ' + f2(r.avg_ccos)], [spct(r.chg), cls(r.chg)]]));
+    if (ni.status === 'ok' && ix.status === 'ok') drawSectors(ni.data, ix.data); else $('sectors').textContent = '';
+    if (id.status === 'ok') {
+      drawChart('chart-mini', 'legend-mini', id.data, 170);
+      if (st.view === 'trend') drawChart('chart-big', 'legend-big', id.data, 340);
+    }
+    if (sc.status === 'ok') drawCreators(sc.data);
+    if (al.status === 'ok') drawAlerts(al.data);
+    const nw = dash.data('news'); if (nw.status === 'ok') drawNews(nw.data);
+    const me = dash.data('methodology');
+    if (me.status === 'ok') drawDes(me.data); else $('des-tbl').tBodies[0].textContent = '';
+    const cv = dash.data('coverage'), cw = dash.data('drop_reasons'), ct = dash.data('coverage_totals');
+    if (cv.status === 'ok') drawCoverage(cv.data, cw.status === 'ok' ? cw.data : []);
+    else { $('cov').tBodies[0].textContent = ''; $('cov-why').tBodies[0].textContent = ''; }
+    const t0 = ct.status === 'ok' ? ct.data[0] : null;
+    document.querySelectorAll('[data-source="coverage_totals"][data-field]').forEach(e => { const v = t0 ? t0[e.dataset.field] : null; e.textContent = v == null ? '—' : num(v); });
+    const fm = dash.data('formats'), fs = dash.data('format_stats'), tg = dash.data('triggers');
+    if (fm.status === 'ok' && tg.status === 'ok') drawFormats(fm.data, tg.data);
+    const s2 = fs.status === 'ok' ? fs.data[0] : null;
+    document.querySelectorAll('[data-source="format_stats"][data-field]').forEach(e => {
+      const f = e.dataset.field, v = s2 ? s2[f] : null;
+      e.textContent = v == null ? '—' : f === 'total' ? num(v) : /change/.test(f) ? d3.format(',.1f')(v) + '%' : /outlier/.test(f) ? d3.format('.1f')(v) + 'x' : d3.format('.0f')(v);
+    });
+    markTips();
+  }
+
+  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '$LIFE', '$GAME', '$FINX'];
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      const v = input.value.trim().toUpperCase(); const m = CMDS.filter(c => c.startsWith(v));
+      if (v && m.length) { e.preventDefault(); input.value = m.length === 1 ? m[0] + ' ' : v; if (m.length > 1) say(m.join('  ')); }
+      return;
+    }
+    if (e.key !== 'Enter') return;
+    const raw = input.value.trim(); input.value = ''; if (!raw) return;
+    log.textContent += '> ' + raw.toUpperCase() + '\n';
+    const [c, ...rest] = raw.split(/\s+/); const C = c.toUpperCase(), arg = rest.join(' ');
+    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
+    else if (C === 'NICHE' || C === 'MARKET') { st.sector = null; show('niche'); say('Niche market overview'); }
+    else if (C.startsWith('$')) { st.sector = C; show('niche'); say('Index ' + C); }
+    else if (C === 'TREND') { show('trend'); say('Trend analysis: index average CCOS by day'); }
+    else if (C === 'CREATOR' || C === 'SCREEN') { $('search').value = arg; st.q = arg.toLowerCase(); show('creator'); say(arg ? 'Creators matching ' + arg.toUpperCase() : 'Creator screener'); }
+    else if (C === 'ALERTS') { show('alerts'); say('Spike alerts for today'); }
+    else if (C === 'NEWS') { show('news'); say('News feed'); }
+    else if (C === 'FORMATS') { $('fmt-q').value = arg; fst.q = arg.toLowerCase(); show('formats'); say(arg ? 'Formats matching ' + arg.toUpperCase() : 'Title formats, from the Trending Formats sheet'); }
+    else if (C === 'DES') {
+      const me = dash.data('methodology'), want = arg.trim().toUpperCase().replace(/%$/, '');
+      const hit = me.status === 'ok' && want ? me.data.find(r => r.code === want || r.name.toUpperCase() === want) : null;
+      if (hit) st.des = hit.code;
+      show('des'); say(hit ? 'DES ' + hit.code + ': ' + hit.name : want ? "No metric '" + want + "'. Pick one from the list." : 'Metric definitions');
+    }
+    else if (C === 'COVERAGE') { show('coverage'); say('Coverage: tracked and screened channels per niche'); }
+    else if (C === 'ANALYZE') { analyze(arg); }
+    else if (C === 'SORT') { const k = SORTS[arg.toUpperCase()]; if (k) { st.sort = k; show('niche'); say('Niches sorted by ' + arg.toUpperCase()); } else say('Sort by: ' + Object.keys(SORTS).join(', ')); }
+    else if (C === 'CLEAR') log.textContent = '';
+    else say("Unknown command '" + raw.toUpperCase() + "'. Type 'help'.");
+  });
+  document.getElementById('terminal').addEventListener('keydown', e => {
+    const map = {F1: 'help', F2: 'niche', F3: 'trend', F4: 'creator', F5: 'alerts', F6: 'news', F7: 'formats', F8: 'coverage', F9: 'des'};
+    if (map[e.key]) { e.preventDefault(); show(map[e.key]); }
+    if (e.key === 'Escape') { $('search').value = ''; st.q = ''; st.sector = null; show('niche'); }
+  });
+
+  const start = document.getElementById(location.hash.slice(1));
+  if (start && start.classList.contains('view')) show(start.id);
+  dash.onData(draw);
+})();
+</script>
+
+<script>
+document.addEventListener('terminal:meta', e => {
+  const m = e.detail || {}, lab = document.getElementById('src-label'), dot = document.getElementById('src-dot');
+  const synthetic = m.source === 'synthetic';
+  lab.textContent = !m.source ? 'No data' : synthetic ? 'SYNTHETIC DATA: made-up channels, not results' : 'Live data';
+  dot.style.color = synthetic ? 'var(--amb)' : m.source ? 'var(--g)' : 'var(--red)';
+  if (synthetic) document.getElementById('terminal').style.outline = '2px solid var(--amb)';
+});
+dash.start();
+</script>
+</body></html>

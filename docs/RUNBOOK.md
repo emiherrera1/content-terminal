@@ -24,10 +24,11 @@ engineer can take it over without a handoff call.
 
 | Job | When | Command | Stages (critical in bold) |
 | --- | --- | --- | --- |
-| daily | 7:17 AM ET every day (`.github/workflows/daily.yml`) | `python -m terminal run daily` | **pull_youtube**, pull_tiktok, pull_instagram, classify_channels, classify_videos, news, tag, comments, **compute**, later, quality_gate, **export** |
-| weekly | Mondays 8:03 AM ET (`weekly.yml`) | `python -m terminal run weekly` | google_trends, outcome_csvs, outside_estimates, **compute**, later, audit_sheet, **export** |
+| daily | 7:17 AM ET every day (`.github/workflows/daily.yml`) | `python -m terminal run daily` | **pull_youtube**, pull_tiktok, pull_instagram, classify_channels, classify_videos, news, tag, comments, **compute**, later, quality_gate, **export**, site; then publishes the site |
+| weekly | Mondays 8:03 AM ET (`weekly.yml`) | `python -m terminal run weekly` | google_trends, outcome_csvs, outside_estimates, **compute**, later, audit_sheet, **export**, site; then publishes the site |
 | rebuild | by hand, after a formula or config change | `python -m terminal run rebuild` | tag, **compute**, later, quality_gate, **export** |
 | tests | every push to main (`tests.yml`) | `python -m pytest -q` | 60+ tests, including a synthetic world |
+| site | by hand (`site.yml`) | `python -m terminal site [--demo]` + `site/deploy.sh` | publishes terminal.cvaccelerator.com with live or synthetic data |
 | setup | by hand (`setup.yml`) | discover / screen / seed | adds channels; never run seed without a reviewed screening file |
 
 Every stage writes a row to `pipeline_runs` (ok, warn, failed, skipped, with attempts and a detail line). A critical
@@ -46,6 +47,10 @@ whether the last daily and weekly runs had failures. It exits 1 when anything is
 | `MOTHERDUCK_TOKEN` | every job | set |
 | `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET` | 9.x | not yet: TikTok Research API access is by application (C-CPAR may qualify as a non-profit researcher) |
 | `INSTAGRAM_ACCESS_TOKEN`, `INSTAGRAM_BUSINESS_ID` | 9.x | not yet: needs a Facebook app and an Instagram professional account |
+| `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | publishing terminal.cvaccelerator.com | not yet: see `site/README.md` |
+| `FORMATS_SHEET_CSV_URL` | the site's Formats view | optional: the sheet's publish-to-web CSV link |
+
+The site password is not a GitHub secret. It lives only in Cloudflare (`TERMINAL_PASSWORD` on the Pages project).
 
 Keys never go in chat, code or config files.
 
@@ -72,6 +77,8 @@ Keys never go in chat, code or config files.
 | quality_gate yellow, completeness below 95% | channels deleted, made private, or a partial pull | `SELECT * FROM data_quality_daily ORDER BY d DESC` to see the day; figures that day are partial and flagged. |
 | **compute** red | a formula change broke on real data | Revert the last commit to `terminal/` and rerun `run rebuild`; the raw data is untouched. |
 | later yellow | a statistic failed on real data | Core tables and exports are fine. Run `TERMINAL_DEBUG=1 python -m terminal run rebuild` locally to see the traceback. |
+| site not updating | Cloudflare secrets missing (the run shows a notice), or the token expired | `site/README.md` steps 5 and 6. The site keeps serving the last good publish. |
+| terminal.cvaccelerator.com shows 522 | domain added in Cargo before Cloudflare, or removed in Cloudflare | Pages project > Custom domains > add it again. |
 | health says STALE | the daily job didn't run, or failed at the pull | Check the Actions tab; rerun with "Run workflow". YouTube has no history endpoint, so a missed day can't be recovered later; the gap-fill rule (1.4) spreads the next day's gain across it. |
 
 ## Changing a formula

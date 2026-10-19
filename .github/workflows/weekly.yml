@@ -18,7 +18,13 @@ jobs:
       - run: python -m terminal run weekly
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          FORMATS_SHEET_CSV_URL: ${{ secrets.FORMATS_SHEET_CSV_URL }}
           TERMINAL_DB: md:content_terminal
+      - if: always()
+        run: site/deploy.sh
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - if: always()
         uses: actions/upload-artifact@v4
         with:

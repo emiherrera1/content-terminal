@@ -24,7 +24,14 @@ jobs:
           TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
           INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
           INSTAGRAM_BUSINESS_ID: ${{ secrets.INSTAGRAM_BUSINESS_ID }}
+          FORMATS_SHEET_CSV_URL: ${{ secrets.FORMATS_SHEET_CSV_URL }}
           TERMINAL_DB: md:content_terminal
+      # terminal.cvaccelerator.com: the page, today's data files and the password gate go to Cloudflare Pages
+      - if: always()
+        run: site/deploy.sh
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - if: always()
         run: python -m terminal health
         env:

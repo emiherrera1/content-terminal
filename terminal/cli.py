@@ -76,7 +76,7 @@ def pull(con):
 def main(argv=None):
     p = argparse.ArgumentParser(prog="terminal", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("command", choices=["discover", "screen", "seed", "pull", "classify", "classify-videos", "index", "watchlist", "review",
-                                      "call", "resolve", "calls", "migrate-ctncs", "audit", "news", "compute", "export", "daily", "run", "health", "demo", "dictionary"])
+                                      "call", "resolve", "calls", "migrate-ctncs", "audit", "news", "compute", "export", "daily", "run", "health", "demo", "dictionary", "site"])
     p.add_argument("--limit", type=int, help="classify at most this many channels")
     p.add_argument("--redo", action="store_true", help="reclassify channels nobody has reviewed yet")
     p.add_argument("query", nargs="*", help="index: a topic name or CTNCS code, e.g. woodworking or 02.05.010.019")
@@ -95,6 +95,7 @@ def main(argv=None):
     p.add_argument("--clean", choices=["yes", "no"], help="review: no conduct or legal issues found")
     p.add_argument("--videos", action="store_true", help="audit: sample video topics instead of channel codes")
     p.add_argument("--record", help="audit: load a filled audit sheet")
+    p.add_argument("--demo", action="store_true", help="site: build from the synthetic world, labeled SYNTHETIC")
     a = p.parse_args(argv)
 
     if a.command == "demo":      # synthetic world in its own database; never opens the real one
@@ -104,6 +105,13 @@ def main(argv=None):
     if a.command == "dictionary":
         from . import demo, dictionary
         print(dictionary.write(store.connect(str(demo.DB))))
+        return
+
+    if a.command == "site" and a.demo:
+        from . import demo, site
+        if not demo.DB.exists():
+            demo.main()
+        print(site.build(store.connect(str(demo.DB)), source="synthetic")["rows"])
         return
 
     con = store.connect()
@@ -194,6 +202,9 @@ def main(argv=None):
         r = pipeline.run(con, job)
         if not r["ok"]:
             raise SystemExit(f"{job} failed at: {', '.join(r['failed'])}")
+    elif a.command == "site":
+        from . import site
+        print(site.build(con)["rows"])
     elif a.command == "health":
         from . import pipeline
         ok, lines = pipeline.health(con)

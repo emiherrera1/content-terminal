@@ -2,3 +2,5 @@ data/
 __pycache__/
 .env
 .pytest_cache/
+site/public/data/
+node_modules/

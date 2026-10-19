@@ -1,0 +1,31 @@
+name: site
+
+# Publish terminal.cvaccelerator.com by hand: after a page change, or to put the synthetic world up for a demo.
+# The daily and weekly jobs publish live data on their own.
+on:
+  workflow_dispatch:
+    inputs:
+      data:
+        description: "live (from the database) or synthetic (made-up channels, labeled SYNTHETIC on the page)"
+        type: choice
+        options: [live, synthetic]
+        default: live
+
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m terminal site ${{ inputs.data == 'synthetic' && '--demo' || '' }}
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          FORMATS_SHEET_CSV_URL: ${{ secrets.FORMATS_SHEET_CSV_URL }}
+          TERMINAL_DB: md:content_terminal
+      - run: site/deploy.sh
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
