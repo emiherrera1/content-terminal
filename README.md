@@ -127,3 +127,9 @@ SI and RISK are relative: they rank niches against the others being tracked.
 - A dashboard over the four exports for design partners
 - Audit workflow: mark reviewed classifications and correct codes
 - Second platform once the YouTube version has paying interest
+
+## Methodology
+
+`config/methodology.csv` is the registry of every metric code the terminal shows (what it measures, formula, inputs,
+how to read it, handbook section). It feeds both the Methodology Handbook's quick reference and the terminal's DES
+page. Change a definition here, in the same commit as the code change, and log it in the handbook's change log.

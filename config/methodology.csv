@@ -1,0 +1,27 @@
+code,name,section,ref,measures,formula,inputs,read,status
+ATTN,Attention,Topic metrics,3.1,Views gained in a day by every tracked video in a topic and its sub-topics.,"A(k,t) = sum of views gained on day t by videos in k and below",Daily video snapshots,The headline daily number for any topic.,Built
+SHARE,Share of attention,Topic metrics,3.6,A topic's attention as a share of its parent topic's.,S = A(topic) ÷ A(parent); change in points vs 28 days ago,28 days,Removes platform-wide swings. Rising share means the topic is gaining.,Built
+WOW,Week-over-week growth,Topic metrics,3.7,Attention in the last 7 days vs the 7 days before.,WoW = Σ7 A ÷ prior Σ7 A − 1,14 days,Shown as CHG% for topics. NGP = WoW + 1.,Built
+ACC,Acceleration,Topic metrics,3.9,Whether growth itself is speeding up.,Acc = WoW today − WoW 7 days ago,21 days,Earliest sign of a turn.,Built
+NCS,New-creator share,Topic metrics,3.13,Share of a topic's attention won by creators new to it.,Σ28 A from creators new to the topic ÷ Σ28 A,28 days; new = first upload in topic within 90 days,High means the topic is still open to newcomers.,Built
+CR3,Top-3 concentration,Topic metrics,3.12,Top 3 creators' share of a topic's attention.,Sum of the 3 largest creator shares of Σ28 A,28 days,High means a few creators own the topic.,Built
+HHI,Concentration index,Topic metrics,3.12,How concentrated a topic's attention is across creators.,Σ (creator share × 100)²,28 days,"Under 1,500 competitive; 1,500 to 2,500 moderate; over 2,500 concentrated.",Built
+THIN,Minimum sample,Topic metrics,3.20,Flags topics too small to read.,THIN if fewer than 30 videos with gains or 5 creators in 28 days,28 days,Treat a THIN topic's figures as unreliable.,Built
+CIDX,Content Index,Content Index,4.3,"A topic's attention over time on a fixed basket of creators, base 100.",I(t) = I(t−1) × matched attention today ÷ matched attention yesterday,Quarterly basket; 10% creator cap,Comparable over time; new creators don't move it.,Built
+TRIDX,Trend index,Content Index,4.4,The Content Index smoothed over 7 days.,Geometric average of the last 7 daily index levels,7 days,The headline line on charts.,Built
+RS,Relative strength,Content Index,4.7,A topic's index against its parent's.,RS = I(topic) ÷ I(parent) × 100,Daily,Above 100 means outperforming its sector.,Built
+TVE,Content supply,Niche opportunity,3.2,Minutes of video published in the niche.,Σ28 minutes published by tracked channels,28 days,More minutes means more competition for attention.,Built
+SI,Saturation,Niche opportunity,3.5,"Content made per unit of audience demand, 0 to 1.","x = uploads ÷ (views gained ÷ 1,000); SI = x ÷ (x + median x)",28 days,0.5 is the median niche. Above 0.5 is crowded.,Built
+NGP,Growth,Niche opportunity,3.7,Views gained in the last 7 days vs the 7 before.,NGP = Σ7 A ÷ prior Σ7 A,14 days,1.00 is flat; 1.20 is 20% growth.,Built
+CCOS,Opportunity score,Niche opportunity,3.17,How attractive a niche is: growing and under-supplied.,CCOS = 20 × NGP × (1 − SI),14 to 28 days,10 is a flat niche at median saturation. Higher is better.,Built
+CHG,CCOS change,Niche opportunity,3.17,CCOS today vs 7 days ago.,CHG% = CCOS today ÷ CCOS 7 days ago − 1,7 days,"Trend is UP above +3%, DOWN below −3%.",Built
+RISK,Risk,Niche opportunity,3.18,Volatility and concentration of a niche.,"Average of the percentile ranks of volatility and CR3, split into thirds",28 days,"LOW, MEDIUM or HIGH.",Built
+TEMP,Market temperature,Niche opportunity,3.17,The overall mood across niches.,"HOT if average CCOS > 12, WARM if > 8, else COOL",Daily,A one-word read of the whole market.,Built
+IA,Intent-weighted attention,Demand Signal Score,6.1,Attention weighted by how buying-oriented each video's format is.,"Σ views gained × format weight (reviews 1.0, tutorials 0.6, other 0.2)",Daily,The demand input to DSS.,Built
+DSS,Demand Signal Score,Demand Signal Score,6.4,How unusual a topic's buying-oriented attention is today.,0.4 z(WoW of IA) + 0.2 z(Acc) + 0.2 z(ΔShare) + 0.2 z(NCS),z over 26 weeks; needs 28 days,0 is normal for the topic. Alert at 2+ for 5 days.,Built
+OUTLIER,Outlier score,Video metrics,2.3,A video's views vs its creator's norm at the same age.,O = views at age a ÷ median views of the creator's last 30 videos at age a,Last 30 videos,1.0 is typical; 3.0 is three times the norm.,Built
+BREAKOUT,Breakout,Video metrics,2.5,A video beating both its creator and its market.,Outlier ≥ 3 and views ≥ 90th percentile of its topic at the same age,Same-age comparison,Both conditions must hold.,Built
+VSNICHE,Vs niche,Creator metrics,5.2,A creator's growth minus its niche's median growth.,G28(creator) − median G28 of the niche,28 days,Positive means outgrowing the niche.,Built
+CVS,Creator Viability Score,Creator metrics,5.11,"How investable a creator looks, 0 to 100.","25 momentum + 20 consistency + 20 audience depth + 20 market opportunity + 15 hit dependence, each a niche percentile",20 videos; 90 days,"Watch 60+, Priority 75+ for 14 days, Diligence-ready 85+ for 28 days.",Built
+SPIKE,Spike z-score,Alerts,7.1,How far today's channel views are above the last 28 days.,z = (today − 28-day mean) ÷ 28-day standard deviation,28 days; 7-day minimum,Alert at 3σ+ and 2× a typical day.,Built
+COVER,Coverage,Data sources and universe,—,"Channels behind the numbers, per niche.","Tracked, added in 7 days, and screening verdicts per niche",Daily,Read any figure alongside the coverage behind it.,Built
