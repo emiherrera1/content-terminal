@@ -62,6 +62,18 @@ CREATE TABLE IF NOT EXISTS video_classifications (
     reviewed       BOOLEAN DEFAULT false,
     classified_at  TIMESTAMP DEFAULT now()
 );
+-- 10.3 hand audits of classifications: one row per item checked
+CREATE TABLE IF NOT EXISTS classification_audits (
+    audited_on     DATE,
+    kind           VARCHAR,      -- channel | video
+    item_id        VARCHAR,
+    sector         VARCHAR,      -- sector of the code the model assigned
+    assigned_code  VARCHAR,
+    correct_code   VARCHAR,
+    correct        BOOLEAN,
+    auditor        VARCHAR,
+    PRIMARY KEY (audited_on, kind, item_id)
+);
 ALTER TABLE videos ADD COLUMN IF NOT EXISTS description VARCHAR;
 ALTER TABLE videos ADD COLUMN IF NOT EXISTS tags VARCHAR;
 """

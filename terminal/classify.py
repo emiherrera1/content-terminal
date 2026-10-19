@@ -80,3 +80,55 @@ def audit_sample(con, n: int = 25):
         "SELECT k.channel_id, c.title, k.ctncs_code, k.confidence, k.rationale "
         "FROM classifications k JOIN channels c USING (channel_id) "
         "WHERE NOT k.reviewed ORDER BY random() LIMIT ?", [n]).fetchall()
+
+
+def audit_sheet(con, kind: str = "video", n: int = 25, out_dir: str = "data/audits") -> str:
+    """10.3: write a random sample of unreviewed classifications to a CSV for a person to check.
+
+    Fill in correct_code only where the assigned code is wrong (leave it blank when it is right), then load it
+    with `python -m terminal audit --record <file>`."""
+    import csv
+    import datetime as dt
+    import os
+    if kind == "video":
+        rows = con.execute(
+            "SELECT k.video_id, v.title, k.topic_code, k.format_label, k.confidence "
+            "FROM video_classifications k JOIN videos v USING (video_id) "
+            "WHERE NOT k.reviewed AND k.topic_code <> 'unclassified' ORDER BY random() LIMIT ?", [n]).fetchall()
+    else:
+        rows = [(r[0], r[1], r[2], "", r[3]) for r in audit_sample(con, n)]
+    os.makedirs(out_dir, exist_ok=True)
+    path = f"{out_dir}/{kind}-audit-{dt.date.today().isoformat()}.csv"
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["kind", "item_id", "title", "assigned_code", "format", "confidence", "correct_code"])
+        for item, title, code, fmt, conf in rows:
+            w.writerow([kind, item, title, code, fmt or "", conf, ""])
+    return path
+
+
+def record_audit(con, path: str, auditor: str | None = None, audited_on=None) -> dict:
+    """Load a filled audit sheet: store each verdict, fix wrong codes, and mark every checked item reviewed."""
+    import csv
+    import datetime as dt
+    audited_on = audited_on or dt.date.today()
+    n = wrong = 0
+    with open(path, newline="", encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            kind, item, assigned = r["kind"].strip(), r["item_id"].strip(), r["assigned_code"].strip()
+            fixed = (r.get("correct_code") or "").strip()
+            ok = not fixed or fixed == assigned
+            con.execute("INSERT OR REPLACE INTO classification_audits VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                        [audited_on, kind, item, assigned.split(".")[0], assigned, fixed or assigned, ok, auditor])
+            parts = (fixed or assigned).split(".")
+            lv = lambda i: ".".join(parts[:i]) if len(parts) >= i else None
+            if kind == "video":
+                con.execute("UPDATE video_classifications SET reviewed = true, topic_code = ?, sector = ?, category = ?, "
+                            "niche = ?, subniche = ? WHERE video_id = ?",
+                            [fixed or assigned, lv(1), lv(2), lv(3), lv(4), item])
+            else:
+                con.execute("UPDATE classifications SET reviewed = true, ctncs_code = ?, sector = ?, category = ?, "
+                            "niche = ? WHERE channel_id = ?", [fixed or assigned, lv(1), lv(2), lv(3), item])
+            n += 1
+            wrong += not ok
+    return {"checked": n, "wrong": wrong, "error_rate": wrong / n if n else None}

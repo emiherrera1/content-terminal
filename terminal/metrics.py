@@ -269,7 +269,8 @@ GROUP BY ALL;
 
 EXPORTS = ["niche_daily", "niche_momentum", "screener", "alerts", "niche_opportunity", "niche_opportunity_daily", "content_daily", "content_format_daily",
            "topic_series", "topic_current", "topic_index", "topic_alerts", "video_metrics", "creator_coverage",
-           "creator_metrics", "creator_watchlist", "creator_alerts", "news_ranked"]
+           "creator_metrics", "creator_watchlist", "creator_alerts", "news_ranked",
+           "creator_subs", "topic_breaks", "data_quality_daily", "audit_error_rate", "topic_crosswalk"]
 
 
 def build(con) -> None:

@@ -12,6 +12,8 @@ windows:
   z_history_days: 182        # 6.4 z-scores against the topic's own last 26 weeks
   z_min_history: 28          # fewer prior days than this -> no DSS
   gap_fill_max_days: 7       # 1.4 spread a gain over at most this many missed days
+  ewma_alpha: 0.25           # 3.8 weight on the newest day in the smoothed trend
+  break_window_days: 14      # 1.11 days either side of a structural break used for the splice factor
 
 thresholds:
   breakout_outlier: 3        # 2.5 and 7.2
@@ -25,6 +27,11 @@ thresholds:
   dss_alert: 2               # 7.6 DSS at or above this ...
   dss_alert_days: 5          # ... for this many consecutive days
   newcomer_top: 10           # 7.5 a new creator entering the topic's top N by 7-day attention
+  min_confidence: 0.7        # 10.2 a classification counts as confident at or above this
+  audit_error_max: 0.15      # 10.3 audit error rate above this flags a prompt or codebook fix
+
+breaks:                      # 1.11 dates a platform changed how it counts (Aug 24, 2026: YouTube views count from playback start)
+  - 2026-08-24
 
 index:
   base_date: null            # 4.8 null = each topic's first full day of data; set to e.g. 2026-11-02 once data starts

@@ -65,16 +65,26 @@ python -m terminal index woodworking        # or a code: python -m terminal inde
 
 ## Formula Library tables
 
-`compute` (and the daily job) also rebuilds the tables in `terminal/formulas.py`, which implement the "Next" set of the Formula Library (Google Drive: "Content Terminal: Formula Library"). Every threshold and weight is in `config/formulas.yaml`.
+`compute` (and the daily job) also rebuilds the tables in `terminal/formulas.py`, which implement the Formula Library (Google Drive: "Content Terminal: Formula Library"). Every threshold and weight is in `config/formulas.yaml`.
 
 | Table | Formulas | What it holds |
 | --- | --- | --- |
 | `video_metrics` | 2.1-2.5, 2.8-2.9 | Views at 1 and 7 days, outlier score against the creator's own videos at the same age, score against the topic, breakout flag, engagement and comment rates |
 | `creator_coverage` | 1.6-1.7 | Share of a creator's daily views the terminal attributes to topics, and back-catalog views |
-| `topic_series` | 3.1-3.10, 3.13, 3.15, 6.1, 6.4 | Per topic per day: attention, share of parent, growth, acceleration, weekday-adjusted attention, views per minute published, new-creator share, intent-weighted attention and the Demand Signal Score |
-| `topic_current` | 3.3, 3.11-3.12, 3.20 | Latest day: active creators, breadth, HHI, CR3 and the THIN flag |
+| `topic_series` | 3.1-3.10, 3.13, 3.15, 6.1, 6.4, 10.2 | Per topic per day: attention, share of parent, growth, smoothed trend (MA7 and EWMA), acceleration, weekday-adjusted attention, views per minute published, new-creator share, intent-weighted attention, the Demand Signal Score and the share of attention from confident classifications |
+| `topic_current` | 3.3, 3.11-3.12, 3.20, 10.2 | Latest day: active creators, breadth, advance-decline, HHI, CR3, 28-day confident share and the THIN flag |
 | `topic_index` | 4.1-4.7 | Chain-linked index (100 on the base date), trend index, relative strength against the parent topic |
 | `topic_alerts` | 7.2-7.6 | Latest day's topic surges, share shifts, demand signals, newcomer wins and video breakouts |
+| `creator_subs` | 1.8 | Subscriber changes that clear YouTube's rounding step, and an estimate that spreads each step over the days since the last |
+| `topic_breaks` | 1.11 | Splice factor per topic around each break date in `breaks:` (config/formulas.yaml) |
+| `data_quality_daily` | 10.1-10.2 | Per day: channels tracked vs snapshotted (pull completeness), and the share of views from confident or unclassified videos |
+| `audit_error_rate` | 10.3 | Latest hand audit by sector: items checked, wrong, error rate, and a `needs_fix` flag above 15% |
+| `topic_crosswalk` | 6.5 | `config/crosswalk.csv`: each niche's consumer categories, NAICS codes, public companies and private brands (draft) |
+
+**Auditing classifications (10.3).** `python -m terminal audit --videos` writes a sheet of 25 unreviewed video
+classifications to `data/audits/`. Fill in `correct_code` only where a code is wrong, then load it with
+`python -m terminal audit --record data/audits/<file>.csv --by <name>`. Corrected codes are written back and every
+checked item is marked reviewed. Without `--videos` it samples channel codes instead.
 
 `video_daily` now clips negative corrections to 0 and spreads gains over gaps of up to 7 days (flagged `corrected` and `imputed`). A creator counts as new to a topic only if the channel is young or it was already posting other topics before entering, so the edge of the tracking window isn't mistaken for a newcomer.
 

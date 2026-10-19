@@ -13,6 +13,11 @@ Tables (rebuilt by `compute`):
   topic_current        3.3-3.4, 3.11-3.12, 3.20: active creators, demand per minute, breadth, HHI, CR3, THIN flag
   topic_index          4.1-4.7: chained index level, trend index, relative strength
   topic_alerts         7.2-7.6 on the latest day
+  creator_subs         1.8: subscriber changes above YouTube's rounding step, spread across the days between steps
+  topic_breaks         1.11: splice factor per topic around each structural break in config
+  data_quality_daily   10.1-10.2: pull completeness and the share of attention from confident classifications
+  audit_error_rate     10.3: wrong codes per sector in the latest hand audit, flagged above the threshold
+  topic_crosswalk      6.5: CTNCS niche -> consumer categories, NAICS, public companies, private brands (config/crosswalk.csv)
 """
 from pathlib import Path
 
@@ -44,13 +49,17 @@ def _parent(col: str) -> str:
 
 def sql(cfg: dict) -> str:
     W, T = cfg["windows"], cfg["thresholds"]
+    alpha = float(W.get("ewma_alpha", 0.25))
+    conf = float(T.get("min_confidence", 0.7))
+    bw = int(W.get("break_window_days", 14))
+    breaks = ", ".join(f"DATE '{b}'" for b in (cfg.get("breaks") or [])) or "NULL"
     dw = cfg["dss_weights"]
     base_date = cfg["index"].get("base_date")
     base = f"DATE '{base_date}'" if base_date else "NULL"
     return f"""
 -- topic_map: each classified video at every level of its topic, plus the ALL root (level 0)
 CREATE OR REPLACE TABLE topic_map AS
-SELECT c.video_id, v.channel_id, x.level AS level, x.code AS code, c.topic_code, c.format_id,
+SELECT c.video_id, v.channel_id, x.level AS level, x.code AS code, c.topic_code, c.format_id, c.confidence,
        CAST(v.published_at AS DATE) AS pub_date, coalesce(v.duration_s, 0) AS duration_s,
        coalesce(v.duration_s, 0) <= 180 AS is_short
 FROM video_classifications c JOIN videos v USING (video_id),
@@ -65,6 +74,7 @@ SELECT d.snapshot_date AS d, m.level, m.code, m.channel_id,
        sum(d.views_gained) AS a,
        sum(d.views_gained * {_intent_case(cfg)}) AS ia,
        sum(d.views_gained) FILTER (WHERE m.is_short) AS short_a,
+       sum(d.views_gained) FILTER (WHERE m.confidence >= {conf}) AS conf_a,   -- 10.2
        count(*) AS videos
 FROM video_daily d JOIN topic_map m USING (video_id)
 WHERE d.views_gained IS NOT NULL
@@ -155,7 +165,7 @@ WHERE c.views_gained IS NOT NULL AND c.days_since_prev = 1;
 -- 3.x and 6.x topic_series
 CREATE OR REPLACE TABLE topic_series AS
 WITH daily AS (
-    SELECT t.d, t.level, t.code, sum(t.a) AS a, sum(t.ia) AS ia, sum(t.short_a) AS short_a,
+    SELECT t.d, t.level, t.code, sum(t.a) AS a, sum(t.ia) AS ia, sum(t.short_a) AS short_a, sum(t.conf_a) AS conf_a,
            count(*) AS creators,
            sum(t.a) FILTER (WHERE f.entry_date >= t.d - {int(W['new_creator_days'])}) AS new_a
     FROM creator_topic_daily t JOIN creator_topic_first f USING (code, channel_id)
@@ -178,7 +188,8 @@ w AS (
         avg(a) OVER (PARTITION BY code, dow ORDER BY d RANGE BETWEEN INTERVAL {int(W['seasonal_days']) - 1} DAYS PRECEDING AND CURRENT ROW)
           / nullif(avg(a) OVER (PARTITION BY code ORDER BY d RANGE BETWEEN INTERVAL {int(W['seasonal_days']) - 1} DAYS PRECEDING AND CURRENT ROW), 0)
           AS weekday_factor,
-        count(*) OVER (PARTITION BY code ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS days_history
+        count(*) OVER (PARTITION BY code ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS days_history,
+        row_number() OVER (PARTITION BY code ORDER BY d) - 1 AS k
     FROM j
     WINDOW r7 AS (PARTITION BY code ORDER BY d RANGE BETWEEN INTERVAL 6 DAYS PRECEDING AND CURRENT ROW),
            p7 AS (PARTITION BY code ORDER BY d RANGE BETWEEN INTERVAL 13 DAYS PRECEDING AND INTERVAL 7 DAYS PRECEDING),
@@ -204,7 +215,8 @@ g AS (
         x.ia_sa7 / nullif(x.ia_sa7_prev, 0) - 1 AS intent_wow,           -- 6.1 growth of seasonally adjusted intent
         x.a28 / nullif(x.minutes28, 0) AS views_per_minute,              -- 3.4
         x.new_a28 / nullif(x.a28, 0) AS new_creator_share,               -- 3.13
-        x.short_a / nullif(x.a, 0) AS shorts_share                       -- 3.15
+        x.short_a / nullif(x.a, 0) AS shorts_share,                      -- 3.15
+        coalesce(x.conf_a, 0) / nullif(x.a, 0) AS confident_share        -- 10.2
     FROM sa7 x
     LEFT JOIN sa7 p ON p.code = x.parent AND p.d = x.d
     LEFT JOIN sa7 y ON y.code = x.code AND y.d = x.d - 1
@@ -231,9 +243,13 @@ z AS (       -- 6.4 each component against the topic's own history
            s28 AS (PARTITION BY code ORDER BY d RANGE BETWEEN INTERVAL 28 DAYS PRECEDING AND INTERVAL 1 DAYS PRECEDING)
 )
 SELECT d, level, code, parent, a, a_sa, ia, ia_sa, short_a, creators, uploads, minutes,
-       a7, a28, uploads28, minutes28, share, share_change_28d, dod, wow, g28, ma7, acceleration,
-       weekday_factor, intent_wow, views_per_minute, new_creator_share, shorts_share, surge_z, share_change_sd,
-       days_history,
+       a7, a28, uploads28, minutes28, share, share_change_28d, dod, wow, g28, ma7,
+       -- 3.8 EWMA(t) = a A(t) + (1 - a) EWMA(t - 1), started at the first day's attention. Written in closed form
+       -- over the topic's k-th observed day so it runs as one window sum.
+       pow({1 - alpha}, k) * sum(CASE WHEN k = 0 THEN a ELSE {alpha} * a * pow({1 - alpha}, -k) END)
+           OVER (PARTITION BY code ORDER BY d ROWS UNBOUNDED PRECEDING) AS ewma,
+       acceleration, weekday_factor, intent_wow, views_per_minute, new_creator_share, shorts_share,
+       confident_share, surge_z, share_change_sd, days_history,
        CASE WHEN z_n >= {int(W['z_min_history'])} THEN
             {float(dw['intent_growth'])} * coalesce(z_intent, 0) + {float(dw['acceleration'])} * coalesce(z_accel, 0)
           + {float(dw['share_change'])} * coalesce(z_share, 0) + {float(dw['new_creator_share'])} * coalesce(z_new, 0)
@@ -244,13 +260,22 @@ FROM z;
 CREATE OR REPLACE TABLE topic_current AS
 WITH last AS (SELECT max(d) AS d FROM creator_topic_daily),
 c28 AS (
-    SELECT t.code, t.channel_id, sum(t.a) AS a, sum(t.videos) AS video_days
+    SELECT t.code, t.channel_id, sum(t.a) AS a, sum(coalesce(t.conf_a, 0)) AS conf_a, sum(t.videos) AS video_days
     FROM creator_topic_daily t JOIN last ON t.d > last.d - 28 GROUP BY ALL
+),
+adv AS (      -- 3.11 creators whose last 7 days beat the 7 before, minus those that fell short
+    SELECT code, count(*) FILTER (WHERE a7 > a7p) AS advancers, count(*) FILTER (WHERE a7 < a7p) AS decliners
+    FROM (SELECT t.code, t.channel_id,
+                 sum(t.a) FILTER (WHERE t.d > last.d - 7) AS a7_raw, sum(t.a) FILTER (WHERE t.d <= last.d - 7) AS a7p_raw,
+                 coalesce(a7_raw, 0) AS a7, coalesce(a7p_raw, 0) AS a7p
+          FROM creator_topic_daily t JOIN last ON t.d > last.d - 14 GROUP BY ALL)
+    GROUP BY code
 ),
 conc AS (
     SELECT code, count(*) AS creators28,
            sum(pow(100.0 * a / nullif(tot, 0), 2)) AS hhi,
-           sum(a) FILTER (WHERE rk <= 3) / nullif(max(tot), 0) AS cr3
+           sum(a) FILTER (WHERE rk <= 3) / nullif(max(tot), 0) AS cr3,
+           sum(conf_a) / nullif(max(tot), 0) AS confident_share28
     FROM (SELECT *, sum(a) OVER (PARTITION BY code) AS tot,
                  row_number() OVER (PARTITION BY code ORDER BY a DESC) AS rk FROM c28)
     GROUP BY code
@@ -273,13 +298,16 @@ SELECT s.d, s.level, s.code, s.a, s.a7, s.a28, s.share, s.share_change_28d, s.wo
        s.new_creator_share, s.shorts_share, s.dss,
        coalesce(a.active_creators, 0) AS active_creators, coalesce(v.videos28, 0) AS videos28,
        coalesce(c.creators28, 0) AS creators28, c.hhi, c.cr3, b.breadth, b.breadth_n,
+       coalesce(ad.advancers, 0) AS advancers, coalesce(ad.decliners, 0) AS decliners,
+       coalesce(ad.advancers, 0) - coalesce(ad.decliners, 0) AS advance_decline, c.confident_share28,
        coalesce(v.videos28, 0) < {int(T['min_videos'])} OR coalesce(c.creators28, 0) < {int(T['min_creators'])} AS thin
 FROM topic_series s
 JOIN last ON s.d = last.d
 LEFT JOIN conc c ON c.code = s.code
 LEFT JOIN vids v ON v.code = s.code
 LEFT JOIN active a ON a.code = s.code
-LEFT JOIN breadth b ON b.code = s.code;
+LEFT JOIN breadth b ON b.code = s.code
+LEFT JOIN adv ad ON ad.code = s.code;
 
 -- 4.1-4.7 topic_index
 CREATE OR REPLACE TABLE topic_index AS
@@ -361,13 +389,97 @@ FROM top7, last WHERE rk <= {int(T['newcomer_top'])} AND entry_date >= last.ld -
 UNION ALL
 SELECT last.ld, 'video_breakout', topic_code, video_id, outlier_score
 FROM video_metrics, last WHERE breakout AND age <= 7;
+
+-- 1.8 creator_subs: YouTube rounds public subscriber counts to 3 significant figures, so a change is only real
+-- once it clears the rounding step r = 10^(digits - 3). The estimate spreads each observed step evenly over the
+-- days since the previous step; days after the latest step stay blank until the next one arrives.
+CREATE OR REPLACE TABLE creator_subs AS
+WITH s AS (
+    SELECT snapshot_date AS d, channel_id, subscribers,
+           CAST(pow(10, greatest(length(CAST(subscribers AS VARCHAR)) - 3, 0)) AS BIGINT) AS rounding_step,
+           subscribers - lag(subscribers) OVER w AS subs_change
+    FROM channel_snapshots WHERE subscribers IS NOT NULL
+    WINDOW w AS (PARTITION BY channel_id ORDER BY snapshot_date)
+),
+steps AS (    -- the first observation and every day the rounded count moved
+    SELECT channel_id, d, subscribers, lag(d) OVER w AS prev_d, lag(subscribers) OVER w AS prev_subs
+    FROM s WHERE subs_change IS NULL OR subs_change <> 0
+    WINDOW w AS (PARTITION BY channel_id ORDER BY d)
+)
+SELECT s.d, s.channel_id, s.subscribers, s.rounding_step,
+       CASE WHEN abs(s.subs_change) >= s.rounding_step THEN s.subs_change END AS subs_change_reported,
+       (st.subscribers - st.prev_subs) / nullif(datediff('day', st.prev_d, st.d), 0) AS subs_gained_est
+FROM s
+LEFT JOIN steps st ON st.channel_id = s.channel_id AND s.d > st.prev_d AND s.d <= st.d;
+
+-- 1.11 topic_breaks: splice factor s = median daily attention in the window after a break / in the window before,
+-- per topic. Divide pre-break attention by s to compare across the break. Blank until both windows have data.
+CREATE OR REPLACE TABLE topic_breaks AS
+WITH b AS (SELECT unnest([{breaks}]) AS break_date)
+SELECT b.break_date, t.level, t.code,
+       median(t.a) FILTER (WHERE t.d BETWEEN b.break_date - {bw} AND b.break_date - 1) AS before_median,
+       median(t.a) FILTER (WHERE t.d BETWEEN b.break_date AND b.break_date + {bw - 1}) AS after_median,
+       count(*) FILTER (WHERE t.d BETWEEN b.break_date - {bw} AND b.break_date - 1) AS before_days,
+       count(*) FILTER (WHERE t.d BETWEEN b.break_date AND b.break_date + {bw - 1}) AS after_days,
+       after_median / nullif(before_median, 0) AS splice_factor
+FROM b, topic_series t
+WHERE b.break_date IS NOT NULL AND t.d BETWEEN b.break_date - {bw} AND b.break_date + {bw - 1}
+GROUP BY ALL;
+
+-- 10.1-10.2 data_quality_daily: did the pull reach every tracked channel, and how much of the day's views come
+-- from videos the classifier was confident about
+CREATE OR REPLACE TABLE data_quality_daily AS
+WITH days AS (SELECT DISTINCT snapshot_date AS d FROM channel_snapshots
+              UNION SELECT DISTINCT snapshot_date FROM video_snapshots),
+expected AS (SELECT d, count(c.channel_id) AS channels_expected
+             FROM days LEFT JOIN channels c ON CAST(c.added_at AS DATE) <= days.d GROUP BY d),
+received AS (SELECT snapshot_date AS d, count(DISTINCT channel_id) AS channels_received FROM channel_snapshots GROUP BY ALL),
+vids AS (SELECT snapshot_date AS d, count(*) AS videos_snapshotted FROM video_snapshots GROUP BY ALL),
+conf AS (
+    SELECT d.snapshot_date AS d, sum(d.views_gained) AS views_gained,
+           sum(d.views_gained) FILTER (WHERE c.topic_code <> 'unclassified' AND c.confidence >= {conf}) AS confident_views,
+           sum(d.views_gained) FILTER (WHERE c.video_id IS NULL OR c.topic_code = 'unclassified') AS unclassified_views
+    FROM video_daily d LEFT JOIN video_classifications c USING (video_id)
+    WHERE d.views_gained IS NOT NULL GROUP BY ALL
+)
+SELECT e.d, e.channels_expected, coalesce(r.channels_received, 0) AS channels_received,
+       coalesce(r.channels_received, 0) / nullif(e.channels_expected, 0) AS pull_completeness,
+       coalesce(v.videos_snapshotted, 0) AS videos_snapshotted,
+       c.views_gained, c.confident_views / nullif(c.views_gained, 0) AS confident_share,
+       c.unclassified_views / nullif(c.views_gained, 0) AS unclassified_share
+FROM expected e LEFT JOIN received r USING (d) LEFT JOIN vids v USING (d) LEFT JOIN conf c USING (d);
+
+-- 10.3 audit_error_rate: the latest hand audit per kind (channel or video), by sector
+CREATE OR REPLACE TABLE audit_error_rate AS
+WITH latest AS (SELECT kind, max(audited_on) AS audited_on FROM classification_audits GROUP BY kind)
+SELECT a.kind, a.audited_on, a.sector, count(*) AS checked, count(*) FILTER (WHERE NOT a.correct) AS wrong,
+       count(*) FILTER (WHERE NOT a.correct) / count(*) AS error_rate,
+       count(*) FILTER (WHERE NOT a.correct) / count(*) > {float(T.get('audit_error_max', 0.15))} AS needs_fix
+FROM classification_audits a JOIN latest USING (kind, audited_on)
+GROUP BY ALL;
 """
 
 
 TABLES = ["topic_map", "creator_topic_daily", "creator_topic_first", "video_metrics", "creator_coverage",
-          "topic_series", "topic_current", "topic_index", "topic_alerts"]
+          "topic_series", "topic_current", "topic_index", "topic_alerts", "creator_subs", "topic_breaks",
+          "data_quality_daily", "audit_error_rate", "topic_crosswalk"]
+CROSSWALK = ROOT / "config" / "crosswalk.csv"
+
+
+def load_crosswalk(con, path=CROSSWALK) -> None:
+    """6.5: the hand-maintained topic-to-market table, loaded as-is so the terminal can join on it."""
+    con.execute("CREATE OR REPLACE TABLE topic_crosswalk (code VARCHAR, niche VARCHAR, consumer_categories VARCHAR, "
+                "naics VARCHAR, public_companies VARCHAR, private_brands VARCHAR, status VARCHAR)")
+    if Path(path).exists():
+        import csv
+        with open(path, newline="", encoding="utf-8") as f:
+            rows = [[r.get(k, "") for k in ("code", "niche", "consumer_categories", "naics", "public_companies",
+                                             "private_brands", "status")] for r in csv.DictReader(f)]
+        if rows:
+            con.executemany("INSERT INTO topic_crosswalk VALUES (?, ?, ?, ?, ?, ?, ?)", rows)
 
 
 def build(con, cfg: dict | None = None) -> None:
     """Rebuild every formula table. Needs the base views from metrics.build first."""
     con.execute(sql(cfg or config()))
+    load_crosswalk(con)

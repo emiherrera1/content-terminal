@@ -13,7 +13,7 @@
   resolve   record a call's outcome: --id 3 --outcome hit --note "<evidence>"
   calls     list calls and check the log hasn't been edited
   index     how a topic did on a day, from video-level data: python -m terminal index woodworking [--date YYYY-MM-DD]
-  audit     print a random sample of classifications to check by hand
+  audit     write a sample of classifications to check by hand (--videos for video topics); --record FILE loads it
   compute   rebuild the metric views
   export    write niche index, momentum, screener and alerts to CSV
   news      pull news feeds and tag new articles
@@ -89,6 +89,8 @@ def main(argv=None):
     p.add_argument("--id", type=int, help="resolve: the call id")
     p.add_argument("--independent", choices=["yes", "no"], help="review: creator is independent (not network- or brand-owned)")
     p.add_argument("--clean", choices=["yes", "no"], help="review: no conduct or legal issues found")
+    p.add_argument("--videos", action="store_true", help="audit: sample video topics instead of channel codes")
+    p.add_argument("--record", help="audit: load a filled audit sheet")
     a = p.parse_args(argv)
 
     con = store.connect()
@@ -160,8 +162,12 @@ def main(argv=None):
     elif a.command == "migrate-ctncs":
         print(f"rewrote v1.0 codes to v2.0: {ctncs.migrate(con)}")
     elif a.command == "audit":
-        for row in classify.audit_sample(con):
-            print(" | ".join(str(x) for x in row))
+        if a.record:
+            r = classify.record_audit(con, a.record, a.by)
+            print(f"recorded {r['checked']} checks, {r['wrong']} wrong ({r['error_rate']:.0%})" if r["checked"] else "nothing to record")
+        else:
+            path = classify.audit_sheet(con, "video" if a.videos else "channel", a.limit or 25)
+            print(f"audit sheet: {path}\nFill in correct_code where a code is wrong, then: python -m terminal audit --record {path}")
     elif a.command == "news":
         print(f"articles: {news.pull(con)}, tagged: {news.tag(con, a.limit)}")
     elif a.command == "compute":
