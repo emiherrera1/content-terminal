@@ -11,4 +11,7 @@ if [ ! -f public/data/manifest.json ]; then
   echo "::warning title=site not deployed::no data files were built (python -m terminal site)"
   exit 0
 fi
-npx --yes wrangler@3.114.0 pages deploy public --project-name "${CF_PAGES_PROJECT:-content-terminal}" --branch main --commit-dirty=true
+PROJECT="${CF_PAGES_PROJECT:-content-terminal}"
+# first run only: create the Pages project (an existing project makes this a no-op)
+npx --yes wrangler@3.114.0 pages project create "$PROJECT" --production-branch main >/dev/null 2>&1 || true
+npx --yes wrangler@3.114.0 pages deploy public --project-name "$PROJECT" --branch main --commit-dirty=true
