@@ -1,9 +1,9 @@
 anthropic>=0.40
-duckdb>=1.1
+duckdb==1.5.6   # MotherDuck supports a DuckDB version only after its own release; bump together
 pyyaml>=6
 requests>=2.31
 pytest>=8
 numpy>=1.26
-pandas>=2.2
+pandas>=2.2,<4
 scipy>=1.11
 pytrends>=4.9
