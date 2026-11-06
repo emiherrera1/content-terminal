@@ -90,12 +90,13 @@ def news(con) -> list[dict]:
     if not _has(con, "news_ranked"):
         return []
     out = []
-    for r in _rows(con, "SELECT * FROM news_ranked WHERE category IS NOT NULL ORDER BY published_at DESC LIMIT 80"):
+    for r in _rows(con, "SELECT * FROM news_ranked WHERE category IS NOT NULL ORDER BY published_at DESC LIMIT 150"):
         p = r.get("published_at")
         out.append({"url": r["url"], "title": r["title"], "source": r.get("source") or "",
                     "published": p.strftime("%Y-%m-%d %H:%M") if p else "", "category": r.get("category") or "",
                     "platform": r.get("platform") or "", "impact": r.get("impact") or "", "sentiment": r.get("sentiment") or "",
-                    "creators": r.get("creators") or "", "score": r.get("score")})
+                    "creators": r.get("creators") or "", "score": r.get("score"),
+                    "note": r.get("note") or "", "label": r.get("label") or "", "status": r.get("status") or ""})
     return out
 
 

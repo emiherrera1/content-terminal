@@ -83,6 +83,11 @@ def _news(ctx):
     return f"{news.pull(ctx.con)} articles, {news.tag(ctx.con)} tagged"
 
 
+def _notes(ctx):
+    from . import notes
+    return f"{notes.load(ctx.con)} Creator Capital notes"
+
+
 def _tag(ctx):
     from . import tagging
     return f"{tagging.tag_packaging(ctx.con)} packaging, {tagging.tag_entities(ctx.con)} entity mentions"
@@ -164,6 +169,7 @@ JOBS: dict[str, list[Stage]] = {
         *[Stage(f"pull_{a.platform}", _platform(a), retries=1) for a in sources.PLATFORMS],
         Stage("classify_channels", _classify_channels, retries=1),
         Stage("classify_videos", _classify_videos, retries=1),
+        Stage("notes", _notes, retries=1),
         Stage("news", _news, retries=1),
         Stage("tag", _tag),
         Stage("comments", _comments, retries=1),

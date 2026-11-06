@@ -144,6 +144,15 @@ window.dash = (() => {
 .ct .card a{display:block;color:var(--tx);text-decoration:none;text-transform:none;margin:5px 0;line-height:1.35;font-size:12px}
 .ct .card a:hover{text-decoration:underline}
 .ct .card .src{font-size:9px;color:var(--td);text-transform:none}
+.ct .card.cc{border-left:2px solid var(--acc)}
+.ct .chip.lab{color:var(--acc);border-color:#5a4a10} .ct .chip.draft{border-style:dashed;color:var(--tm)}
+.ct .card details{margin:4px 0 2px;font-size:10px}
+.ct .card summary{cursor:pointer;color:var(--acc);font-size:9px;list-style:none}
+.ct .card summary::-webkit-details-marker{display:none}
+.ct .card summary::before{content:'▸ '} .ct .card details[open] summary::before{content:'▾ '}
+.ct .card .cnote-body{text-transform:none;white-space:pre-wrap;color:var(--tx);line-height:1.45;margin-top:4px;font-size:11px;letter-spacing:0}
+.ct .pnews{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:8px}
+@container (max-width:700px){.ct .pnews{grid-template-columns:minmax(0,1fr)}}
 .ct .empty{color:var(--td);padding:8px;text-transform:none}
 .ct .fmt{display:grid;grid-template-columns:15rem minmax(0,1fr);gap:8px;padding:8px}
 @container (max-width:800px){.ct .fmt{grid-template-columns:minmax(0,1fr)}}
@@ -257,6 +266,8 @@ window.dash = (() => {
         <div class="ph"><span>Platforms</span><span class="meta">YouTube · TikTok · Instagram · Formula Library 9.1–9.4</span></div>
         <div class="cov-top" id="plat-cards"></div>
         <div class="cnote" id="plat-note"></div>
+        <div class="ph"><span>Platform news</span><span class="meta">platform changes, features and policies · newest first</span></div>
+        <div class="pnews" id="plat-news"></div>
         <div class="ph"><span>Attention by platform</span><span class="meta">7-day average, indexed to 100 · platforms count views differently, so compare movement</span></div>
         <div class="chart" id="chart-plat" style="min-height:17rem"><div class="tip"></div></div>
         <div class="legend" id="legend-plat"></div>
@@ -266,7 +277,7 @@ window.dash = (() => {
         <div class="pb"><table id="plat-move"><thead><tr><th>Topic</th><th class="narrow">Code</th><th>YouTube</th><th>TikTok</th><th>Instagram</th></tr></thead><tbody></tbody></table></div>
       </section>
       <section class="view" id="news" hidden>
-        <div class="ph"><span>News feed</span><span class="meta" id="news-src">YouTube Official Blog · Tubefilter · tagged by Claude</span></div>
+        <div class="ph"><span>News feed</span><span class="meta" id="news-src">Creator Capital daily notes · YouTube Official Blog · Tubefilter · tagged by Claude</span></div>
         <div class="news" data-source="news">
           <div class="ncol"><h3>Top ranked news</h3><div class="nlist" id="n-top"></div></div>
           <div class="ncol"><h3>Time ordered news</h3><div class="nlist" id="n-time"></div></div>
@@ -671,13 +682,24 @@ dash.calc('drop_reasons', {
     const f = new Intl.DateTimeFormat('en-US', {timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false}).format(d);
     return f.toUpperCase() + ' ET'; };
   function card(n) {
-    const c = el('div', null, 'card'); c.dataset.key = n.url;
+    const cc = /^Creator Capital/.test(n.source || '');
+    const c = el('div', null, 'card' + (cc ? ' cc' : '')); c.dataset.key = n.url;
     const r = el('div', null, 'row');
-    r.append(el('span', fmtET(n.published)), el('span', n.category, 'chip'), el('span', n.platform, 'chip'), el('span', n.impact, 'chip' + (n.impact === 'HIGH' ? ' hi' : '')));
-    const a = el('a', n.title); a.href = n.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    // a daily note carries a date, not a time of day
+    r.append(el('span', cc ? fmtDay(String(n.published).slice(0, 10)) : fmtET(n.published)));
+    if (n.label) r.append(el('span', n.label, 'chip lab'));
+    if (n.status === 'draft') r.append(el('span', 'DRAFT', 'chip draft'));
+    r.append(el('span', n.category, 'chip'), el('span', n.platform, 'chip'), el('span', n.impact, 'chip' + (n.impact === 'HIGH' ? ' hi' : '')));
+    let a;
+    if (/^https?:/.test(n.url)) { a = el('a', n.title); a.href = n.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+    else { a = el('a', n.title); a.removeAttribute('href'); }
+    c.append(r, a);
+    if (n.note) {
+      const d = el('details'); d.append(el('summary', 'Creator Capital note'), el('div', n.note, 'cnote-body')); c.append(d);
+    }
     const b = el('div', null, 'row');
     b.append(el('span', n.sentiment, 'chip' + (n.sentiment === 'POSITIVE' ? ' pos' : n.sentiment === 'NEGATIVE' ? ' neg' : '')), el('span', n.source + (n.creators ? ' · ' + n.creators : ''), 'src'));
-    c.append(r, a, b); return c;
+    c.append(b); return c;
   }
   function fillList(id, items, empty) {
     const box = $(id); box.textContent = '';
@@ -896,6 +918,7 @@ dash.calc('drop_reasons', {
     if (fm.status === 'ok' && tg.status === 'ok') drawFormats(fm.data, tg.data);
     const po = dash.data('platform_overview'), ps = dash.data('platform_series'), pl = dash.data('platform_lead'), pm = dash.data('platform_movement');
     if (po.status === 'ok') drawPlatform(po.data, pl.status === 'ok' ? pl.data : [], pm.status === 'ok' ? pm.data : []);
+    if (nw.status === 'ok') fillList('plat-news', nw.data.filter(n => n.category === 'PLATFORM').sort((a, b) => b.published.localeCompare(a.published)).slice(0, 8), 'No platform news yet.');
     if (ps.status === 'ok' && st.view === 'platform') drawChart('chart-plat', 'legend-plat', ps.data, 260);
     const s2 = fs.status === 'ok' ? fs.data[0] : null;
     document.querySelectorAll('[data-source="format_stats"][data-field]').forEach(e => {

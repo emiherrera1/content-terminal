@@ -65,6 +65,9 @@ Reply with JSON only:
 
 def connect(con):
     con.execute(SCHEMA)
+    # Creator Capital daily notes ride in the same table (terminal/notes.py): the full note, its label and whether it is posted
+    for col in ("note VARCHAR", "label VARCHAR", "status VARCHAR"):
+        con.execute(f"ALTER TABLE news ADD COLUMN IF NOT EXISTS {col}")
     con.execute(RANKED)
 
 
@@ -129,7 +132,9 @@ def tag(con, limit: int | None = None) -> int:
     import anthropic
     client = anthropic.Anthropic()
     model = os.environ.get("CLASSIFIER_MODEL", "claude-sonnet-5-5")
-    rows = con.execute("SELECT url, source, title, summary FROM news WHERE category IS NULL ORDER BY published_at DESC").fetchall()[:limit]
+    # a daily note arrives with its category already set from the sheet; it still needs platform, impact, sentiment, creators
+    rows = con.execute("SELECT url, source, title, coalesce(note, summary) FROM news WHERE category IS NULL OR impact IS NULL "
+                       "ORDER BY published_at DESC").fetchall()[:limit]
     n = 0
     for url, source, title, summary in rows:
         msg = client.messages.create(model=model, max_tokens=2000, messages=[{"role": "user", "content": PROMPT.format(
@@ -139,7 +144,7 @@ def tag(con, limit: int | None = None) -> int:
             t = json.loads(text[text.index("{"): text.rindex("}") + 1])
         except ValueError:
             continue
-        con.execute("UPDATE news SET category = ?, platform = ?, impact = ?, sentiment = ?, creators = ? WHERE url = ?",
+        con.execute("UPDATE news SET category = coalesce(category, ?), platform = ?, impact = ?, sentiment = ?, creators = ? WHERE url = ?",
                     [t.get("category") if t.get("category") in CATEGORIES else "TREND",
                      t.get("platform") if t.get("platform") in PLATFORMS else "OTHER",
                      t.get("impact") if t.get("impact") in ("HIGH", "MEDIUM", "LOW") else "LOW",

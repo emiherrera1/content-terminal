@@ -23,3 +23,7 @@ video_classify_daily_limit: 5000
 quality:
   min_pull_completeness: 0.95
   max_unclassified_share: 0.25
+
+# Creator Capital daily notes in the News view (terminal/notes.py). Drafts show with a DRAFT tag; false = posted notes only.
+notes:
+  include_drafts: true

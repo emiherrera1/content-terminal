@@ -24,7 +24,7 @@ engineer can take it over without a handoff call.
 
 | Job | When | Command | Stages (critical in bold) |
 | --- | --- | --- | --- |
-| daily | 7:17 AM ET every day (`.github/workflows/daily.yml`) | `python -m terminal run daily` | **pull_youtube**, pull_tiktok, pull_instagram, classify_channels, classify_videos, news, tag, comments, **compute**, later, quality_gate, **export**, site; then publishes the site |
+| daily | 7:17 AM ET every day (`.github/workflows/daily.yml`) | `python -m terminal run daily` | **pull_youtube**, pull_tiktok, pull_instagram, classify_channels, classify_videos, notes, news, tag, comments, **compute**, later, quality_gate, **export**, site; then publishes the site |
 | weekly | Mondays 8:03 AM ET (`weekly.yml`) | `python -m terminal run weekly` | google_trends, outcome_csvs, outside_estimates, **compute**, later, audit_sheet, **export**, site; then publishes the site |
 | rebuild | by hand, after a formula or config change | `python -m terminal run rebuild` | tag, **compute**, later, quality_gate, **export** |
 | tests | every push to main (`tests.yml`) | `python -m pytest -q` | 60+ tests, including a synthetic world |
@@ -49,6 +49,7 @@ whether the last daily and weekly runs had failures. It exits 1 when anything is
 | `INSTAGRAM_ACCESS_TOKEN`, `INSTAGRAM_BUSINESS_ID` | 9.x | not yet: needs a Facebook app and an Instagram professional account |
 | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | publishing terminal.cvaccelerator.com | not yet: see `site/README.md` |
 | `FORMATS_SHEET_CSV_URL` | the site's Formats view | optional: the sheet's publish-to-web CSV link |
+| `NOTES_SHEET_CSV_URL` | Creator Capital daily notes in News and Platform | a CSV link to a tab with only Date, Category, Label, Headline, Note, Sources, POSTED (never the Flags or Gmail columns) |
 
 The site password is not a GitHub secret. It lives only in Cloudflare (`TERMINAL_PASSWORD` on the Pages project).
 
@@ -64,6 +65,7 @@ Keys never go in chat, code or config files.
 | Outside view estimates | 10.4 | `data/inputs/outside_estimates.csv` with `code, period_start, period_end, total_views, source`. |
 | RPM bands | 5.9 | Replace the placeholder bands under `rpm_bands` in `config/formulas.yaml` and set `source:` to where they came from. Until then every earnings figure is labeled `placeholder`. |
 | TikTok, Instagram | 9.1-9.4 | Add the secrets, list handles in `config/channels_tiktok.csv` / `config/channels_instagram.csv` (column `handle`), and implement `fetch()` in `terminal/sources.py` (the class docstrings say what each API returns). Everything downstream already runs on any platform. |
+| Creator Capital daily notes | News view, Platform news | Set `NOTES_SHEET_CSV_URL`, or drop an export at `data/inputs/daily_notes.csv`. Drafts show with a DRAFT tag; `notes.include_drafts: false` in `config/settings.yaml` shows posted notes only. A note deleted from the sheet leaves the terminal on the next run. |
 | Packaging and entity tags | 2.11, 6.2 | Already on, rule-based. Edit `config/ctncs/packaging.csv` (draft CTNCS v3 codes) and `config/entities.csv`. |
 
 ## When something breaks
