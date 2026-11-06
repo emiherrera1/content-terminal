@@ -24,7 +24,11 @@ document.addEventListener('terminal:meta', e => {
   const synthetic = m.source === 'synthetic';
   lab.textContent = !m.source ? 'No data' : synthetic ? 'SYNTHETIC DATA: made-up channels, not results' : 'Live data';
   dot.style.color = synthetic ? 'var(--amb)' : m.source ? 'var(--g)' : 'var(--red)';
-  if (synthetic) document.getElementById('terminal').style.outline = '2px solid var(--amb)';
+  if (synthetic) {
+    document.getElementById('terminal').style.outline = '2px solid var(--amb)';
+    document.getElementById('news-src').textContent = 'SYNTHETIC: made-up headlines for the demo';
+    document.getElementById('cov-src').textContent = 'SYNTHETIC: made-up screening counts';
+  }
 });
 dash.start();
 </script>"""

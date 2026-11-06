@@ -15,11 +15,19 @@ PAGE_FIELDS = {
 def test_site_files_match_the_page(tmp_path):
     con = store.connect(":memory:")
     w = demo.build(con, end=dt.date(2026, 10, 18), n_youtube=24, n_tiktok=4, n_instagram=2)
-    pipeline.run(con, "rebuild", today=w["end"], stages=[s for s in pipeline.JOBS["rebuild"] if s.name in ("compute",)])
+    pipeline.run(con, "rebuild", today=w["end"], stages=[s for s in pipeline.JOBS["rebuild"] if s.name in ("compute", "later")])
     meta = site.build(con, tmp_path, source="synthetic")
     assert meta["source"] == "synthetic" and meta["as_of"] == "2026-10-18"
     assert set(meta["datasets"]) >= {"niches", "index_daily", "screener", "alerts", "news", "methodology", "coverage", "formats_sheet"}
-    assert json.loads((tmp_path / "coverage.json").read_text()) == []      # real screening counts never reach the synthetic site
+    # the demo fills every screen with made-up data, never real screening counts or real headlines
+    news = json.loads((tmp_path / "news.json").read_text())
+    assert news and all(n["source"] == "Demo Wire (synthetic)" and "example.com" in n["url"] for n in news)
+    cov = json.loads((tmp_path / "coverage.json").read_text())
+    assert cov and all(r["screened"] == r["kept"] + r["review"] + r["dropped"] for r in cov)
+    assert json.loads((tmp_path / "formats_sheet.json").read_text())
+    plats = {r["platform"] for r in json.loads((tmp_path / "platform_overview.json").read_text())}
+    assert plats == {"YouTube", "TikTok", "Instagram"}
+    assert json.loads((tmp_path / "platform_series.json").read_text())
     for name, fields in PAGE_FIELDS.items():
         rows = json.loads((tmp_path / f"{name}.json").read_text())
         assert rows, name

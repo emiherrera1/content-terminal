@@ -189,6 +189,7 @@ window.dash = (() => {
 .ct .cbar .k{background:var(--g)} .ct .cbar .r{background:var(--amb)} .ct .cbar .d{background:#5a1010}
 .ct .ckey{display:flex;gap:12px;padding:0 8px 6px;font-size:10px;color:var(--tm)}
 .ct .ckey i{display:inline-block;width:10px;height:8px;margin-right:4px;vertical-align:middle}
+.ct .nt{text-transform:none}
 .ct .cnote{padding:6px 8px 10px;color:var(--tm);font-size:10px;text-transform:none}
 [data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
 </style>
@@ -206,7 +207,7 @@ window.dash = (() => {
     <button class="fn" data-act="analyze" title="Analyze the top niche, or type ANALYZE <niche>">Analyze</button>
     <button class="fn" aria-disabled="true" title="Not built yet">Comp</button>
     <button class="fn" aria-disabled="true" title="Not built yet: needs ~90 days of history">Forecast</button>
-    <button class="fn" aria-disabled="true" title="Not built yet">Platform</button>
+    <button class="fn" role="tab" data-v="platform">Platform<small>F10</small></button>
     <button class="fn" role="tab" data-v="news">News<small>F6</small></button>
     <button class="fn" role="tab" data-v="formats">Formats<small>F7</small></button>
     <button class="fn" role="tab" data-v="coverage">Coverage<small>F8</small></button>
@@ -252,8 +253,20 @@ window.dash = (() => {
           </table>
         </div>
       </section>
+      <section class="view" id="platform" hidden>
+        <div class="ph"><span>Platforms</span><span class="meta">YouTube · TikTok · Instagram · Formula Library 9.1–9.4</span></div>
+        <div class="cov-top" id="plat-cards"></div>
+        <div class="cnote" id="plat-note"></div>
+        <div class="ph"><span>Attention by platform</span><span class="meta">7-day average, indexed to 100 · platforms count views differently, so compare movement</span></div>
+        <div class="chart" id="chart-plat" style="min-height:17rem"><div class="tip"></div></div>
+        <div class="legend" id="legend-plat"></div>
+        <div class="ph"><span>Who moves first</span><span class="meta">lead-lag of weekly attention · ρ 0.3+ over 16+ weeks</span></div>
+        <div class="pb"><table id="plat-lead"><thead><tr><th>Topic</th><th class="narrow">Code</th><th>Leader</th><th>Follower</th><th>Lag</th><th class="nt">ρ</th></tr></thead><tbody></tbody></table></div>
+        <div class="ph"><span>Movement this week</span><span class="meta">z-score vs each platform's own last 26 weeks</span></div>
+        <div class="pb"><table id="plat-move"><thead><tr><th>Topic</th><th class="narrow">Code</th><th>YouTube</th><th>TikTok</th><th>Instagram</th></tr></thead><tbody></tbody></table></div>
+      </section>
       <section class="view" id="news" hidden>
-        <div class="ph"><span>News feed</span><span class="meta">YouTube Official Blog · Tubefilter · tagged by Claude</span></div>
+        <div class="ph"><span>News feed</span><span class="meta" id="news-src">YouTube Official Blog · Tubefilter · tagged by Claude</span></div>
         <div class="news" data-source="news">
           <div class="ncol"><h3>Top ranked news</h3><div class="nlist" id="n-top"></div></div>
           <div class="ncol"><h3>Time ordered news</h3><div class="nlist" id="n-time"></div></div>
@@ -306,7 +319,7 @@ window.dash = (() => {
         </div>
       </section>
       <section class="view" id="coverage" hidden>
-        <div class="ph"><span>Coverage: channels behind the numbers</span><span class="meta">Real data · discovery run 1, Oct 18, 2026</span></div>
+        <div class="ph"><span>Coverage: channels behind the numbers</span><span class="meta" id="cov-src">from the screening file · refreshed each run</span></div>
         <div class="cov-top">
           <div class="m"><div class="k">Tracked</div><div class="v" data-source="coverage_totals" data-field="tracked" data-row="0">—</div></div>
           <div class="m"><div class="k">Added 7D</div><div class="v" data-source="coverage_totals" data-field="added_7d" data-row="0">—</div></div>
@@ -356,7 +369,7 @@ window.dash = (() => {
         <div class="ph"><span>Help</span><span class="meta">F1</span></div>
         <div class="pb"><dl>
           <dt>Commands</dt>
-          <dd>NICHE · TREND · CREATOR [search] · ALERTS · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
+          <dd>NICHE · TREND · CREATOR [search] · ALERTS · PLATFORM · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
           <dd>$LIFE, $GAME, $FINX … one sector's index. SORT CCOS | SI | NGP | TVE | CHG on the niche table.</dd>
           <dd>Tab completes a command. Esc goes back to the niche overview and clears the search.</dd>
           <dt>TVE</dt><dd>Content supply: minutes published by tracked channels in the niche over 28 days.</dd>
@@ -369,6 +382,7 @@ window.dash = (() => {
           <dt>News rank</dt><dd>Impact (HIGH 3, MEDIUM 2, LOW 1), halving every 7 days. Tags come from Claude reading each headline; every item links to its source.</dd>
           <dt>Dog house</dt><dd>Articles whose reporting is negative for creators. Sourced articles only; posts from X need the paid X API and aren't connected.</dd>
           <dt>Formats</dt><dd>Refreshed from the Trending Formats sheet each morning. Performance = 60 × min(change ÷ 100%, 1) + 40 × min(outlier ÷ 10x, 1). EXCELLENT 80+, STRONG 60+, GOOD 40+, FAIR 20+, else WEAK. A change of "-" counts as 0. Filters: top 10% by performance, change 100%+, outlier 6x+, 3+ triggers.</dd>
+          <dt>Platform</dt><dd>Attention per platform (9.1), each platform's week against its own 26 weeks (9.2), the follower-weighted composite (9.3) and which platform moves first in a topic (9.4).</dd>
           <dt>Coverage</dt><dd>Per niche: channels tracked in the database, anchors, channels added in the last 7 days, and what screening did with every discovered channel (kept, held for review, dropped and why).</dd>
           <dt>Definitions</dt><dd>Hover any underlined column or metric name for a one-line definition. DES &lt;code&gt; (for example DES CCOS) opens the full entry: formula, inputs, how to read it and its handbook section. Click an underlined name to open it there too.</dd>
           <dt>Market temp</dt><dd>HOT above an average CCOS of 12, WARM above 8, else COOL.</dd>
@@ -515,7 +529,7 @@ dash.calc('drop_reasons', {
 (() => {
   const TICK = {'Entertainment': '$ENTX', 'Education': '$EDU', 'Lifestyle': '$LIFE', 'Technology': '$TECH', 'News & Commentary': '$NEWS',
     'Creative Arts': '$ARTS', 'Gaming': '$GAME', 'Business & Finance': '$FINX', 'Health & Wellness': '$WELL',
-    'Social & Community': '$SOCL', 'Sports': '$SPRT', 'Pets & Animals': '$PETS'};
+    'Social & Community': '$SOCL', 'Sports': '$SPRT', 'Pets & Animals': '$PETS', 'YouTube': '$YT', 'TikTok': '$TT', 'Instagram': '$IG'};
   const tk = s => TICK[s] || '$' + s.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase();
   const N = Number, num = d3.format(','), f2 = d3.format('.2f'), f3 = d3.format('.3f');
   const compact = v => Intl.NumberFormat('en', {notation: 'compact', maximumFractionDigits: 1}).format(v);
@@ -604,7 +618,7 @@ dash.calc('drop_reasons', {
     if (!rows.length || !box.clientWidth) return;
     const sectors = [...new Set(rows.map(r => r.sector))];
     const ser = sectors.map((s, i) => ({s, c: COLORS[i % COLORS.length], pts: rows.filter(r => r.sector === s).map(r => ({d: new Date(r.day), day: r.day, v: N(r.avg_ccos)}))}));
-    const w = box.clientWidth - 16, m = {t: 8, r: 8, b: 18, l: 30};
+    const w = box.clientWidth - 16, m = {t: 8, r: 8, b: 18, l: 38};
     const x = d3.scaleUtc(d3.extent(rows, r => new Date(r.day)), [m.l, w - m.r]);
     const y = d3.scaleLinear(d3.extent(rows, r => N(r.avg_ccos)), [h - m.b, m.t]).nice();
     const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${w} ${h}`).attr('height', h);
@@ -729,6 +743,31 @@ dash.calc('drop_reasons', {
       td(tr, r.trigger); td(tr, r.formats); td(tr, r.avg_outlier == null ? '—' : d3.format('.1f')(r.avg_outlier) + 'x'); });
   }
 
+  function drawPlatform(over, lead, move) {
+    const cards = $('plat-cards'); cards.textContent = '';
+    if (!over.length) cards.append(el('div', 'No platform data yet.', 'dim'));
+    over.forEach(p => {
+      const m = el('div', null, 'm');
+      m.append(el('div', p.platform, 'k'), el('div', compact(N(p.attention_28d)) + ' views', 'v'));
+      const sub = el('div', null, 'dim'); sub.style.fontSize = '10px'; sub.style.marginTop = '4px';
+      sub.append(el('span', spct(p.chg) + ' vs prior 28D', cls(p.chg)), el('span', ' · ' + num(N(p.creators)) + ' creators · ' + compact(N(p.followers)) + ' followers'),
+                 el('span', p.weight == null ? '' : ' · weight ' + pct(p.weight)));
+      m.append(sub); cards.append(m);
+    });
+    const missing = ['YouTube', 'TikTok', 'Instagram'].filter(n => !over.some(p => p.platform === n));
+    $('plat-note').textContent = missing.length ? missing.join(' and ') + ' switch on when their API access is connected; everything here runs on any platform.' : 'Views over 28 days are each platform\'s own count; the weight is the platform\'s share of tracked followers, used in the composite index (9.3).';
+    const lt = $('plat-lead').tBodies[0]; lt.textContent = '';
+    if (!lead.length) { const c = lt.insertRow().insertCell(); c.colSpan = 6; c.className = 'dim'; c.textContent = 'Needs two platforms and 16 weeks of history.'; }
+    lead.forEach(r => { const tr = lt.insertRow(); tr.dataset.key = r.code + r.leader + r.follower;
+      td(tr, r.code === 'ALL' ? 'ALL TOPICS' : String(r.topic).toUpperCase()); td(tr, r.code === 'ALL' ? '—' : r.code, 'narrow dim'); td(tr, r.leader.toUpperCase(), 'up'); td(tr, r.follower.toUpperCase());
+      td(tr, r.lag_weeks + 'W'); td(tr, f2(N(r.rho))); });
+    const mt = $('plat-move').tBodies[0]; mt.textContent = '';
+    if (!move.length) { const c = mt.insertRow().insertCell(); c.colSpan = 5; c.className = 'dim'; c.textContent = 'Needs 26 weeks of history per platform.'; }
+    const zc = v => v == null ? 'dim' : v >= 1 ? 'up' : v <= -1 ? 'dn' : 'fl', zf = v => v == null ? '—' : (v > 0 ? '+' : '') + d3.format('.1f')(v) + 'σ';
+    move.filter(r => !st.q || String(r.topic).toLowerCase().includes(st.q)).forEach(r => { const tr = mt.insertRow(); tr.dataset.key = r.code;
+      const c0 = td(tr, (r.level === 3 ? '  ' : '') + String(r.topic).toUpperCase()); if (r.level === 2) c0.style.fontWeight = '700';
+      td(tr, r.code, 'narrow dim'); ['youtube', 'tiktok', 'instagram'].forEach(k => td(tr, zf(r[k]), zc(r[k]) + ' nt')); });
+  }
   function drawCoverage(rows, why) {
     const tb = $('cov').tBodies[0]; tb.textContent = '';
     rows.forEach(r => {
@@ -855,6 +894,9 @@ dash.calc('drop_reasons', {
     document.querySelectorAll('[data-source="coverage_totals"][data-field]').forEach(e => { const v = t0 ? t0[e.dataset.field] : null; e.textContent = v == null ? '—' : num(v); });
     const fm = dash.data('formats'), fs = dash.data('format_stats'), tg = dash.data('triggers');
     if (fm.status === 'ok' && tg.status === 'ok') drawFormats(fm.data, tg.data);
+    const po = dash.data('platform_overview'), ps = dash.data('platform_series'), pl = dash.data('platform_lead'), pm = dash.data('platform_movement');
+    if (po.status === 'ok') drawPlatform(po.data, pl.status === 'ok' ? pl.data : [], pm.status === 'ok' ? pm.data : []);
+    if (ps.status === 'ok' && st.view === 'platform') drawChart('chart-plat', 'legend-plat', ps.data, 260);
     const s2 = fs.status === 'ok' ? fs.data[0] : null;
     document.querySelectorAll('[data-source="format_stats"][data-field]').forEach(e => {
       const f = e.dataset.field, v = s2 ? s2[f] : null;
@@ -863,7 +905,7 @@ dash.calc('drop_reasons', {
     markTips();
   }
 
-  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '$LIFE', '$GAME', '$FINX'];
+  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '$LIFE', '$GAME', '$FINX'];
   input.addEventListener('keydown', e => {
     if (e.key === 'Tab') {
       const v = input.value.trim().toUpperCase(); const m = CMDS.filter(c => c.startsWith(v));
@@ -874,7 +916,7 @@ dash.calc('drop_reasons', {
     const raw = input.value.trim(); input.value = ''; if (!raw) return;
     log.textContent += '> ' + raw.toUpperCase() + '\n';
     const [c, ...rest] = raw.split(/\s+/); const C = c.toUpperCase(), arg = rest.join(' ');
-    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
+    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
     else if (C === 'NICHE' || C === 'MARKET') { st.sector = null; show('niche'); say('Niche market overview'); }
     else if (C.startsWith('$')) { st.sector = C; show('niche'); say('Index ' + C); }
     else if (C === 'TREND') { show('trend'); say('Trend analysis: index average CCOS by day'); }
@@ -889,13 +931,14 @@ dash.calc('drop_reasons', {
       show('des'); say(hit ? 'DES ' + hit.code + ': ' + hit.name : want ? "No metric '" + want + "'. Pick one from the list." : 'Metric definitions');
     }
     else if (C === 'COVERAGE') { show('coverage'); say('Coverage: tracked and screened channels per niche'); }
+    else if (C === 'PLATFORM') { show('platform'); say('Platforms: attention, who moves first, and this week\'s movement'); }
     else if (C === 'ANALYZE') { analyze(arg); }
     else if (C === 'SORT') { const k = SORTS[arg.toUpperCase()]; if (k) { st.sort = k; show('niche'); say('Niches sorted by ' + arg.toUpperCase()); } else say('Sort by: ' + Object.keys(SORTS).join(', ')); }
     else if (C === 'CLEAR') log.textContent = '';
     else say("Unknown command '" + raw.toUpperCase() + "'. Type 'help'.");
   });
   document.getElementById('terminal').addEventListener('keydown', e => {
-    const map = {F1: 'help', F2: 'niche', F3: 'trend', F4: 'creator', F5: 'alerts', F6: 'news', F7: 'formats', F8: 'coverage', F9: 'des'};
+    const map = {F1: 'help', F2: 'niche', F3: 'trend', F4: 'creator', F5: 'alerts', F6: 'news', F7: 'formats', F8: 'coverage', F9: 'des', F10: 'platform'};
     if (map[e.key]) { e.preventDefault(); show(map[e.key]); }
     if (e.key === 'Escape') { $('search').value = ''; st.q = ''; st.sector = null; show('niche'); }
   });
@@ -912,7 +955,11 @@ document.addEventListener('terminal:meta', e => {
   const synthetic = m.source === 'synthetic';
   lab.textContent = !m.source ? 'No data' : synthetic ? 'SYNTHETIC DATA: made-up channels, not results' : 'Live data';
   dot.style.color = synthetic ? 'var(--amb)' : m.source ? 'var(--g)' : 'var(--red)';
-  if (synthetic) document.getElementById('terminal').style.outline = '2px solid var(--amb)';
+  if (synthetic) {
+    document.getElementById('terminal').style.outline = '2px solid var(--amb)';
+    document.getElementById('news-src').textContent = 'SYNTHETIC: made-up headlines for the demo';
+    document.getElementById('cov-src').textContent = 'SYNTHETIC: made-up screening counts';
+  }
 });
 dash.start();
 </script>

@@ -132,6 +132,184 @@ def formats_sheet() -> list[dict]:
             for r in rows if r and r[0].strip()]
 
 
+PLATFORM_NAMES = {"youtube": "YouTube", "tiktok": "TikTok", "instagram": "Instagram"}
+
+
+def platform_overview(con) -> list[dict]:
+    """9.1 / 9.3: per platform, tracked creators and followers, attention over the last 28 days vs the 28 before, composite weight."""
+    if not _has(con, "platform_daily"):
+        return []
+    rows = _rows(con, """
+        WITH t AS (SELECT d, platform, sum(a) AS a, max(creators) AS creators, max(followers) AS followers
+                   FROM platform_daily WHERE level = 0 GROUP BY ALL),
+             last AS (SELECT max(d) AS m FROM t)
+        SELECT platform,
+               max(creators) FILTER (WHERE d = (SELECT m FROM last))  AS creators,
+               max(followers) FILTER (WHERE d = (SELECT m FROM last)) AS followers,
+               sum(a) FILTER (WHERE d > (SELECT m FROM last) - 28)                                  AS attention_28d,
+               sum(a) FILTER (WHERE d <= (SELECT m FROM last) - 28 AND d > (SELECT m FROM last) - 56) AS attention_prev_28d
+        FROM t GROUP BY platform""")
+    weights = {}
+    if _has(con, "composite_index"):
+        weights = dict(con.execute("""SELECT platform, weight FROM composite_index
+                                      WHERE level = 0 AND platform <> 'ALL' AND d = (SELECT max(d) FROM composite_index)""").fetchall())
+    out = []
+    for r in rows:
+        prev = r["attention_prev_28d"]
+        out.append({"platform": PLATFORM_NAMES.get(r["platform"], r["platform"]), "creators": r["creators"], "followers": r["followers"],
+                    "attention_28d": r["attention_28d"], "chg": (r["attention_28d"] / prev - 1) if prev else None,
+                    "weight": weights.get(r["platform"])})
+    return sorted(out, key=lambda r: -(r["followers"] or 0))
+
+
+def platform_series(con) -> list[dict]:
+    """Each platform's daily attention, 7-day average, indexed to 100 at the start of the window: platforms count views
+    differently, so the chart compares movement, never levels (9.2)."""
+    if not _has(con, "platform_daily"):
+        return []
+    rows = _rows(con, """
+        WITH t AS (SELECT d, platform, sum(a) AS a FROM platform_daily WHERE level = 0 GROUP BY ALL),
+             s AS (SELECT d, platform, avg(a) OVER (PARTITION BY platform ORDER BY d ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS a7,
+                          count(*) OVER (PARTITION BY platform ORDER BY d ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS n
+                   FROM t),
+             w AS (SELECT * FROM s WHERE n = 7 AND d > (SELECT max(d) FROM t) - 120)
+        SELECT d, platform, 100 * a7 / first_value(a7) OVER (PARTITION BY platform ORDER BY d) AS idx FROM w ORDER BY d""")
+    # same shape as index_daily so the page's chart draws it
+    return [{"day": r["d"].isoformat(), "sector": PLATFORM_NAMES.get(r["platform"], r["platform"]), "avg_ccos": r["idx"]} for r in rows]
+
+
+def platform_lead(con, label) -> list[dict]:
+    """9.4: which platform moves first in a topic. Sectors, categories and niches with a clear signal (rho 0.3+, 16+ weeks)."""
+    if not _has(con, "platform_lead"):
+        return []
+    rows = _rows(con, """SELECT * FROM platform_lead WHERE rho >= 0.3 AND n >= 16 AND length(code) <= 9
+                         ORDER BY rho DESC LIMIT 60""")
+    return [{"code": r["code"], "topic": label(r["code"]), "leader": PLATFORM_NAMES.get(r["leader"], r["leader"]),
+             "follower": PLATFORM_NAMES.get(r["follower"], r["follower"]), "lag_weeks": r["best_lag_weeks"], "rho": r["rho"], "n": r["n"]}
+            for r in rows]
+
+
+def platform_movement(con, label) -> list[dict]:
+    """9.2: this week's attention on each platform as a z-score against that platform's own last 26 weeks, per category and niche."""
+    if not _has(con, "platform_z"):
+        return []
+    rows = _rows(con, """SELECT code, level, platform, z FROM platform_z
+                         WHERE week = (SELECT max(week) FROM platform_z WHERE days = 7) AND level IN (2, 3)""")
+    acc = {}
+    for r in rows:
+        a = acc.setdefault(r["code"], {"code": r["code"], "topic": label(r["code"]), "level": r["level"],
+                                       "youtube": None, "tiktok": None, "instagram": None})
+        a[r["platform"]] = r["z"]
+    return sorted(acc.values(), key=lambda r: r["code"])
+
+
+# ---------------------------------------------------------------- synthetic-only datasets (the demo site)
+def _demo_news(as_of: dt.date, creators: list[str]) -> list[dict]:
+    import random
+    rng = random.Random(7)
+    items = [
+        ("PLATFORM", "YOUTUBE", "HIGH", "POSITIVE", "YouTube widens mid-roll eligibility to videos over six minutes"),
+        ("MONETIZATION", "TIKTOK", "HIGH", "NEGATIVE", "TikTok trims Creator Rewards rates in three content categories"),
+        ("DEAL", "ALL", "MEDIUM", "POSITIVE", "{c} closes seed round for a kitchenware line"),
+        ("POLICY", "ALL", "HIGH", "NEUTRAL", "FTC proposes updated disclosure rules for creator endorsements"),
+        ("CREATOR", "YOUTUBE", "MEDIUM", "POSITIVE", "{c} passes one million subscribers after a 90-day series"),
+        ("RESEARCH", "ALL", "LOW", "NEUTRAL", "Survey: two-thirds of mid-size creators now run a second business"),
+        ("TREND", "INSTAGRAM", "MEDIUM", "POSITIVE", "Long carousels are outdrawing Reels in fitness and home cooking"),
+        ("PLATFORM", "INSTAGRAM", "MEDIUM", "NEUTRAL", "Instagram tests a creator subscription bundle in four markets"),
+        ("MONETIZATION", "YOUTUBE", "MEDIUM", "POSITIVE", "YouTube Shopping affiliate program opens to channels under 10,000 subscribers"),
+        ("DEAL", "ALL", "HIGH", "POSITIVE", "Holding company acquires a minority stake in {c}'s media business"),
+        ("CREATOR", "TIKTOK", "MEDIUM", "NEGATIVE", "{c} pauses uploads after a sponsor dispute"),
+        ("POLICY", "TIKTOK", "HIGH", "NEGATIVE", "State attorneys general open an inquiry into TikTok's creator fund terms"),
+        ("RESEARCH", "YOUTUBE", "LOW", "NEUTRAL", "Study finds watch time on personal finance videos up 18% year over year"),
+        ("TREND", "TIKTOK", "MEDIUM", "POSITIVE", "Sleep and recovery content is the fastest-growing wellness niche this quarter"),
+        ("DEAL", "ALL", "MEDIUM", "NEUTRAL", "{c} signs a licensing deal for a back-catalog of tutorials"),
+        ("PLATFORM", "YOUTUBE", "LOW", "NEUTRAL", "YouTube Studio adds a revenue forecast panel for Partner Program members"),
+        ("MONETIZATION", "INSTAGRAM", "LOW", "NEGATIVE", "Brand deal rates for mid-tier Instagram creators fell in Q3, agency data shows"),
+        ("CREATOR", "YOUTUBE", "HIGH", "POSITIVE", "{c} launches a holding company for three channels and a product line"),
+        ("TREND", "YOUTUBE", "MEDIUM", "NEUTRAL", "Side-hustle explainers cool after a summer spike"),
+        ("RESEARCH", "ALL", "MEDIUM", "NEUTRAL", "New index tracks creator-led consumer brands against the S&P 500"),
+        ("POLICY", "YOUTUBE", "MEDIUM", "NEUTRAL", "YouTube updates its reused-content policy for compilation channels"),
+        ("DEAL", "ALL", "LOW", "POSITIVE", "{c} partners with a regional grocery chain on a recipe series"),
+        ("CREATOR", "INSTAGRAM", "LOW", "NEGATIVE", "{c} loses a skincare sponsorship after a product mix-up"),
+        ("TREND", "ALL", "MEDIUM", "POSITIVE", "Budgeting content climbs as holiday spending forecasts tighten"),
+    ]
+    weight = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
+    end = dt.datetime.combine(as_of, dt.time(14, 0))
+    out = []
+    for i, (cat, plat, imp, sent, title) in enumerate(items):
+        c = rng.choice(creators) if "{c}" in title and creators else ""
+        when = end - dt.timedelta(hours=rng.randint(2, 20 * 24))
+        hours = (end - when).total_seconds() / 3600
+        out.append({"url": f"https://example.com/demo-news/{i + 1}", "title": title.format(c=c), "source": "Demo Wire (synthetic)",
+                    "published": when.strftime("%Y-%m-%d %H:%M"), "category": cat, "platform": plat, "impact": imp,
+                    "sentiment": sent, "creators": c, "score": weight[imp] * 0.5 ** (hours / 168)})
+    return out
+
+
+def _demo_formats() -> list[dict]:
+    import random
+    rng = random.Random(11)
+    patterns = [
+        ("I tried {x} for 30 days", "Challenge, Transformation, Curiosity"), ("{x} vs {y}: which is actually worth it?", "Comparison, Value"),
+        ("The {x} nobody talks about", "Secret, Curiosity"), ("Why I stopped {x}", "Confession, Contrarian"),
+        ("{n} {x} mistakes beginners make", "List, Fear of missing out"), ("I asked {n} experts about {x}", "Authority, Curiosity"),
+        ("$1 vs $1,000 {x}", "Price contrast, Comparison"), ("What {x} really costs in 2026", "Money, Transparency"),
+        ("Do this before you {x}", "Urgency, Advice"), ("The only {x} guide you need", "Completeness, Authority"),
+        ("{x} in {n} minutes a day", "Ease, Time"), ("I copied a {x} routine for a week", "Challenge, Imitation"),
+        ("Ranking every {x}", "List, Comparison"), ("Stop {x} like this", "Correction, Fear"), ("How I {x} on a budget", "Money, How-to"),
+        ("{x} changed my life (not clickbait)", "Transformation, Trust"), ("Testing viral {x} hacks", "Curiosity, Proof"),
+        ("The science of {x}", "Authority, Explanation"), ("Day in the life: {x}", "Voyeurism, Routine"),
+        ("I quit {x} for {n} days", "Challenge, Abstinence"), ("Beginner to pro {x} in {n} weeks", "Transformation, Progress"),
+        ("Honest review: {x}", "Trust, Review"), ("What nobody tells you about {x}", "Secret, Warning"),
+        ("{x} tier list", "List, Opinion"), ("Rich vs poor {x}", "Price contrast, Social"),
+    ]
+    topics = ["meal prep", "pilates", "budgeting", "cold plunges", "sleep tracking", "sourdough", "index funds", "home gyms",
+              "skincare", "credit cards", "standing desks", "air fryers"]
+    out = []
+    for i, (p, trig) in enumerate(patterns):
+        x, y = rng.sample(topics, 2)
+        change = round(rng.lognormvariate(4.0, 0.8))
+        outlier = round(rng.lognormvariate(1.3, 0.5), 1)
+        out.append({"formula": p.format(x=x, y=y, n=rng.choice([3, 5, 7, 10])), "change_pct": float(change),
+                    "outlier": outlier, "triggers": trig})
+    return out
+
+
+def _demo_alerts(screener: list[dict]) -> list[dict]:
+    """A handful of spikes so the Alerts screen has rows: 3 to 6 sigma, 2.2x to 5x a typical day."""
+    import random
+    rng = random.Random(3)
+    out = []
+    for r in rng.sample(screener, min(5, len(screener))):
+        typical = rng.randint(8_000, 120_000)
+        mult = rng.uniform(2.2, 5.0)
+        out.append({"channel": r["channel"], "channel_id": r["channel_id"], "niche": r["niche"],
+                    "views_today": round(typical * mult), "typical_daily_views": typical, "z_score": round(rng.uniform(3.1, 6.2), 1)})
+    return sorted(out, key=lambda x: -x["z_score"])
+
+
+def _demo_coverage(con, label) -> list[dict]:
+    import random
+    rng = random.Random(5)
+    counts = dict(con.execute("SELECT substr(niche_code, 1, 5), count(*) FROM channel_niche GROUP BY 1").fetchall()) \
+        if _has(con, "channel_niche") else {}
+    out = []
+    for code in sorted(counts):
+        tracked = counts[code]
+        screened = tracked * rng.randint(4, 7)
+        kept = tracked + rng.randint(0, 4)
+        review = rng.randint(2, 12)
+        dropped = screened - kept - review
+        split = [rng.random() for _ in range(8)]
+        drops = [int(dropped * s / sum(split)) for s in split]
+        drops[0] += dropped - sum(drops)
+        row = {"niche_code": code, "niche": label(code), "tracked": tracked, "anchors": rng.randint(2, 5), "added_7d": rng.randint(0, 3),
+               "screened": screened, "kept": kept, "review": review, "dropped": dropped}
+        row.update({f"drop_{k}": v for k, v in zip(coverage.DROP_REASONS, drops)})
+        out.append(row)
+    return out
+
+
 def build(con, out_dir: Path = OUT, source: str = "live") -> dict:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -145,7 +323,19 @@ def build(con, out_dir: Path = OUT, source: str = "live") -> dict:
         "methodology": methodology(),
         "coverage": coverage.rows(con) if source == "live" else [],   # screening counts are real; kept off the synthetic site
         "formats_sheet": formats_sheet(),
+        "platform_overview": platform_overview(con),
+        "platform_series": platform_series(con),
+        "platform_lead": platform_lead(con, label),
+        "platform_movement": platform_movement(con, label),
     }
+    if source == "synthetic":
+        # the demo shows every screen filled in: made-up news, title formats and screening counts, all labeled synthetic
+        as_of_d = con.execute("SELECT max(snapshot_date) FROM channel_snapshots").fetchone()[0] or dt.date.today()
+        sets["news"] = _demo_news(as_of_d, [r["channel"] for r in sets["screener"][:30]])
+        sets["formats_sheet"] = _demo_formats()
+        sets["coverage"] = _demo_coverage(con, label)
+        if not sets["alerts"]:
+            sets["alerts"] = _demo_alerts(sets["screener"])
     for name, rows in sets.items():
         (out_dir / f"{name}.json").write_text(json.dumps([{k: _clean(v) for k, v in r.items()} for r in rows], default=str))
     as_of = con.execute("SELECT max(snapshot_date) FROM channel_snapshots").fetchone()[0] if _has(con, "channel_snapshots") else None
