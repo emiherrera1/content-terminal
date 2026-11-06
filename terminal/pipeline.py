@@ -262,7 +262,10 @@ def health(con, today: dt.date | None = None, max_age_days: int = 1) -> tuple[bo
                            FROM pipeline_runs WHERE job = ? GROUP BY run_id ORDER BY 2 DESC LIMIT 1""", [job]).fetchone()
         if r:
             lines.append(f"last {job} run {r[1]:%Y-%m-%d %H:%M} UTC: {r[2]} failed, {r[3]} warnings, {r[4]} skipped")
-            ok = ok and r[2] == 0
+            # a failure only counts while it is the job's current state: a weekly run older than 8 days (or a daily
+            # older than 2) has been superseded by the schedule, and a missed run shows up as STALE data instead
+            recent = (dt.datetime.now(dt.timezone.utc).replace(tzinfo=None) - r[1]).days <= (8 if job == "weekly" else 2)
+            ok = ok and (r[2] == 0 or not recent)
         else:
             lines.append(f"no {job} run logged yet")
     return ok, lines
