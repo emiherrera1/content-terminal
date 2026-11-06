@@ -4,3 +4,4 @@ __pycache__/
 .pytest_cache/
 site/public/data/
 node_modules/
+site/.wrangler/
