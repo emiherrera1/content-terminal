@@ -9,6 +9,8 @@ PAGE_FIELDS = {
     "index_daily": {"day", "sector", "avg_ccos"},
     "screener": {"channel", "channel_id", "niche", "subscribers", "view_growth_28d", "growth_vs_niche", "uploads_28d", "outlier_rate"},
     "methodology": {"code", "name", "measures", "formula", "inputs", "read", "status", "section", "ref"},
+    "creator_details": {"channel", "channel_id", "niche", "subscribers", "view_growth_28d", "growth_vs_niche", "outlier_rate", "cvs",
+                        "top_video_share", "earnings_low_90d", "earnings_high_90d", "rpm_source"},
 }
 
 

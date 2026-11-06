@@ -204,6 +204,37 @@ def platform_movement(con, label) -> list[dict]:
     return sorted(acc.values(), key=lambda r: r["code"])
 
 
+def creator_details(con, label) -> list[dict]:
+    """Everything the Comp view compares about one creator: the screener row, creator metrics (5.x), the viability
+    score and its pillars, and the 90-day earnings range (labeled placeholder until real RPM bands are set)."""
+    if not _has(con, "screener"):
+        return []
+    have = {t for (t,) in con.execute("SELECT table_name FROM information_schema.tables").fetchall()}
+    joins, cols = [], []
+    if "creator_metrics" in have:
+        joins.append("LEFT JOIN creator_metrics m USING (channel_id)")
+        cols += ["m.views_28d", "m.uploads_per_week", "m.regularity", "m.consistency", "m.top_video_share", "m.relative_er", "m.last_upload"]
+    if "creator_watchlist" in have:
+        joins.append("LEFT JOIN creator_watchlist w USING (channel_id)")
+        cols += ["w.cvs", "w.tier", "w.momentum", "w.consistency_pillar", "w.audience_depth", "w.market_opportunity", "w.hit_dependence"]
+    if "creator_earnings" in have:
+        joins.append("LEFT JOIN creator_earnings e USING (channel_id)")
+        cols += ["e.earnings_low_90d", "e.earnings_high_90d", "e.rpm_source"]
+    sql = f"SELECT s.*{''.join(', ' + c for c in cols)} FROM screener s {' '.join(joins)}"
+    out = []
+    for r in _rows(con, sql):
+        d = {"channel": r["title"], "channel_id": r["channel_id"], "niche": label(r["niche_code"]) if r["niche_code"] else "—",
+             "niche_code": r["niche_code"]}
+        for k in ("subscribers", "views", "view_growth_28d", "sub_growth_28d", "growth_vs_niche", "uploads_28d", "median_video_views",
+                  "outlier_rate", "views_28d", "uploads_per_week", "regularity", "consistency", "top_video_share", "relative_er",
+                  "last_upload", "cvs", "tier", "momentum", "consistency_pillar", "audience_depth", "market_opportunity",
+                  "hit_dependence", "earnings_low_90d", "earnings_high_90d", "rpm_source"):
+            if k in r:
+                d[k] = r[k]
+        out.append(d)
+    return out
+
+
 # ---------------------------------------------------------------- synthetic-only datasets (the demo site)
 def _demo_news(as_of: dt.date, creators: list[str]) -> list[dict]:
     import random
@@ -324,6 +355,7 @@ def build(con, out_dir: Path = OUT, source: str = "live") -> dict:
         "methodology": methodology(),
         "coverage": coverage.rows(con) if source == "live" else [],   # screening counts are real; kept off the synthetic site
         "formats_sheet": formats_sheet(),
+        "creator_details": creator_details(con, label),
         "platform_overview": platform_overview(con),
         "platform_series": platform_series(con),
         "platform_lead": platform_lead(con, label),
