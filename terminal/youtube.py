@@ -11,6 +11,8 @@ import os
 import re
 import requests
 
+from . import store
+
 API = "https://www.googleapis.com/youtube/v3"
 
 
@@ -93,24 +95,18 @@ def channel_profiles(channel_ids: list[str], recent: int = 10) -> dict:
 
 
 def pull_channels(con, channel_ids: list[str], today: dt.date) -> int:
-    n = 0
+    chans, snaps = [], []
     for batch in _chunks(channel_ids):
         data = _get("channels", part="snippet,statistics,contentDetails", id=",".join(batch), maxResults=50)
         for c in data.get("items", []):
             sn, st = c["snippet"], c.get("statistics", {})
-            con.execute(
-                "INSERT OR REPLACE INTO channels (channel_id, title, description, country, published_at, uploads_playlist) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                [c["id"], sn.get("title"), sn.get("description"), sn.get("country"), sn.get("publishedAt"),
-                 c["contentDetails"]["relatedPlaylists"]["uploads"]],
-            )
-            con.execute(
-                "INSERT OR REPLACE INTO channel_snapshots VALUES (?, ?, ?, ?, ?)",
-                [today, c["id"], int(st.get("subscriberCount", 0)), int(st.get("viewCount", 0)),
-                 int(st.get("videoCount", 0))],
-            )
-            n += 1
-    return n
+            chans.append([c["id"], sn.get("title"), sn.get("description"), sn.get("country"), sn.get("publishedAt"),
+                          c["contentDetails"]["relatedPlaylists"]["uploads"]])
+            snaps.append([today, c["id"], int(st.get("subscriberCount", 0)), int(st.get("viewCount", 0)),
+                          int(st.get("videoCount", 0))])
+    store.upsert(con, "channels", ["channel_id", "title", "description", "country", "published_at", "uploads_playlist"], chans)
+    store.upsert(con, "channel_snapshots", ["snapshot_date", "channel_id", "subscribers", "views", "video_count"], snaps)
+    return len(chans)
 
 
 def pull_recent_videos(con, today: dt.date, per_channel: int = 50) -> int:
@@ -125,22 +121,16 @@ def pull_recent_videos(con, today: dt.date, per_channel: int = 50) -> int:
             continue  # channel deleted or uploads hidden
         video_ids += [i["contentDetails"]["videoId"] for i in data.get("items", [])]
 
-    n = 0
+    vids, snaps = [], []
     for batch in _chunks(video_ids):
         data = _get("videos", part="snippet,statistics,contentDetails", id=",".join(batch), maxResults=50)
         for v in data.get("items", []):
             sn, st = v["snippet"], v.get("statistics", {})
-            con.execute(
-                "INSERT OR REPLACE INTO videos (video_id, channel_id, title, published_at, duration_s, description, tags) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                [v["id"], sn["channelId"], sn.get("title"), sn.get("publishedAt"),
-                 _duration_s(v["contentDetails"].get("duration")), (sn.get("description") or "")[:1000],
-                 ", ".join(sn.get("tags", [])[:15]) or None],
-            )
-            con.execute(
-                "INSERT OR REPLACE INTO video_snapshots VALUES (?, ?, ?, ?, ?)",
-                [today, v["id"], int(st.get("viewCount", 0)), int(st.get("likeCount", 0)),
-                 int(st.get("commentCount", 0))],
-            )
-            n += 1
-    return n
+            vids.append([v["id"], sn["channelId"], sn.get("title"), sn.get("publishedAt"),
+                         _duration_s(v["contentDetails"].get("duration")), (sn.get("description") or "")[:1000],
+                         ", ".join(sn.get("tags", [])[:15]) or None])
+            snaps.append([today, v["id"], int(st.get("viewCount", 0)), int(st.get("likeCount", 0)),
+                          int(st.get("commentCount", 0))])
+    store.upsert(con, "videos", ["video_id", "channel_id", "title", "published_at", "duration_s", "description", "tags"], vids)
+    store.upsert(con, "video_snapshots", ["snapshot_date", "video_id", "views", "likes", "comments"], snaps)
+    return len(vids)

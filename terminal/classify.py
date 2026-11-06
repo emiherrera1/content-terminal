@@ -8,7 +8,7 @@ import os
 
 import anthropic
 
-from . import ctncs, llm
+from . import ctncs, llm, store
 
 MODEL = os.environ.get("CLASSIFIER_MODEL", "claude-sonnet-5-5")
 
@@ -43,10 +43,17 @@ def classify_channels(con, sectors: list[str], limit: int | None = None, redo: b
            WHERE k.channel_id IS NULL OR (? AND NOT coalesce(k.reviewed, false))"""
     rows = con.execute(q, [redo]).fetchall()[:limit]
 
-    n = 0
-    for channel_id, title, description in rows:
-        titles = [t for (t,) in con.execute(
-            "SELECT title FROM videos WHERE channel_id = ? ORDER BY published_at DESC LIMIT 15", [channel_id]).fetchall()]
+    titles_by = {}
+    if rows:
+        ids = [r[0] for r in rows]
+        for cid, t in con.execute(
+                "SELECT channel_id, title FROM (SELECT channel_id, title, row_number() OVER (PARTITION BY channel_id "
+                "ORDER BY published_at DESC) AS k FROM videos WHERE list_contains(?, channel_id)) WHERE k <= 15", [ids]).fetchall():
+            titles_by.setdefault(cid, []).append(t)
+
+    def one(row):
+        channel_id, title, description = row
+        titles = titles_by.get(channel_id, [])
         msg = client.messages.create(
             model=MODEL, max_tokens=2000,
             messages=[{"role": "user", "content": PROMPT.format(
@@ -60,17 +67,21 @@ def classify_channels(con, sectors: list[str], limit: int | None = None, redo: b
             out = {"code": "unclassified", "confidence": 0, "rationale": "unparseable reply"}
         code = out.get("code") if out.get("code") in allowed_codes else "unclassified"
         parts = code.split(".") if code != "unclassified" else []
-        con.execute(
-            "INSERT OR REPLACE INTO classifications "
-            "(channel_id, ctncs_code, sector, category, niche, confidence, rationale, model, reviewed) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, false)",
-            [channel_id, code,
-             parts[0] if len(parts) > 0 else None,
-             ".".join(parts[:2]) if len(parts) > 1 else None,
-             ".".join(parts[:3]) if len(parts) > 2 else None,
-             float(out.get("confidence") or 0), out.get("rationale"), MODEL],
-        )
-        n += 1
+        return [channel_id, code,
+                parts[0] if len(parts) > 0 else None,
+                ".".join(parts[:2]) if len(parts) > 1 else None,
+                ".".join(parts[:3]) if len(parts) > 2 else None,
+                float(out.get("confidence") or 0), out.get("rationale"), MODEL, False]
+
+    from concurrent.futures import ThreadPoolExecutor
+    cols = ["channel_id", "ctncs_code", "sector", "category", "niche", "confidence", "rationale", "model", "reviewed"]
+    n, buf = 0, []
+    with ThreadPoolExecutor(max_workers=int(os.environ.get("CLASSIFY_WORKERS", "6"))) as pool:
+        for k, out in enumerate(pool.map(one, rows), 1):
+            buf.append(out)
+            if k % 50 == 0 or k == len(rows):
+                n += store.upsert(con, "classifications", cols, buf)
+                buf = []
     return n
 
 

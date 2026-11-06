@@ -88,7 +88,8 @@ def test_audit_error_rate(tmp_path):
     assert len(rows) == 5 and header.endswith("correct_code")
     # mark one of the five wrong
     first = rows[0].split(",")
-    rows[0] = ",".join(first[:-1] + ["03.08.015"])
+    wrong_code = "03.08.015" if first[3] != "03.08.015" else "03.08.016"   # always differs from the assigned code
+    rows[0] = ",".join(first[:-1] + [wrong_code])
     open(path, "w").write("\n".join([header] + rows) + "\n")
     r = classify.record_audit(con, path, "emily", day(LAST))
     assert (r["checked"], r["wrong"]) == (5, 1)
@@ -96,7 +97,7 @@ def test_audit_error_rate(tmp_path):
     got = con.execute("SELECT sum(checked), sum(wrong) FROM audit_error_rate WHERE kind = 'video'").fetchone()
     assert got == (5, 1)
     assert con.execute("SELECT count(*) FROM video_classifications WHERE reviewed").fetchone()[0] == 5
-    assert con.execute("SELECT topic_code FROM video_classifications WHERE video_id = ?", [first[1]]).fetchone()[0] == "03.08.015"
+    assert con.execute("SELECT topic_code FROM video_classifications WHERE video_id = ?", [first[1]]).fetchone()[0] == wrong_code
 
 
 def test_crosswalk_loads():

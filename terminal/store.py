@@ -152,3 +152,21 @@ def connect(path: str | None = None) -> duckdb.DuckDBPyConnection:
         con = duckdb.connect(path)
     con.execute(SCHEMA)
     return con
+
+
+def upsert(con, table: str, columns: list[str], rows: list) -> int:
+    """Write many rows in one statement. Row-by-row inserts cost a network round trip each on MotherDuck,
+    which turned a 17,000-video first pull into hours; one bulk insert is a single trip."""
+    if not rows:
+        return 0
+    import pandas as pd
+    df = pd.DataFrame(rows, columns=columns).drop_duplicates(subset=[columns[0]] if table not in ("channel_snapshots", "video_snapshots")
+                                                             else columns[:2], keep="last")
+    name = f"_upsert_{table}"
+    con.register(name, df)
+    try:
+        cols = ", ".join(columns)
+        con.execute(f"INSERT OR REPLACE INTO {table} ({cols}) SELECT {cols} FROM {name}")
+    finally:
+        con.unregister(name)
+    return len(df)

@@ -11,10 +11,12 @@ import datetime as dt
 import json
 import os
 
-from . import ctncs, llm
+from . import store, ctncs, llm
 
 MODEL = os.environ.get("VIDEO_CLASSIFIER_MODEL", "claude-haiku-5-5")
 BATCH = 25
+WORKERS = int(os.environ.get("CLASSIFY_WORKERS", "6"))   # Claude calls in flight at once
+SAVE_EVERY = 20                                          # batches per database write
 
 SYSTEM = """You classify individual YouTube videos using the CTNCS taxonomy (Content Terminal Niche Classification Standard).
 
@@ -82,13 +84,14 @@ def parse_reply(text: str, ids: list[str], book: dict) -> list[dict]:
     return out
 
 
+SAVE_COLS = ["video_id", "topic_code", "sector", "category", "niche", "subniche", "format_id", "format_label", "confidence",
+             "model", "reviewed"]
+
+
 def save(con, rows: list[dict], model: str = MODEL) -> None:
-    for r in rows:
-        con.execute(
-            "INSERT OR REPLACE INTO video_classifications (video_id, topic_code, sector, category, niche, subniche, "
-            "format_id, format_label, confidence, model, reviewed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false)",
-            [r["video_id"], r["topic_code"], r["sector"], r["category"], r["niche"], r["subniche"],
-             r["format_id"], r["format_label"], r["confidence"], model])
+    store.upsert(con, "video_classifications", SAVE_COLS,
+                 [[r["video_id"], r["topic_code"], r["sector"], r["category"], r["niche"], r["subniche"],
+                   r["format_id"], r["format_label"], r["confidence"], model, False] for r in rows])
 
 
 def pending(con, days: int = 60, limit: int | None = None):
@@ -114,13 +117,23 @@ def classify_videos(con, limit: int | None = None, days: int = 60, client=None) 
         import anthropic
         client = anthropic.Anthropic()
     system = [{"type": "text", "text": _system(book), "cache_control": {"type": "ephemeral"}}]
-    n = 0
-    for i in range(0, len(rows), BATCH):
-        batch = rows[i:i + BATCH]
+
+    def one(batch):
         msg = client.messages.create(model=MODEL, max_tokens=4000 + 150 * len(batch), system=system,
                                      messages=[{"role": "user", "content": USER.format(videos=_video_block(batch))}])
         llm.warn_if_cut(msg, "classify-videos")
-        out = parse_reply(llm.reply_text(msg), [r[0] for r in batch], book)
-        save(con, out)
-        n += len(out)
+        return parse_reply(llm.reply_text(msg), [r[0] for r in batch], book)
+
+    # several batches in flight at once; results are saved every SAVE_EVERY batches so a failure late in a long run
+    # keeps what was already done
+    from concurrent.futures import ThreadPoolExecutor
+    batches = [rows[i:i + BATCH] for i in range(0, len(rows), BATCH)]
+    n, pending_rows = 0, []
+    with ThreadPoolExecutor(max_workers=WORKERS) as pool:
+        for k, out in enumerate(pool.map(one, batches), 1):
+            pending_rows += out
+            if k % SAVE_EVERY == 0 or k == len(batches):
+                save(con, pending_rows)
+                n += len(pending_rows)
+                pending_rows = []
     return n
