@@ -404,7 +404,7 @@ window.dash = (() => {
         <div class="pb"><dl>
           <dt>Commands</dt>
           <dd>NICHE · TREND · CREATOR [search] · ALERTS · COMP [A vs B] · PLATFORM · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
-          <dd>$LIFE, $GAME, $FINX … one sector's index. SORT CCOS | SI | NGP | TVE | CHG on the niche table.</dd>
+          <dd>!LIFE, !GAME, !FINX … one sector's attention index (! for attention; $ still works).</dd><dd>SORT CCOS | SI | NGP | TVE | CHG on the niche table.</dd>
           <dd>Tab completes a command. Esc goes back to the niche overview and clears the search.</dd>
           <dt>TVE</dt><dd>Content supply: minutes published by tracked channels in the niche over 28 days.</dd>
           <dt>SI</dt><dd>Saturation, 0 to 1: uploads per 1,000 views gained over 28 days, against the median niche (0.5).</dd>
@@ -562,10 +562,10 @@ dash.calc('drop_reasons', {
 </script>
 <script>
 (() => {
-  const TICK = {'Entertainment': '$ENTX', 'Education': '$EDU', 'Lifestyle': '$LIFE', 'Technology': '$TECH', 'News & Commentary': '$NEWS',
-    'Creative Arts': '$ARTS', 'Gaming': '$GAME', 'Business & Finance': '$FINX', 'Health & Wellness': '$WELL',
-    'Social & Community': '$SOCL', 'Sports': '$SPRT', 'Pets & Animals': '$PETS', 'YouTube': '$YT', 'TikTok': '$TT', 'Instagram': '$IG'};
-  const tk = s => TICK[s] || '$' + s.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase();
+  const TICK = {'Entertainment': '!ENTX', 'Education': '!EDU', 'Lifestyle': '!LIFE', 'Technology': '!TECH', 'News & Commentary': '!NEWS',
+    'Creative Arts': '!ARTS', 'Gaming': '!GAME', 'Business & Finance': '!FINX', 'Health & Wellness': '!WELL',
+    'Social & Community': '!SOCL', 'Sports': '!SPRT', 'Pets & Animals': '!PETS', 'YouTube': '!YT', 'TikTok': '!TT', 'Instagram': '!IG'};
+  const tk = s => TICK[s] || '!' + s.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase();
   const N = Number, num = d3.format(','), f2 = d3.format('.2f'), f3 = d3.format('.3f');
   const compact = v => Intl.NumberFormat('en', {notation: 'compact', maximumFractionDigits: 1}).format(v);
   const spct = v => v == null || isNaN(v) ? '—' : (v > 0 ? '+' : '') + d3.format('.1%')(v), pct = d3.format('.0%');
@@ -1047,7 +1047,7 @@ dash.calc('drop_reasons', {
     markTips();
   }
 
-  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'COMP', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '$LIFE', '$GAME', '$FINX'];
+  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'COMP', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '!LIFE', '!GAME', '!FINX'];
   input.addEventListener('keydown', e => {
     if (e.key === 'Tab') {
       const v = input.value.trim().toUpperCase(); const m = CMDS.filter(c => c.startsWith(v));
@@ -1060,7 +1060,7 @@ dash.calc('drop_reasons', {
     const [c, ...rest] = raw.split(/\s+/); const C = c.toUpperCase(), arg = rest.join(' ');
     if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, COMP [A vs B], PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
     else if (C === 'NICHE' || C === 'MARKET') { st.sector = null; show('niche'); say('Niche market overview'); }
-    else if (C.startsWith('$')) { st.sector = C; show('niche'); say('Index ' + C); }
+    else if (C.startsWith('!') || C.startsWith('$')) { st.sector = '!' + C.slice(1); show('niche'); say('Index ' + st.sector); }
     else if (C === 'TREND') { show('trend'); say('Trend analysis: index average CCOS by day'); }
     else if (C === 'CREATOR' || C === 'SCREEN') { $('search').value = arg; st.q = arg.toLowerCase(); show('creator'); say(arg ? 'Creators matching ' + arg.toUpperCase() : 'Creator screener'); }
     else if (C === 'ALERTS') { show('alerts'); say('Spike alerts for today'); }
