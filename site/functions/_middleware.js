@@ -88,7 +88,7 @@ export async function onRequest(ctx) {
   }
 
   if (!(await valid(request, secret))) {
-    if (url.pathname.startsWith('/data/')) return new Response('Unauthorized', {status: 401, headers: {'Cache-Control': 'no-store'}});
+    if (url.pathname.startsWith('/data/') || url.pathname.startsWith('/api/')) return new Response('Unauthorized', {status: 401, headers: {'Cache-Control': 'no-store'}});
     return Response.redirect(url.origin + '/login', 302);
   }
 

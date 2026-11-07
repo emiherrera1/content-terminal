@@ -30,6 +30,11 @@ def test_site_files_match_the_page(tmp_path):
     plats = {r["platform"] for r in json.loads((tmp_path / "platform_overview.json").read_text())}
     assert plats == {"YouTube", "TikTok", "Instagram"}
     assert json.loads((tmp_path / "platform_series.json").read_text())
+    series = json.loads((tmp_path / "creator_series.json").read_text())
+    assert series and {"channel_id", "start", "views", "subs"} <= set(series[0]) and len(series[0]["views"]) == len(series[0]["subs"])
+    details = json.loads((tmp_path / "creator_details.json").read_text())
+    assert any(d.get("top_entities") for d in details) and any(d.get("top_packaging") for d in details)
+    assert set(meta["cvs"]["weights"]) == {"momentum", "consistency", "audience_depth", "market_opportunity", "hit_dependence"}
     for name, fields in PAGE_FIELDS.items():
         rows = json.loads((tmp_path / f"{name}.json").read_text())
         assert rows, name

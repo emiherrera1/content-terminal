@@ -8,6 +8,7 @@ The Content Terminal as a private website: one page, today's data files, and a p
 | `public/vendor/d3.min.js` | Charting library, self-hosted (ISC licence in `d3.LICENSE.txt`). |
 | `public/data/*.json` | Built each run by `python -m terminal site`. Never committed. |
 | `functions/_middleware.js` | The password gate. Runs on Cloudflare before every request, data files included. |
+| `functions/api/pipeline.js` | The Watchlist's deal pipeline: each creator's stage and note, saved in Cloudflare KV (binding `PIPELINE`), behind the same password. Keeps a log of every stage change. |
 | `deploy.sh` | Uploads `public/` and `functions/` to Cloudflare Pages. Does nothing until the Cloudflare secrets exist. |
 | `dash-shim.js`, `build_page.py` | How the page was ported from its first version; kept for the record. |
 
@@ -44,3 +45,7 @@ cd site && npx wrangler@3.114.0 pages dev public --binding TERMINAL_PASSWORD=pic
 7. Optional: `FORMATS_SHEET_CSV_URL` for the Formats view. In the Trending Formats sheet: File > Share > Publish to web >
    the `trending_titles_master_clean` tab > CSV > Publish, and paste the link as the secret.
 8. Actions > **site** > Run workflow.
+9. Pipeline storage for the Watchlist: Workers & Pages > KV (Storage & databases > Workers KV) > Create a namespace
+   named `content-terminal-pipeline`. Then the Pages project > Settings > Bindings > Add > KV namespace: variable name
+   `PIPELINE`, namespace `content-terminal-pipeline` (Production). Until this exists, stages save in each browser only
+   and the Watchlist says so.

@@ -204,6 +204,13 @@ def platform_movement(con, label) -> list[dict]:
     return sorted(acc.values(), key=lambda r: r["code"])
 
 
+def _cvs_config() -> dict:
+    """Pillar maximums, gate thresholds and tier rules, so the tear sheet explains the score with the numbers that made it."""
+    import yaml
+    c = (yaml.safe_load((ROOT / "config" / "formulas.yaml").read_text()) or {}).get("cvs", {})
+    return {"weights": c.get("weights", {}), "gates": c.get("gates", {}), "tiers": c.get("tiers", {})}
+
+
 def creator_details(con, label) -> list[dict]:
     """Everything the Comp view compares about one creator: the screener row, creator metrics (5.x), the viability
     score and its pillars, and the 90-day earnings range (labeled placeholder until real RPM bands are set)."""
@@ -217,6 +224,8 @@ def creator_details(con, label) -> list[dict]:
     if "creator_watchlist" in have:
         joins.append("LEFT JOIN creator_watchlist w USING (channel_id)")
         cols += ["w.cvs", "w.tier", "w.momentum", "w.consistency_pillar", "w.audience_depth", "w.market_opportunity", "w.hit_dependence"]
+    if "creator_watchlist" in have:
+        cols += ["w.auto_gates", "w.manual_gates", "w.needs_review"]
     if "creator_earnings" in have:
         joins.append("LEFT JOIN creator_earnings e USING (channel_id)")
         cols += ["e.earnings_low_90d", "e.earnings_high_90d", "e.rpm_source"]
@@ -228,11 +237,41 @@ def creator_details(con, label) -> list[dict]:
         for k in ("subscribers", "views", "view_growth_28d", "sub_growth_28d", "growth_vs_niche", "uploads_28d", "median_video_views",
                   "outlier_rate", "views_28d", "uploads_per_week", "regularity", "consistency", "top_video_share", "relative_er",
                   "last_upload", "cvs", "tier", "momentum", "consistency_pillar", "audience_depth", "market_opportunity",
-                  "hit_dependence", "earnings_low_90d", "earnings_high_90d", "rpm_source"):
+                  "hit_dependence", "earnings_low_90d", "earnings_high_90d", "rpm_source", "auto_gates", "manual_gates", "needs_review"):
             if k in r:
                 d[k] = r[k]
         out.append(d)
+    # what the tear sheet adds: the brands and companies named in the creator's videos (6.2) and how they package them (2.11)
+    by = {d["channel_id"]: d for d in out}
+    if "video_entities" in have:
+        for cid, ents in con.execute("""
+                SELECT channel_id, list(entity ORDER BY n DESC)[1:5] FROM (
+                  SELECT v.channel_id, e.entity, count(*) AS n FROM video_entities e JOIN videos v USING (video_id)
+                  WHERE v.published_at >= (SELECT max(published_at) FROM videos) - INTERVAL 180 DAY
+                  GROUP BY ALL) GROUP BY channel_id""").fetchall():
+            if cid in by:
+                by[cid]["top_entities"] = ", ".join(ents)
+    if "video_packaging" in have:
+        for cid, labels, shares in con.execute("""
+                WITH c AS (SELECT v.channel_id, p.packaging_label, count(*) AS n
+                           FROM video_packaging p JOIN videos v USING (video_id) WHERE p.packaging_label IS NOT NULL GROUP BY ALL),
+                     t AS (SELECT *, n / sum(n) OVER (PARTITION BY channel_id) AS share FROM c)
+                SELECT channel_id, list(packaging_label ORDER BY n DESC)[1:3], list(share ORDER BY n DESC)[1:3] FROM t
+                GROUP BY channel_id""").fetchall():
+            if cid in by:
+                by[cid]["top_packaging"] = ", ".join(f"{l} {round(100 * float(x))}%" for l, x in zip(labels, shares))
     return out
+
+
+def creator_series(con) -> list[dict]:
+    """The tear sheet's chart: each creator's last 90 days of views gained and subscribers, one row per creator."""
+    if not _has(con, "channel_daily"):
+        return []
+    rows = con.execute("""
+        SELECT channel_id, min(snapshot_date), list(views_gained ORDER BY snapshot_date), list(subscribers ORDER BY snapshot_date)
+        FROM channel_daily WHERE snapshot_date > (SELECT max(snapshot_date) FROM channel_snapshots) - 90
+        GROUP BY channel_id""").fetchall()
+    return [{"channel_id": c, "start": d.isoformat(), "views": v, "subs": s} for c, d, v, s in rows]
 
 
 # ---------------------------------------------------------------- synthetic-only datasets (the demo site)
@@ -356,6 +395,7 @@ def build(con, out_dir: Path = OUT, source: str = "live") -> dict:
         "coverage": coverage.rows(con) if source == "live" else [],   # screening counts are real; kept off the synthetic site
         "formats_sheet": formats_sheet(),
         "creator_details": creator_details(con, label),
+        "creator_series": creator_series(con),
         "platform_overview": platform_overview(con),
         "platform_series": platform_series(con),
         "platform_lead": platform_lead(con, label),
@@ -373,6 +413,7 @@ def build(con, out_dir: Path = OUT, source: str = "live") -> dict:
         (out_dir / f"{name}.json").write_text(json.dumps([{k: _clean(v) for k, v in r.items()} for r in rows], default=str))
     as_of = con.execute("SELECT max(snapshot_date) FROM channel_snapshots").fetchone()[0] if _has(con, "channel_snapshots") else None
     meta = {"source": source, "as_of": _clean(as_of), "built_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-            "datasets": list(sets), "rows": {k: len(v) for k, v in sets.items()}}
+            "datasets": list(sets), "rows": {k: len(v) for k, v in sets.items()},
+            "cvs": _cvs_config()}
     (out_dir / "manifest.json").write_text(json.dumps(meta, indent=1))
     return meta
