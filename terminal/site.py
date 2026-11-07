@@ -54,7 +54,8 @@ def niches(con, label, sector) -> list[dict]:
         return []
     return [{"niche_code": r["niche_code"], "niche": label(r["niche_code"]), "tag": r["niche_code"], "sector": sector(r["niche_code"]),
              "tve": r["tve"], "si": r["si"], "ngp": r["ngp"], "ccos": r["ccos"], "chg": r["ccos_chg_7d"], "trend": r["trend"],
-             "risk": r["risk"], "volatility": r["volatility"], "cr3": r["cr3"]}
+             "risk": r["risk"], "volatility": r["volatility"], "cr3": r["cr3"],
+             "views_28d": r.get("views_28d"), "uploads_28d": r.get("uploads_28d")}
             for r in _rows(con, "SELECT * FROM niche_opportunity WHERE ccos IS NOT NULL")]
 
 

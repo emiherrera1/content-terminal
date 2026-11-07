@@ -199,6 +199,17 @@ window.dash = (() => {
 .ct .ts-comp{cursor:pointer} .ct .ts-comp:hover td{background:var(--hl)}
 .ct .ts-foot{color:var(--td);font-size:9px;margin-top:8px;text-transform:none}
 .ct .print-only{display:none}
+.ct .hm{position:relative;margin:0 8px 8px;height:min(62vh,34rem);min-height:22rem}
+@container (max-width:640px){.ct .hm{height:36rem}}
+.ct .hm .sec{position:absolute;border:1px solid #3a3631;box-sizing:border-box}
+.ct .hm .sec>span{position:absolute;left:4px;top:1px;font-size:9px;color:var(--acc);font-weight:700;white-space:nowrap;overflow:hidden;right:4px;text-overflow:ellipsis}
+.ct .hm .tile{position:absolute;box-sizing:border-box;border:1px solid #000;overflow:hidden;cursor:pointer;padding:3px 4px;color:#fff;text-shadow:0 0 2px #000}
+.ct .hm .tile:hover{outline:1px solid var(--acc);z-index:2}
+.ct .hm .tile b{display:block;font-size:10px;line-height:1.15;overflow:hidden;text-overflow:ellipsis}
+.ct .hm .tile span{display:block;font-size:10px;margin-top:2px}
+.ct .hm .tip{z-index:5;max-width:min(22rem,92%);white-space:normal}
+.ct .hm-legend{display:inline-flex;align-items:center;gap:6px;font-size:9px;color:var(--tm);margin-left:auto}
+.ct .hm-legend i{display:inline-block;width:120px;height:8px}
 @media print{
   html,body{background:#fff!important;padding:0} .ct{--bg:#fff;--panel:#fff;--tx:#111;--tm:#555;--td:#777;--line:#ccc;--acc:#8a4b00;--g:#0a6b2a;--red:#a0001a;--hl:#fff;border:0;outline:none!important}
   .ct .tk,.ct .fbar,.ct .search,.ct #command-line,.ct .status,.ct .grid>div:last-child,.ct #ts-back,.ct #ts-print,.ct .ts-stage select,.ct .ts-stage button,.ct .ts-stage .dim{display:none!important}
@@ -251,6 +262,7 @@ window.dash = (() => {
     <span class="stamp" id="stamp">—</span>
     <button class="fn" role="tab" data-v="niche" aria-selected="true">Niche<small>F2</small></button>
     <button class="fn" role="tab" data-v="trend">Trend<small>F3</small></button>
+    <button class="fn" role="tab" data-v="hmap">Heatmap</button>
     <button class="fn" role="tab" data-v="creator">Creator<small>F4</small></button>
     <button class="fn" role="tab" data-v="alerts">Alerts<small>F5</small></button>
     <button class="fn" data-act="analyze" title="Analyze the top niche, or type ANALYZE <niche>">Analyze</button>
@@ -301,6 +313,16 @@ window.dash = (() => {
             </tr></thead><tbody></tbody>
           </table>
         </div>
+      </section>
+      <section class="view" id="hmap" hidden>
+        <div class="ph"><span>Niche heatmap</span><span class="meta" id="hm-meta">—</span></div>
+        <div class="compbar">
+          <span class="seg" id="hm-color"><button class="cmb" data-c="attn" aria-pressed="true">Color: attention 7D</button><button class="cmb" data-c="ccos" aria-pressed="false">Color: CCOS 7D</button></span>
+          <span class="seg" id="hm-size"><button class="cmb" data-z="views_28d" aria-pressed="true">Size: views 28D</button><button class="cmb" data-z="tve" aria-pressed="false">Size: content supply</button></span>
+          <span class="hm-legend" id="hm-legend"></span>
+        </div>
+        <div id="hm" class="hm"><div class="tip"></div></div>
+        <div class="cnote">Each tile is a niche, grouped by sector. Hover for the numbers; click a tile for its analysis. Gray tiles have no 7-day change yet.</div>
       </section>
       <section class="view" id="watch" hidden>
         <div class="ph"><span>Watchlist</span><span class="meta">ranked by Creator Viability Score · click a creator for the tear sheet</span></div>
@@ -446,7 +468,7 @@ window.dash = (() => {
         <div class="ph"><span>Help</span><span class="meta">F1</span></div>
         <div class="pb"><dl>
           <dt>Commands</dt>
-          <dd>NICHE · TREND · CREATOR [search] · ALERTS · WATCH · TEAR &lt;creator&gt; · COMP [A vs B] · PLATFORM · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
+          <dd>NICHE · TREND · CREATOR [search] · ALERTS · HMAP · WATCH · TEAR &lt;creator&gt; · COMP [A vs B] · PLATFORM · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
           <dd>!LIFE, !GAME, !FINX … one sector's attention index (! for attention; $ still works).</dd><dd>SORT CCOS | SI | NGP | TVE | CHG on the niche table.</dd>
           <dd>Tab completes a command. Esc goes back to the niche overview and clears the search.</dd>
           <dt>TVE</dt><dd>Content supply: minutes published by tracked channels in the niche over 28 days.</dd>
@@ -459,6 +481,7 @@ window.dash = (() => {
           <dt>News rank</dt><dd>Impact (HIGH 3, MEDIUM 2, LOW 1), halving every 7 days. Tags come from Claude reading each headline; every item links to its source.</dd>
           <dt>Dog house</dt><dd>Articles whose reporting is negative for creators. Sourced articles only; posts from X need the paid X API and aren't connected.</dd>
           <dt>Formats</dt><dd>Refreshed from the Trending Formats sheet each morning. Performance = 60 × min(change ÷ 100%, 1) + 40 × min(outlier ÷ 10x, 1). EXCELLENT 80+, STRONG 60+, GOOD 40+, FAIR 20+, else WEAK. A change of "-" counts as 0. Filters: top 10% by performance, change 100%+, outlier 6x+, 3+ triggers.</dd>
+          <dt>Heatmap</dt><dd>Every niche as a tile inside its sector, sized by views over 28 days (or content supply) and colored by its 7-day change in attention (or in CCOS), green up and red down, capped at ±15% (±20% for CCOS). Click a tile to analyze that niche.</dd>
           <dt>Watchlist</dt><dd>Creators ranked by Creator Viability Score within tier (Diligence-ready, Priority, Watch), with a pipeline stage on each: Watching, Contacted, In diligence, Passed, Invested. Click a creator for its tear sheet: numbers, the score's pillars against their maximums, gates, brands in their videos, packaging, niche and the closest comparables, with a note field and Print / PDF.</dd>
           <dt>Comp</dt><dd>Two creators or two niches side by side on the same metrics. Green marks the stronger value where higher or lower is clearly better. COMP SLEEP VS NUTRITION or pick from the lists.</dd>
           <dt>Platform</dt><dd>Attention per platform (9.1), each platform's week against its own 26 weeks (9.2), the follower-weighted composite (9.3) and which platform moves first in a topic (9.4).</dd>
@@ -833,6 +856,56 @@ dash.calc('drop_reasons', {
       td(tr, r.trigger); td(tr, r.formats); td(tr, r.avg_outlier == null ? '—' : d3.format('.1f')(r.avg_outlier) + 'x'); });
   }
 
+  // ---- Niche heatmap: every niche a tile, sized by attention, colored by its 7-day change
+  const hst = {color: 'attn', size: 'views_28d'};
+  const HM_RAMP = ['#c62828', '#6b1a16', '#1c1917', '#14532d', '#22c55e'];
+  function drawHeatmap(niches) {
+    const box = $('hm'), tip = box.querySelector('.tip');
+    box.querySelectorAll('.sec,.tile,.hm-empty').forEach(x => x.remove());
+    const val = n => hst.color === 'attn' ? (n.ngp == null ? null : N(n.ngp) - 1) : (n.chg == null ? null : N(n.chg));
+    const lim = hst.color === 'attn' ? 0.15 : 0.2;
+    const color = v => v == null || isNaN(v) ? '#2a2724' : d3.interpolateRgbBasis(HM_RAMP)((Math.max(-lim, Math.min(lim, v)) + lim) / (2 * lim));
+    const rows = niches.filter(n => N(n[hst.size]) > 0);
+    $('hm-meta').textContent = 'size: ' + (hst.size === 'tve' ? 'content supply, 28 days' : 'views, 28 days') + ' · color: ' +
+      (hst.color === 'attn' ? 'views this week vs last week' : 'opportunity score vs 7 days ago') + ' · ' + num(rows.length) + ' niches';
+    const lg = $('hm-legend'); lg.textContent = '';
+    const bar = el('i'); bar.style.background = 'linear-gradient(90deg,' + HM_RAMP.join(',') + ')';
+    lg.append(el('span', '−' + Math.round(lim * 100) + '%'), bar, el('span', '+' + Math.round(lim * 100) + '%'));
+    if (!rows.length) { box.append(el('div', 'The heatmap fills in once niches have 14 days of history.', 'hm-empty dim')); return; }
+    const W = box.clientWidth, H = box.clientHeight;
+    const bySec = d3.group(rows, n => n.sector);
+    const root = d3.hierarchy({children: [...bySec].map(([sector, kids]) => ({sector, children: kids}))})
+      .sum(d => d.children ? 0 : N(d[hst.size])).sort((a, b) => b.value - a.value);
+    d3.treemap().size([W, H]).paddingOuter(1).paddingTop(d => d.depth === 1 ? 14 : 0).paddingInner(1).round(true)(root);
+    root.children.forEach(sn => {
+      const d = el('div', null, 'sec'); Object.assign(d.style, {left: sn.x0 + 'px', top: sn.y0 + 'px', width: (sn.x1 - sn.x0) + 'px', height: (sn.y1 - sn.y0) + 'px'});
+      // sector change = attention-weighted average of its niches, so a big niche counts for more than a small one
+      const lv = sn.leaves().filter(l => val(l.data) != null), wsum = d3.sum(lv, l => l.value);
+      const sv = wsum ? d3.sum(lv, l => l.value * val(l.data)) / wsum : null;
+      d.append(el('span', tk(sn.data.sector) + ' ' + String(sn.data.sector).toUpperCase() + (sv == null ? '' : ' ' + spct(sv)))); box.append(d);
+    });
+    root.leaves().forEach(l => {
+      const n = l.data, v = val(n), w = l.x1 - l.x0, h = l.y1 - l.y0;
+      const t = el('div', null, 'tile'); Object.assign(t.style, {left: l.x0 + 'px', top: l.y0 + 'px', width: w + 'px', height: h + 'px', background: color(v)});
+      if (w > 46 && h > 22) { t.append(el('b', String(n.niche).toUpperCase())); if (h > 34) t.append(el('span', v == null ? '—' : spct(v))); }
+      t.addEventListener('mousemove', ev => {
+        tip.textContent = '';
+        tip.append(el('div', String(n.niche).toUpperCase() + ' · ' + n.niche_code), el('div', String(n.sector), 'dim'),
+          el('div', 'Views 28D ' + (n.views_28d == null ? '—' : compact(N(n.views_28d))) + ' · supply ' + num(Math.round(N(n.tve))) + ' min'),
+          el('div', 'Attention 7D ' + (n.ngp == null ? '—' : spct(N(n.ngp) - 1)) + ' · CCOS ' + f2(N(n.ccos)) + ' (' + spct(N(n.chg)) + ')'),
+          el('div', 'Trend ' + n.trend + ' · risk ' + n.risk));
+        tip.style.display = 'block';
+        const r = box.getBoundingClientRect(), x = ev.clientX - r.left + 12, y = ev.clientY - r.top + 12;
+        tip.style.left = Math.max(0, Math.min(x, W - tip.offsetWidth - 4)) + 'px'; tip.style.top = Math.max(0, Math.min(y, H - tip.offsetHeight - 4)) + 'px';
+      });
+      t.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+      t.addEventListener('click', () => { log.textContent += '> ANALYZE ' + String(n.niche).toUpperCase() + '\n'; analyze(n.niche); });
+      box.append(t);
+    });
+  }
+  document.querySelectorAll('#hm-color .cmb').forEach(b => b.addEventListener('click', () => { hst.color = b.dataset.c; document.querySelectorAll('#hm-color .cmb').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw(); }));
+  document.querySelectorAll('#hm-size .cmb').forEach(b => b.addEventListener('click', () => { hst.size = b.dataset.z; document.querySelectorAll('#hm-size .cmb').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw(); }));
+  let hmT; window.addEventListener('resize', () => { clearTimeout(hmT); hmT = setTimeout(() => { if (st.view === 'hmap') draw(); }, 150); });
   // ---- Watchlist, pipeline and tear sheet
   const STAGES = ['Watching', 'Contacted', 'In diligence', 'Passed', 'Invested'];
   const TIER_ORDER = {'Diligence-ready': 0, 'Priority': 1, 'Watch': 2};
@@ -1259,6 +1332,7 @@ dash.calc('drop_reasons', {
     const cdx = dash.data('creator_details');
     if (cdx.status === 'ok' && ni.status === 'ok' && st.view === 'comp') drawComp(cdx.data, ni.data);
     if (cdx.status === 'ok' && st.view === 'watch') drawWatch(cdx.data);
+    if (ni.status === 'ok' && st.view === 'hmap') drawHeatmap(ni.data);
     const csx = dash.data('creator_series');
     if (cdx.status === 'ok' && ni.status === 'ok' && st.view === 'tear') drawTear(cdx.data, ni.data, csx.status === 'ok' ? csx.data : []);
     if (nw.status === 'ok') fillList('plat-news', nw.data.filter(n => n.category === 'PLATFORM').sort((a, b) => b.published.localeCompare(a.published)).slice(0, 8), 'No platform news yet.');
@@ -1271,7 +1345,7 @@ dash.calc('drop_reasons', {
     markTips();
   }
 
-  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'WATCH', 'TEAR', 'COMP', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '!LIFE', '!GAME', '!FINX'];
+  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'HMAP', 'WATCH', 'TEAR', 'COMP', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '!LIFE', '!GAME', '!FINX'];
   input.addEventListener('keydown', e => {
     if (e.key === 'Tab') {
       const v = input.value.trim().toUpperCase(); const m = CMDS.filter(c => c.startsWith(v));
@@ -1282,7 +1356,7 @@ dash.calc('drop_reasons', {
     const raw = input.value.trim(); input.value = ''; if (!raw) return;
     log.textContent += '> ' + raw.toUpperCase() + '\n';
     const [c, ...rest] = raw.split(/\s+/); const C = c.toUpperCase(), arg = rest.join(' ');
-    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, WATCH, TEAR <creator>, COMP [A vs B], PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
+    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, HMAP, WATCH, TEAR <creator>, COMP [A vs B], PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
     else if (C === 'NICHE' || C === 'MARKET') { st.sector = null; show('niche'); say('Niche market overview'); }
     else if (C.startsWith('!') || C.startsWith('$')) { st.sector = '!' + C.slice(1); show('niche'); say('Index ' + st.sector); }
     else if (C === 'TREND') { show('trend'); say('Trend analysis: index average CCOS by day'); }
@@ -1297,6 +1371,7 @@ dash.calc('drop_reasons', {
       show('des'); say(hit ? 'DES ' + hit.code + ': ' + hit.name : want ? "No metric '" + want + "'. Pick one from the list." : 'Metric definitions');
     }
     else if (C === 'COVERAGE') { show('coverage'); say('Coverage: tracked and screened channels per niche'); }
+    else if (C === 'HMAP' || C === 'HEATMAP' || C === 'IMAP') { show('hmap'); say('Niche heatmap: size is attention, color is the 7-day change'); }
     else if (C === 'WATCH' || C === 'WATCHLIST') { show('watch'); say('Watchlist: creators by viability score, with pipeline stages'); }
     else if (C === 'TEAR') {
       const cd = dash.data('creator_details'), t = arg.trim().toLowerCase();
