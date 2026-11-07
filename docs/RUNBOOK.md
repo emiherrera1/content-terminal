@@ -24,7 +24,7 @@ engineer can take it over without a handoff call.
 
 | Job | When | Command | Stages (critical in bold) |
 | --- | --- | --- | --- |
-| daily | 7:17 AM ET every day (`.github/workflows/daily.yml`) | `python -m terminal run daily` | **pull_youtube**, pull_tiktok, pull_instagram, classify_channels, classify_videos, notes, news, tag, comments, **compute**, later, quality_gate, **export**, site; then publishes the site |
+| daily | 7:17 AM ET every day (`.github/workflows/daily.yml`) | `python -m terminal run daily` | **pull_youtube**, pull_tiktok, pull_instagram, classify_channels, classify_videos, notes, news, tag, comments, **compute**, later, ask, quality_gate, **export**, site; then publishes the site |
 | weekly | Mondays 8:03 AM ET (`weekly.yml`) | `python -m terminal run weekly` | google_trends, outcome_csvs, outside_estimates, **compute**, later, audit_sheet, **export**, site; then publishes the site |
 | rebuild | by hand, after a formula or config change | `python -m terminal run rebuild` | tag, **compute**, later, quality_gate, **export** |
 | tests | every push to main (`tests.yml`) | `python -m pytest -q` | 60+ tests, including a synthetic world |
@@ -108,3 +108,13 @@ the tests check that the formulas recover them. Use it to see a change end to en
 - Add a dbt-style layer if analysts start writing SQL against the tables directly.
 - Partition `video_snapshots` by month once it passes ~100M rows.
 - Replace the rule-based packaging, entity and purchase-intent taggers with model-based ones, keeping the same tables.
+
+## Asking questions in chat
+
+Claude's MotherDuck connector (Claude > Customize > Connectors > MotherDuck > Connect, then sign in to MotherDuck)
+reads the database directly. The pipeline's `ask` stage rebuilds a set of plain-English views for it after every run
+(`terminal/ask.py`): `ask_guide` lists them; `ask_creators`, `ask_niches`, `ask_niche_history`, `ask_creator_history`,
+`ask_topic_attention`, `ask_news`, `ask_tier_changes`, `ask_glossary` and `ask_topics` use names instead of codes and
+carry a definition on every view and key column. In the connector's settings, set the write tool (`query_rw`) to
+**Blocked** so chat can read but never change the data. Each chat query uses a little of the MotherDuck Lite plan's
+10 compute hours a month.

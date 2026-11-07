@@ -114,6 +114,12 @@ def _comments(ctx):
     return f"{sources.pull_comments(ctx.con, ctx.today)} comments"
 
 
+def _ask(ctx):
+    """Plain-English views for asking questions in chat (terminal/ask.py)."""
+    from . import ask
+    return ", ".join(ask.build(ctx.con))
+
+
 def _quality_gate(ctx):
     """Warn (never fail) when today's data looks incomplete, so a partial day is visible in the run log."""
     q = ctx.settings.get("quality", {})
@@ -175,6 +181,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("comments", _comments, retries=1),
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
+        Stage("ask", _ask),
         Stage("quality_gate", _quality_gate),
         Stage("export", _export, critical=True),
         Stage("site", _site),
@@ -185,6 +192,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("outside_estimates", _outside),
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
+        Stage("ask", _ask),
         Stage("audit_sheet", _audit_sheet),
         Stage("export", _export, critical=True),
         Stage("site", _site),
@@ -194,6 +202,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("tag", _tag),
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
+        Stage("ask", _ask),
         Stage("quality_gate", _quality_gate),
         Stage("export", _export, critical=True),
     ],
