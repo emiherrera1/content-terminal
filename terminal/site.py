@@ -382,7 +382,9 @@ def _demo_coverage(con, label) -> list[dict]:
     return out
 
 
-def build(con, out_dir: Path = OUT, source: str = "live") -> dict:
+def build(con, out_dir: Path = OUT, source: str = "live", public: bool = False) -> dict:
+    """public=True is the shareable build (the beta at terminal.cvaccelerator.com): Creator Capital notes that are still
+    drafts are left out, so a guest never sees unposted work."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     label, sector = _labels()
@@ -410,11 +412,13 @@ def build(con, out_dir: Path = OUT, source: str = "live") -> dict:
         sets["coverage"] = _demo_coverage(con, label)
         if not sets["alerts"]:
             sets["alerts"] = _demo_alerts(sets["screener"])
+    if public:
+        sets["news"] = [n for n in sets["news"] if n.get("status") != "draft"]
     for name, rows in sets.items():
         (out_dir / f"{name}.json").write_text(json.dumps([{k: _clean(v) for k, v in r.items()} for r in rows], default=str))
     as_of = con.execute("SELECT max(snapshot_date) FROM channel_snapshots").fetchone()[0] if _has(con, "channel_snapshots") else None
     meta = {"source": source, "as_of": _clean(as_of), "built_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
             "datasets": list(sets), "rows": {k: len(v) for k, v in sets.items()},
-            "cvs": _cvs_config()}
+            "cvs": _cvs_config(), "public": public}
     (out_dir / "manifest.json").write_text(json.dumps(meta, indent=1))
     return meta

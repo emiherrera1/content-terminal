@@ -55,3 +55,16 @@ def test_site_news_carries_the_note():
     out = site.news(con)
     first = next(n for n in out if n["label"] == "New Platform Feature")
     assert first["note"].startswith("NEWS: YouTube opened Shopping") and first["status"] == "posted" and first["source"] == "Creator Capital"
+
+
+def test_public_build_leaves_out_drafts(tmp_path):
+    con = store.connect(":memory:")
+    news.connect(con)
+    for r in notes.parse(SHEET):
+        con.execute("INSERT INTO news (url, source, title, summary, published_at, category, note, label, status, impact) "
+                    "VALUES (?, ?, ?, ?, ?, coalesce(?, 'TREND'), ?, ?, ?, 'LOW')",
+                    [r["url"], r["source"], r["title"], r["summary"], r["published_at"], r["category"], r["note"], r["label"], r["status"]])
+    full = site.build(con, tmp_path / "full")
+    shared = site.build(con, tmp_path / "shared", public=True)
+    assert full["rows"]["news"] == 3 and shared["rows"]["news"] == 1 and shared["public"] is True
+    assert all(n["status"] != "draft" for n in json.loads((tmp_path / "shared" / "news.json").read_text()))

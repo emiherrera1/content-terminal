@@ -7,6 +7,7 @@
 <script src="vendor/d3.min.js"></script>
 <script>/* Stand-in for the dashboard runtime the terminal page was first built on.
    Datasets come from data/<name>.json (written by `python -m terminal site`); calcs run in the browser. */
+const BASE = new URLSearchParams(location.search).get('data') === 'demo' ? 'data-demo/' : 'data/';
 window.dash = (() => {
   const raw = {}, calcs = {}, loaders = {}, subs = [];
   let meta = null, failed = null;
@@ -34,11 +35,11 @@ window.dash = (() => {
   }
   async function load() {
     try {
-      const r = await fetch('data/manifest.json', {cache: 'no-store', credentials: 'same-origin'});
+      const r = await fetch(BASE + 'manifest.json', {cache: 'no-store', credentials: 'same-origin'});
       if (r.status === 401 || r.redirected) { location.href = '/login'; return; }
       meta = await r.json();
       await Promise.all(meta.datasets.map(async n => {
-        const d = await fetch('data/' + n + '.json', {cache: 'no-store', credentials: 'same-origin'});
+        const d = await fetch(BASE + n + '.json', {cache: 'no-store', credentials: 'same-origin'});
         raw[n] = d.ok ? await d.json() : [];
       }));
     } catch (e) { failed = String(e); }
@@ -199,6 +200,8 @@ window.dash = (() => {
 .ct .ts-comp{cursor:pointer} .ct .ts-comp:hover td{background:var(--hl)}
 .ct .ts-foot{color:var(--td);font-size:9px;margin-top:8px;text-transform:none}
 .ct .print-only{display:none}
+.ct[data-role=guest] #wl-stage,.ct[data-role=guest] #wl-store,.ct[data-role=guest] #wl-tbl th:last-child,.ct[data-role=guest] #wl-tbl td:last-child,.ct[data-role=guest] .ts-stage{display:none!important}
+.ct #src-switch{display:inline-flex;gap:4px;align-items:center} .ct #src-switch[hidden]{display:none}
 .ct .hm{position:relative;margin:0 8px 8px;height:min(62vh,34rem);min-height:22rem}
 @container (max-width:640px){.ct .hm{height:36rem}}
 .ct .hm .sec{position:absolute;border:1px solid #3a3631;box-sizing:border-box}
@@ -516,7 +519,7 @@ window.dash = (() => {
     <label class="prompt"><b>CONTENT&gt;</b><input id="cmd" type="text" placeholder="Enter command..." autocomplete="off" spellcheck="false" aria-label="Command"></label>
   </div>
   <div class="status">
-    <span><span class="dot" id="src-dot">●</span> <span id="src-label">Loading</span></span><span>F1=Help</span><span>Esc=Close</span><span>Tab=Autocomplete</span>
+    <span><span class="dot" id="src-dot">●</span> <span id="src-label">Loading</span></span><span id="src-switch" hidden></span><span>F1=Help</span><span>Esc=Close</span><span>Tab=Autocomplete</span>
     <span>Data: daily, as of <span data-source="summary" data-field="asOf" data-row="0">—</span></span>
     <span class="ver">Content terminal v0.5 · <a href="/logout" style="color:inherit">Log out</a></span>
   </div>
@@ -973,7 +976,7 @@ dash.calc('drop_reasons', {
       tr.addEventListener('click', () => openTear(c.channel_id));
     });
     const inPipe = Object.values(pipe.items).filter(x => x.stage).length;
-    $('wl-count').textContent = num(rows.length) + ' creators shown · ' + num(inPipe) + ' in the pipeline' +
+    $('wl-count').textContent = num(rows.length) + ' creators shown' + (pipe.mode === 'guest' ? '' : ' · ' + num(inPipe) + ' in the pipeline') +
       (cd.every(c => c.cvs == null) ? ' · scores fill in once 28 days of history exist' : '');
   }
   function openTear(id) { wst.open = id; show('tear'); }
@@ -1403,7 +1406,22 @@ dash.calc('drop_reasons', {
   const start = document.getElementById(location.hash.slice(1));
   if (start && start.classList.contains('view')) show(start.id);
   dash.onData(draw);
-  loadPipe();
+  // who is signed in: guests (for example a grant committee) never see the deal pipeline
+  fetch('api/whoami', {credentials: 'same-origin', cache: 'no-store'}).then(r => r.ok ? r.json() : null).catch(() => null).then(w => {
+    const role = w && w.role || 'owner';
+    document.getElementById('terminal').dataset.role = role;
+    if (role === 'guest') { pipe.mode = 'guest'; pipe.items = {}; draw(); } else loadPipe();
+  });
+  // Live / Demo switch, shown when the synthetic world is published next to the live data
+  fetch('data-demo/manifest.json', {method: 'HEAD', credentials: 'same-origin', cache: 'no-store'}).then(r => {
+    if (!r.ok) return;
+    const box = $('src-switch'), demo = BASE === 'data-demo/';
+    const go = d => { const u = new URL(location.href); if (d) u.searchParams.set('data', 'demo'); else u.searchParams.delete('data'); location.href = u.toString(); };
+    const a = el('button', 'Live', 'cmb'), b = el('button', 'Demo', 'cmb');
+    a.setAttribute('aria-pressed', String(!demo)); b.setAttribute('aria-pressed', String(demo));
+    a.addEventListener('click', () => demo && go(false)); b.addEventListener('click', () => !demo && go(true));
+    box.append(el('span', 'Data: ', 'dim'), a, b); box.hidden = false;
+  }).catch(() => {});
 })();
 </script>
 

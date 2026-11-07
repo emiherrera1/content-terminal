@@ -5,3 +5,4 @@ __pycache__/
 site/public/data/
 node_modules/
 site/.wrangler/
+site/public/data-demo/

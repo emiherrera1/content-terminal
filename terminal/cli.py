@@ -96,6 +96,8 @@ def main(argv=None):
     p.add_argument("--videos", action="store_true", help="audit: sample video topics instead of channel codes")
     p.add_argument("--record", help="audit: load a filled audit sheet")
     p.add_argument("--demo", action="store_true", help="site: build from the synthetic world, labeled SYNTHETIC")
+    p.add_argument("--public", action="store_true", help="site: the shareable build (no unposted Creator Capital drafts)")
+    p.add_argument("--out", help="site: folder for the data files (default site/public/data)")
     a = p.parse_args(argv)
 
     if a.command == "demo":      # synthetic world in its own database; never opens the real one
@@ -111,7 +113,7 @@ def main(argv=None):
         from . import demo, site
         if not demo.DB.exists():
             demo.main()
-        print(site.build(store.connect(str(demo.DB)), source="synthetic")["rows"])
+        print(site.build(store.connect(str(demo.DB)), out_dir=a.out or site.OUT, source="synthetic")["rows"])
         return
 
     con = store.connect()
@@ -204,7 +206,7 @@ def main(argv=None):
             raise SystemExit(f"{job} failed at: {', '.join(r['failed'])}")
     elif a.command == "site":
         from . import site
-        print(site.build(con)["rows"])
+        print(site.build(con, out_dir=a.out or site.OUT, public=a.public)["rows"])
     elif a.command == "health":
         from . import pipeline
         ok, lines = pipeline.health(con)

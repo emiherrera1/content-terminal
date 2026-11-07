@@ -1,5 +1,23 @@
 # terminal.cvaccelerator.com
 
+## Two copies
+
+| Address | Code | Data | Who |
+| --- | --- | --- | --- |
+| terminal.cvaccelerator.com | the `beta` branch, frozen | live, minus unposted Creator Capital drafts; Live / Demo switch | owner password, or the guest password |
+| dev.content-terminal.pages.dev | `main`, the latest | everything; Live / Demo switch | owner password |
+
+`site/publish.sh` publishes both after every daily and weekly run. Guests (`TERMINAL_GUEST_PASSWORD`) see every screen
+but never the deal pipeline: the gate refuses them `/api/pipeline`, and the Watchlist hides stages and notes.
+
+**Moving the beta forward** (when a new version is ready to show): point the `beta` branch at the commit, e.g.
+`git push origin main:beta --force`, then run the **site** workflow. Tag each beta (`git tag v0.6-beta`) so any version
+can be brought back. Version 0.5-beta is the one shown to the Dirigo team.
+
+**Cloudflare settings for the two copies:** `TERMINAL_PASSWORD` must be set for both Production and Preview (the dev
+copy is a Preview deployment; without it the dev copy refuses every request). `TERMINAL_GUEST_PASSWORD` only needs
+Production. The `PIPELINE` KV binding goes on both if the pipeline should work on both.
+
 The Content Terminal as a private website: one page, today's data files, and a password gate.
 
 | Path | What it is |

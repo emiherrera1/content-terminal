@@ -28,11 +28,14 @@ jobs:
           NOTES_SHEET_CSV_URL: ${{ secrets.NOTES_SHEET_CSV_URL }}
           TERMINAL_DB: md:content_terminal
       # terminal.cvaccelerator.com: the page, today's data files and the password gate go to Cloudflare Pages
+      # dev.content-terminal.pages.dev (latest code) and terminal.cvaccelerator.com (the frozen beta)
       - if: always()
-        run: site/deploy.sh
+        run: site/publish.sh
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          TERMINAL_DB: md:content_terminal
       - if: always()
         run: python -m terminal health
         env:
