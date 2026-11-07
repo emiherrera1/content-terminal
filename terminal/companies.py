@@ -42,6 +42,7 @@ def connect(con):
 
 def _feed_url(base: str, gid: int) -> str:
     u = urllib.parse.urlsplit(base)
+    u = u._replace(path=re.sub(r"/pubhtml$", "/pub", u.path))   # the dialog's web-page link works too
     q = [(k, v) for k, v in urllib.parse.parse_qsl(u.query) if k not in ("gid", "single", "output")]
     q += [("gid", str(gid)), ("single", "true"), ("output", "csv")]
     return urllib.parse.urlunsplit((u.scheme, u.netloc, u.path, urllib.parse.urlencode(q), ""))

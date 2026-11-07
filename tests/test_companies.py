@@ -49,6 +49,8 @@ def test_feed_url_picks_each_tab():
     base = "https://docs.google.com/spreadsheets/d/e/2PACX-abc/pub?gid=0&single=true&output=csv"
     u = companies._feed_url(base, 11)
     assert u.startswith("https://docs.google.com/spreadsheets/d/e/2PACX-abc/pub?") and "gid=11" in u and "gid=0" not in u and "output=csv" in u
+    assert companies._feed_url("https://docs.google.com/spreadsheets/d/e/2PACX-abc/pubhtml?gid=10&single=true", 12).startswith(
+        "https://docs.google.com/spreadsheets/d/e/2PACX-abc/pub?")
 
 
 def test_companies_screens_and_ask_views(tmp_path, monkeypatch):
