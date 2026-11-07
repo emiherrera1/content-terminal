@@ -17,7 +17,7 @@ PAGE_FIELDS = {
 def test_site_files_match_the_page(tmp_path):
     con = store.connect(":memory:")
     w = demo.build(con, end=dt.date(2026, 10, 18), n_youtube=24, n_tiktok=4, n_instagram=2)
-    pipeline.run(con, "rebuild", today=w["end"], stages=[s for s in pipeline.JOBS["rebuild"] if s.name in ("compute", "later")])
+    pipeline.run(con, "rebuild", today=w["end"], stages=[s for s in pipeline.JOBS["rebuild"] if s.name in ("tag", "compute", "later")])
     meta = site.build(con, tmp_path, source="synthetic")
     assert meta["source"] == "synthetic" and meta["as_of"] == "2026-10-18"
     assert set(meta["datasets"]) >= {"niches", "index_daily", "screener", "alerts", "news", "methodology", "coverage", "formats_sheet"}
