@@ -26,6 +26,7 @@ jobs:
           INSTAGRAM_BUSINESS_ID: ${{ secrets.INSTAGRAM_BUSINESS_ID }}
           FORMATS_SHEET_CSV_URL: ${{ secrets.FORMATS_SHEET_CSV_URL }}
           NOTES_SHEET_CSV_URL: ${{ secrets.NOTES_SHEET_CSV_URL }}
+          COMPANIES_SHEET_CSV_URL: ${{ secrets.COMPANIES_SHEET_CSV_URL }}
           TERMINAL_DB: md:content_terminal
       # terminal.cvaccelerator.com: the page, today's data files and the password gate go to Cloudflare Pages
       # dev.content-terminal.pages.dev (latest code) and terminal.cvaccelerator.com (the frozen beta)

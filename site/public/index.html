@@ -180,6 +180,8 @@ window.dash = (() => {
 .ct #wl-tbl td:nth-child(2){text-align:left} .ct #wl-tbl tbody tr{cursor:pointer}
 .ct #wl-tbl select,.ct .ts-stage select{all:unset;border:1px solid var(--line);padding:1px 4px;font-size:10px;color:var(--tx);cursor:pointer;min-width:7.5rem;text-align:left}
 .ct .tierchip{border:1px solid var(--line);padding:0 4px;font-size:9px}
+.ct .stg{border:1px solid var(--line);padding:0 4px;font-size:9px;white-space:nowrap} .ct .stg.s4,.ct .stg.s6{color:var(--acc);border-color:#5a4a10} .ct .stg.s5{color:#000;background:var(--g);border-color:var(--g)} .ct .stg.s0{color:var(--tm);border-style:dashed}
+.ct #corp-tbl td a,.ct .ts-txt a{color:var(--acc)} .ct #corp-tbl tr.click{cursor:pointer} .ct #corp-tbl td{white-space:normal} .ct #corp-tbl td.narrow{white-space:nowrap}
 .ct .tierchip.Diligence-ready{color:#000;background:var(--g);border-color:var(--g)} .ct .tierchip.Priority{color:#000;background:var(--acc);border-color:var(--acc)} .ct .tierchip.Watch{color:var(--acc);border-color:#5a4a10}
 .ct #ts{padding:8px}
 .ct .ts-head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:8px}
@@ -277,6 +279,7 @@ window.dash = (() => {
     <button class="fn" role="tab" data-v="coverage">Coverage<small>F8</small></button>
     <button class="fn" role="tab" data-v="des">DES<small>F9</small></button>
     <button class="fn" role="tab" data-v="watch">Watchlist</button>
+    <button class="fn" role="tab" data-v="corp">Companies</button>
     <button class="fn" role="tab" data-v="help">Help<small>F1</small></button>
     <span class="clock" id="clock">—</span>
   </div>
@@ -340,6 +343,16 @@ window.dash = (() => {
       <section class="view" id="tear" hidden>
         <div class="ph"><span>Tear sheet</span><span class="meta"><button class="cmb" id="ts-back">◀ Watchlist</button> <button class="cmb" id="ts-print">Print / PDF</button></span></div>
         <div id="ts"></div>
+      </section>
+      <section class="view" id="corp" hidden>
+        <div class="ph"><span>Creator companies</span><span class="meta" id="corp-src">from the Creator Companies sheet · every fact has a source</span></div>
+        <div class="compbar">
+          <span class="seg" id="corp-tab"><button class="cmb" data-t="ladder" aria-pressed="true">Stage ladder</button><button class="cmb" data-t="under" aria-pressed="false">Undercapitalized</button><button class="cmb" data-t="deals" aria-pressed="false">Deals</button><button class="cmb" data-t="investors" aria-pressed="false">Investors</button></span>
+          <span class="seg" id="corp-stage"></span>
+        </div>
+        <div class="cnote" id="corp-note"></div>
+        <div class="pb" style="max-height:none"><table id="corp-tbl"><thead></thead><tbody></tbody></table></div>
+        <div class="cnote" id="corp-count"></div>
       </section>
       <section class="view" id="comp" hidden>
         <div class="ph"><span>Comp</span><span class="meta">two creators or two niches on the same metrics · or type COMP A VS B</span></div>
@@ -471,7 +484,7 @@ window.dash = (() => {
         <div class="ph"><span>Help</span><span class="meta">F1</span></div>
         <div class="pb"><dl>
           <dt>Commands</dt>
-          <dd>NICHE · TREND · CREATOR [search] · ALERTS · HMAP · WATCH · TEAR &lt;creator&gt; · COMP [A vs B] · PLATFORM · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
+          <dd>NICHE · TREND · CREATOR [search] · ALERTS · HMAP · WATCH · TEAR &lt;creator&gt; · COMP [A vs B] · CORP · UNDERCAP · DEALS · INVESTORS · PLATFORM · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
           <dd>!LIFE, !GAME, !FINX … one sector's attention index (! for attention; $ still works).</dd><dd>SORT CCOS | SI | NGP | TVE | CHG on the niche table.</dd>
           <dd>Tab completes a command. Esc goes back to the niche overview and clears the search.</dd>
           <dt>TVE</dt><dd>Content supply: minutes published by tracked channels in the niche over 28 days.</dd>
@@ -486,6 +499,7 @@ window.dash = (() => {
           <dt>Formats</dt><dd>Refreshed from the Trending Formats sheet each morning. Performance = 60 × min(change ÷ 100%, 1) + 40 × min(outlier ÷ 10x, 1). EXCELLENT 80+, STRONG 60+, GOOD 40+, FAIR 20+, else WEAK. A change of "-" counts as 0. Filters: top 10% by performance, change 100%+, outlier 6x+, 3+ triggers.</dd>
           <dt>Heatmap</dt><dd>Every niche as a tile inside its sector, sized by views over 28 days (or content supply) and colored by its 7-day change in attention (or in CCOS), green up and red down, capped at ±15% (±20% for CCOS). Click a tile to analyze that niche.</dd>
           <dt>Watchlist</dt><dd>Creators ranked by Creator Viability Score within tier (Diligence-ready, Priority, Watch), with a pipeline stage on each: Watching, Contacted, In diligence, Passed, Invested. Click a creator for its tear sheet: numbers, the score's pillars against their maximums, gates, brands in their videos, packaging, niche and the closest comparables, with a note field and Print / PDF.</dd>
+          <dt>Companies</dt><dd>The company around each creator, from the Creator Companies sheet: stage 1 no company found, 2 payout LLC, 3 operating company, 4 holding company, 5 outside capital, 6 exited. Blank means not researched yet. Undercapitalized lists creators growing faster than their niche with no outside capital found. Deals lists financing rounds; Investors counts who backs them. Every row has a source and a confidence: Confirmed (a filing or the company), Reported (press) or Inferred.</dd>
           <dt>Comp</dt><dd>Two creators or two niches side by side on the same metrics. Green marks the stronger value where higher or lower is clearly better. COMP SLEEP VS NUTRITION or pick from the lists.</dd>
           <dt>Platform</dt><dd>Attention per platform (9.1), each platform's week against its own 26 weeks (9.2), the follower-weighted composite (9.3) and which platform moves first in a topic (9.4).</dd>
           <dt>Coverage</dt><dd>Per niche: channels tracked in the database, anchors, channels added in the last 7 days, and what screening did with every discovered channel (kept, held for review, dropped and why).</dd>
@@ -980,6 +994,95 @@ dash.calc('drop_reasons', {
       (cd.every(c => c.cvs == null) ? ' · scores fill in once 28 days of history exist' : '');
   }
   function openTear(id) { wst.open = id; show('tear'); }
+  // ---- Companies: the stage ladder, undercapitalized creators, deals and investors (Creator Companies sheet)
+  const STG = {1: 'No company found', 2: 'Payout LLC', 3: 'Operating company', 4: 'Holding company', 5: 'Outside capital', 6: 'Exited'};
+  const crp = {tab: 'ladder', stage: 'all'};
+  const stgChip = s => el('span', s ? s + ' · ' + STG[s] : 'NOT RESEARCHED', 'stg s' + (s || 0));
+  const srcLink = src => { const u = (src || '').split(/\s;\s|\s+/).find(x => /^https?:\/\//.test(x)); if (!u) return el('span', '—', 'dim'); const a = el('a', 'SOURCE'); a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer'; return a; };
+  const usd = v => v == null ? '—' : '$' + d3.format(',.0f')(N(v)) + 'M';
+  function drawCorp(rows, cos, rounds, cd) {
+    const head = $('corp-tbl').tHead, tb = $('corp-tbl').tBodies[0]; head.textContent = ''; tb.textContent = '';
+    const hr = head.insertRow(), LEFT = ['Creator', 'Main company', 'Company', 'Investor', 'Creators backed', 'Lead', 'Others', 'Round'];
+    const NARROW = ['Main company', 'Subs', 'Vs niche', 'Confidence', 'Niche', 'Views 28D', 'Tier', 'Round', 'Valuation', 'Lead', 'Rounds', 'Led', 'Company'];
+    const H = (...xs) => xs.forEach(x => { const th = el('th', x); if (LEFT.includes(x)) th.style.textAlign = 'left'; if (NARROW.includes(x)) th.classList.add('narrow'); hr.append(th); });
+    const L = c => { c.style.textAlign = 'left'; return c; };
+    const proof = (tr, r) => { const c = tr.insertCell(); c.className = 'narrow'; c.append(el('span', (r.confidence || '—') + ' ', 'dim'), srcLink(r.source)); };
+    const q = st.q, seg = $('corp-stage'); seg.textContent = ''; seg.hidden = crp.tab !== 'ladder';
+    if (meta0().source === 'synthetic') $('corp-src').textContent = 'SYNTHETIC: made-up companies and rounds for the demo';
+    if (crp.tab === 'ladder') {
+      const cnt = k => rows.filter(r => k === 'all' || (k === 'none' ? !r.stage : r.stage === +k)).length;
+      [['all', 'All'], ['5', '5 Capital'], ['4', '4 Holdco'], ['6', '6 Exited'], ['3', '3 Operating'], ['2', '2 LLC'], ['1', '1 None'], ['none', 'Not researched']].forEach(([k, lab]) => {
+        const b = el('button', lab + ' ' + cnt(k), 'cmb'); b.setAttribute('aria-pressed', String(crp.stage === k));
+        b.addEventListener('click', () => { crp.stage = k; draw(); }); seg.append(b); });
+      H('Creator', 'Stage', 'Main company', 'Outside money', 'Subs', 'Vs niche', 'Confidence');
+      const list = rows.filter(r => crp.stage === 'all' || (crp.stage === 'none' ? !r.stage : r.stage === +crp.stage))
+        .filter(r => !q || (r.creator + ' ' + (r.main_company || '') + ' ' + (r.niche || '')).toLowerCase().includes(q))
+        .sort((a, b) => N(b.stage || 0) - N(a.stage || 0) || N(b.subscribers || 0) - N(a.subscribers || 0));
+      list.forEach(r => {
+        const tr = tb.insertRow(); L(td(tr, r.creator.toUpperCase() + (r.tracked ? '' : ' ·REF')));
+        tr.insertCell().append(stgChip(r.stage)); L(td(tr, (r.main_company || '—') + (r.companies > 1 ? ' +' + (r.companies - 1) : '')));
+        td(tr, r.outside_money === 'Yes' ? 'YES' + (r.raised_usd_m ? ' · ' + usd(r.raised_usd_m) : '') : (r.outside_money || '—'), r.outside_money === 'Yes' ? 'up' : 'dim');
+        td(tr, r.subscribers == null ? '—' : compact(N(r.subscribers)), 'narrow');
+        td(tr, r.growth_vs_niche == null ? '—' : spct(N(r.growth_vs_niche)), 'narrow ' + (N(r.growth_vs_niche) >= 0 ? 'up' : 'dn'));
+        proof(tr, r);
+        if (r.notes) tr.title = r.notes;
+        if (r.tracked) { tr.className = 'click'; tr.addEventListener('click', e => { if (e.target.tagName !== 'A') openTear(r.channel_id); }); }
+      });
+      const done = rows.filter(r => r.research_status === 'Done').length;
+      $('corp-note').textContent = 'Stage 1 no company found · 2 payout LLC · 3 operating company · 4 holding company · 5 outside capital · 6 exited. +N = more companies. Hover a row for notes. ·REF = tracked for reference, outside the terminal\'s sectors.';
+      $('corp-count').textContent = num(list.length) + ' shown · ' + num(done) + ' of ' + num(rows.length) + ' researched';
+    } else if (crp.tab === 'under') {
+      const by = Object.fromEntries(rows.filter(r => r.channel_id).map(r => [r.channel_id, r]));
+      const list = cd.map(c => ({c, r: by[c.channel_id]}))
+        .filter(({r}) => !r || ((!r.stage || r.stage <= 3) && r.outside_money !== 'Yes'))
+        .filter(({c}) => c.growth_vs_niche != null && N(c.growth_vs_niche) > 0)
+        .filter(({c}) => !q || (c.channel + ' ' + c.niche).toLowerCase().includes(q))
+        .sort((a, b) => N(b.c.cvs ?? -1) - N(a.c.cvs ?? -1) || N(b.c.growth_vs_niche) - N(a.c.growth_vs_niche)).slice(0, 100);
+      H('#', 'Creator', 'Niche', 'Company stage', 'Vs niche', 'Views 28D', 'Subs', 'CVS', 'Tier');
+      list.forEach(({c, r}, i) => {
+        const tr = tb.insertRow(); tr.className = 'click'; td(tr, i + 1, 'dim'); L(td(tr, c.channel.toUpperCase())); td(tr, String(c.niche).toUpperCase(), 'narrow');
+        tr.insertCell().append(stgChip(r && r.stage)); td(tr, spct(N(c.growth_vs_niche)), 'up');
+        td(tr, c.view_growth_28d == null ? '—' : spct(N(c.view_growth_28d)), cls(N(c.view_growth_28d)));
+        td(tr, c.subscribers == null ? '—' : compact(N(c.subscribers)), 'narrow'); td(tr, c.cvs == null ? '—' : d3.format('.1f')(N(c.cvs)));
+        const t = tr.insertCell(); if (c.tier) t.append(el('span', c.tier, 'tierchip ' + c.tier)); else t.textContent = '—';
+        tr.addEventListener('click', () => openTear(c.channel_id));
+      });
+      $('corp-note').textContent = 'Growing faster than their niche, with no outside capital found: company stage 1–3, or not researched yet. Ranked by Creator Viability Score. Not researched means check before reading it as no company.';
+      $('corp-count').textContent = num(list.length) + ' creators' + (list.length === 100 ? ' (top 100)' : '');
+    } else if (crp.tab === 'deals') {
+      H('Date', 'Creator', 'Company', 'Round', 'Amount', 'Valuation', 'Lead', 'Confidence');
+      const list = rounds.filter(r => !q || (r.creator + ' ' + r.company + ' ' + (r.lead_investors || '') + ' ' + (r.other_investors || '')).toLowerCase().includes(q));
+      list.forEach(r => {
+        const tr = tb.insertRow(); td(tr, r.round_date ? fmtDay(String(r.round_date).slice(0, 10)) : 'UNDATED', r.round_date ? '' : 'dim');
+        L(td(tr, String(r.creator || '—').toUpperCase())); L(td(tr, r.company)); L(td(tr, r.round || '—'));
+        const cur = r.currency && r.currency !== 'USD' ? ' ' + r.currency : '';
+        td(tr, r.amount_m == null ? 'Undisclosed' : d3.format(',.1f')(N(r.amount_m)) + 'M' + cur, r.amount_m == null ? 'dim' : 'up');
+        td(tr, r.valuation_m == null ? '—' : d3.format(',.0f')(N(r.valuation_m)) + 'M' + cur);
+        const ld = L(td(tr, r.lead_investors || '—')); if (r.other_investors) ld.title = 'Also: ' + r.other_investors; proof(tr, r);
+      });
+      $('corp-note').textContent = 'Financing rounds for companies around creators, newest first. Amounts in millions; Undisclosed when the press did not report one.';
+      $('corp-count').textContent = num(list.length) + ' rounds';
+    } else {
+      const inv = {};
+      rounds.forEach(r => [['lead', r.lead_investors], ['other', r.other_investors]].forEach(([role, s]) => (s || '').split(';').map(x => x.trim()).filter(Boolean).forEach(n => {
+        const o = inv[n] = inv[n] || {name: n, creators: new Set(), rounds: 0, leads: 0, usd: 0};
+        o.creators.add(r.creator); o.rounds++; if (role === 'lead') o.leads++; if (r.currency === 'USD' && r.amount_m != null) o.usd += N(r.amount_m);
+      })));
+      const list = Object.values(inv).filter(o => !q || (o.name + ' ' + [...o.creators].join(' ')).toLowerCase().includes(q))
+        .sort((a, b) => b.creators.size - a.creators.size || b.leads - a.leads || b.usd - a.usd);
+      H('Investor', 'Creators backed', 'Rounds', 'Led', 'In rounds totaling (USD)');
+      list.forEach(o => { const tr = tb.insertRow(); L(td(tr, o.name.toUpperCase())); L(td(tr, [...o.creators].join(', '))); td(tr, o.rounds, 'narrow'); td(tr, o.leads, 'narrow');
+        td(tr, o.usd ? usd(o.usd) : '—'); });
+      $('corp-note').textContent = 'Who backs companies around creators, from the rounds on the Deals tab. The total is the disclosed size of the rounds they joined, not their own check.';
+      $('corp-count').textContent = num(list.length) + ' investors';
+    }
+    // small screens drop the same columns from the body that they drop from the header
+    const nar = [...hr.cells].map(c => c.classList.contains('narrow'));
+    [...tb.rows].forEach(r => [...r.cells].forEach((c, i) => { if (nar[i]) c.classList.add('narrow'); }));
+  }
+  const meta0 = () => dash.meta() || {};
+  document.querySelectorAll('#corp-tab .cmb').forEach(b => b.addEventListener('click', () => { crp.tab = b.dataset.t; document.querySelectorAll('#corp-tab .cmb').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw(); }));
+  function corpTab(t) { crp.tab = t; document.querySelectorAll('#corp-tab .cmb').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.t === t))); show('corp'); }
   function sparkChart(box, ser, h) {
     box.querySelectorAll('svg').forEach(x => x.remove());
     if (!ser || !ser.views || ser.views.filter(v => v != null).length < 2) { box.append(el('div', 'The chart fills in after a few days of history.', 'dim')); return; }
@@ -1076,6 +1179,23 @@ dash.calc('drop_reasons', {
       ct.append(t);
     }
     cols.append(sb, ct); box.append(cols);
+    // the company around the creator: stage ladder, companies and financing (Creator Companies sheet)
+    const cp = dash.data('corp'), cc = dash.data('corp_companies'), cr = dash.data('corp_rounds');
+    const crow = cp.status === 'ok' ? cp.data.find(x => x.channel_id === c.channel_id) : null;
+    const cbx = el('div', null, 'ts-box'); cbx.style.marginTop = '8px';
+    const h4 = el('h4', 'Company: '); h4.append(stgChip(crow && crow.stage)); cbx.append(h4);
+    if (!crow || crow.research_status !== 'Done') cbx.append(el('div', 'Not researched yet. Add findings to the Creator Companies sheet and they show here the next morning.', 'dim'));
+    else {
+      if (crow.main_company) cbx.append(el('div', 'Main company: ' + crow.main_company + (crow.raised_usd_m ? ' · disclosed raised ' + usd(crow.raised_usd_m) : ''), 'ts-txt'));
+      const mine = cc.status === 'ok' ? cc.data.filter(x => x.creator === crow.creator) : [];
+      if (mine.length) cbx.append(el('div', 'Companies: ' + mine.map(x => x.company + ' (' + [x.type, x.parent ? 'under ' + x.parent : null, x.status !== 'Active' ? x.status : null].filter(Boolean).join(', ') + ')').join(' · '), 'ts-txt'));
+      const rs = cr.status === 'ok' ? cr.data.filter(x => x.creator === crow.creator) : [];
+      rs.forEach(x => cbx.append(el('div', (x.round_date ? fmtDay(String(x.round_date).slice(0, 10)) : 'Undated') + ' · ' + x.company + ' · ' + (x.round || 'Round') + ' · ' +
+        (x.amount_m == null ? 'amount undisclosed' : d3.format(',.1f')(N(x.amount_m)) + 'M ' + x.currency) + (x.lead_investors ? ' · led by ' + x.lead_investors : ''), 'ts-txt')));
+      if (crow.notes) cbx.append(el('div', crow.notes, 'ts-txt'));
+      const src = el('div', 'Confidence: ' + (crow.confidence || '—') + (crow.last_checked ? ' · checked ' + fmtDay(String(crow.last_checked).slice(0, 10)) : '') + ' · ', 'dim'); src.append(srcLink(crow.source)); cbx.append(src);
+    }
+    box.append(cbx);
     const foot = el('div', 'Data as of ' + fmtDay(meta.as_of || '') + '. ' + (meta.source === 'synthetic' ? 'SYNTHETIC: a made-up creator, not a result. ' : '') +
       (c.rpm_source === 'placeholder' ? 'Earnings use placeholder RPM bands until real ones are set (5.9). ' : '') +
       'Definitions in the Methodology Handbook. Not investment advice.', 'ts-foot');
@@ -1335,6 +1455,8 @@ dash.calc('drop_reasons', {
     const cdx = dash.data('creator_details');
     if (cdx.status === 'ok' && ni.status === 'ok' && st.view === 'comp') drawComp(cdx.data, ni.data);
     if (cdx.status === 'ok' && st.view === 'watch') drawWatch(cdx.data);
+    const cpx = dash.data('corp'), ccx = dash.data('corp_companies'), crx = dash.data('corp_rounds');
+    if (cdx.status === 'ok' && st.view === 'corp') drawCorp(cpx.status === 'ok' ? cpx.data : [], ccx.status === 'ok' ? ccx.data : [], crx.status === 'ok' ? crx.data : [], cdx.data);
     if (ni.status === 'ok' && st.view === 'hmap') drawHeatmap(ni.data);
     const csx = dash.data('creator_series');
     if (cdx.status === 'ok' && ni.status === 'ok' && st.view === 'tear') drawTear(cdx.data, ni.data, csx.status === 'ok' ? csx.data : []);
@@ -1348,7 +1470,7 @@ dash.calc('drop_reasons', {
     markTips();
   }
 
-  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'HMAP', 'WATCH', 'TEAR', 'COMP', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '!LIFE', '!GAME', '!FINX'];
+  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'HMAP', 'WATCH', 'TEAR', 'COMP', 'CORP', 'UNDERCAP', 'DEALS', 'INVESTORS', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '!LIFE', '!GAME', '!FINX'];
   input.addEventListener('keydown', e => {
     if (e.key === 'Tab') {
       const v = input.value.trim().toUpperCase(); const m = CMDS.filter(c => c.startsWith(v));
@@ -1359,7 +1481,7 @@ dash.calc('drop_reasons', {
     const raw = input.value.trim(); input.value = ''; if (!raw) return;
     log.textContent += '> ' + raw.toUpperCase() + '\n';
     const [c, ...rest] = raw.split(/\s+/); const C = c.toUpperCase(), arg = rest.join(' ');
-    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, HMAP, WATCH, TEAR <creator>, COMP [A vs B], PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
+    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, HMAP, WATCH, TEAR <creator>, COMP [A vs B], CORP, UNDERCAP, DEALS, INVESTORS, PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
     else if (C === 'NICHE' || C === 'MARKET') { st.sector = null; show('niche'); say('Niche market overview'); }
     else if (C.startsWith('!') || C.startsWith('$')) { st.sector = '!' + C.slice(1); show('niche'); say('Index ' + st.sector); }
     else if (C === 'TREND') { show('trend'); say('Trend analysis: index average CCOS by day'); }
@@ -1391,6 +1513,10 @@ dash.calc('drop_reasons', {
       }
       show('comp'); say(parts.length === 2 ? 'Comparing ' + parts[0].toUpperCase() + ' vs ' + parts[1].toUpperCase() : 'Comp: pick two creators or niches, or type COMP A VS B');
     }
+    else if (C === 'CORP' || C === 'COMPANIES') { corpTab('ladder'); say('Creator companies: stage ladder from no company to outside capital'); }
+    else if (C === 'UNDERCAP' || C === 'UNDERCAPITALIZED') { corpTab('under'); say('Undercapitalized: growing creators with no outside capital found'); }
+    else if (C === 'DEALS') { corpTab('deals'); say('Deals: financing rounds for creator companies'); }
+    else if (C === 'INVESTORS') { corpTab('investors'); say('Investors: who backs creator companies'); }
     else if (C === 'PLATFORM') { show('platform'); say('Platforms: attention, who moves first, and this week\'s movement'); }
     else if (C === 'ANALYZE') { analyze(arg); }
     else if (C === 'SORT') { const k = SORTS[arg.toUpperCase()]; if (k) { st.sort = k; show('niche'); say('Niches sorted by ' + arg.toUpperCase()); } else say('Sort by: ' + Object.keys(SORTS).join(', ')); }

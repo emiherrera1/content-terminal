@@ -12,6 +12,8 @@ names instead of codes, readable column names, and a comment on every view and k
     ask_topic_attention   attention, growth and demand signal for every CTNCS topic at every level, latest day
     ask_news              the News feed, including Creator Capital daily notes
     ask_tier_changes      creators moving between Watch, Priority and Diligence-ready
+    ask_creator_companies the company around each creator: stage, companies, financing (Creator Companies sheet)
+    ask_creator_rounds    financing rounds for creator companies, with investors
     ask_glossary          every metric: what it measures, the formula, how to read it
     ask_topics            the CTNCS codebook: code, name, level, sector, full path
 
@@ -35,6 +37,10 @@ GUIDE = [
     ("ask_news", "The News feed: platform and trade-press headlines plus Creator Capital daily notes, tagged by category, platform, impact and sentiment.",
      "source = 'Creator Capital' rows carry Emily's full note in the note column; status = 'draft' means not yet posted."),
     ("ask_tier_changes", "Creators entering or leaving a CVS tier (Watch, Priority, Diligence-ready), by day.", "Empty until scores have 28 days of history."),
+    ("ask_creator_companies", "The company around each creator from the Creator Companies sheet: stage 1 no company found, 2 payout LLC, 3 operating company, 4 holding company, 5 outside capital, 6 exited; main company, disclosed money raised, confidence and source, joined to the creator's growth.",
+     "stage is null when research_status = 'To research': that means unknown, not no company. confidence: Confirmed (filing or company), Reported (press), Inferred (needs confirming). Public rows only."),
+    ("ask_creator_rounds", "Financing rounds for companies around creators: date, company, round, amount and valuation in millions with currency, lead and other investors (semicolon-separated), source.",
+     "amount_m is null when the round size was not disclosed. Sum amounts only within one currency."),
     ("ask_glossary", "Every metric in the terminal: code, name, what it measures, the formula, how to read it, and whether it is running on live data (Built) or waiting for an input (Ready).",
      "The Methodology Handbook is the published version of this table."),
     ("ask_topics", "The CTNCS codebook: every topic code with its name, level, sector and full path.", "Join on code to name any code in the working tables."),
@@ -170,6 +176,20 @@ def build(con) -> list[str]:
         con.execute("""CREATE OR REPLACE VIEW ask_tier_changes AS
             SELECT d AS day, title AS creator, channel_id, prev_tier AS from_tier, tier AS to_tier, cvs FROM creator_alerts""")
         made.append("ask_tier_changes")
+
+    if have("creator_companies"):
+        g = ("LEFT JOIN screener s USING (channel_id)" if have("screener") else "")
+        growth = "s.subscribers, s.view_growth_28d, s.growth_vs_niche" if g else "NULL AS subscribers, NULL AS view_growth_28d, NULL AS growth_vs_niche"
+        con.execute(f"""CREATE OR REPLACE VIEW ask_creator_companies AS
+            SELECT c.creator, c.channel_id, c.in_terminal, c.stage, c.stage_name, c.main_company, c.outside_money,
+                   c.raised_usd_m, c.research_status, c.confidence, c.source, c.notes, c.last_checked, {growth}
+            FROM creator_companies c {g}""")
+        made.append("ask_creator_companies")
+    if have("creator_rounds"):
+        con.execute("""CREATE OR REPLACE VIEW ask_creator_rounds AS
+            SELECT round_date, creator, company, round, amount_m, valuation_m, currency, lead_investors, other_investors,
+                   confidence, source FROM creator_rounds""")
+        made.append("ask_creator_rounds")
 
     con.execute("CREATE OR REPLACE TABLE ask_guide (view_name VARCHAR, what_it_holds VARCHAR, how_to_use VARCHAR)")
     con.executemany("INSERT INTO ask_guide VALUES (?, ?, ?)", [g for g in GUIDE if g[0] in made] + [

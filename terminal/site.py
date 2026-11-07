@@ -264,6 +264,66 @@ def creator_details(con, label) -> list[dict]:
     return out
 
 
+def corp(con, details: list[dict]) -> list[dict]:
+    """One row per creator in the Creator Companies sheet: the stage ladder and financing, next to the terminal's numbers
+    for that creator (when we track them), so the Undercapitalized screen can rank strong audiences without a company."""
+    if not _has(con, "creator_companies"):
+        return []
+    by_id = {d["channel_id"]: d for d in details}
+    n_co = dict(con.execute("SELECT creator, count(*) FROM creator_company_list GROUP BY 1").fetchall()) if _has(con, "creator_company_list") else {}
+    last = dict(con.execute("SELECT creator, max(round_date) FROM creator_rounds GROUP BY 1").fetchall()) if _has(con, "creator_rounds") else {}
+    out = []
+    for r in _rows(con, "SELECT * FROM creator_companies"):
+        d = by_id.get(r["channel_id"]) or {}
+        out.append({**r, "channel": d.get("channel") or r["creator"], "niche": d.get("niche"), "niche_code": d.get("niche_code"),
+                    "subscribers": d.get("subscribers"), "view_growth_28d": d.get("view_growth_28d"),
+                    "growth_vs_niche": d.get("growth_vs_niche"), "cvs": d.get("cvs"), "tier": d.get("tier"),
+                    "tracked": bool(d), "companies": n_co.get(r["creator"], 0), "last_round": last.get(r["creator"])})
+    return out
+
+
+def corp_companies(con) -> list[dict]:
+    return _rows(con, "SELECT * FROM creator_company_list") if _has(con, "creator_company_list") else []
+
+
+def corp_rounds(con) -> list[dict]:
+    return _rows(con, "SELECT * FROM creator_rounds ORDER BY round_date DESC NULLS LAST") if _has(con, "creator_rounds") else []
+
+
+def _demo_corp(details: list[dict]) -> tuple[list[dict], list[dict], list[dict]]:
+    """Made-up company stages, companies and rounds for the synthetic creators, so the demo shows every screen."""
+    import zlib
+    inv = ["Example Ventures", "Sample Growth Partners", "Placeholder Capital", "Demo Strategic Fund", "Mock Media Holdings"]
+    cut = [(40, None), (50, 1), (65, 2), (85, 3), (93, 4), (99, 5), (100, 6)]
+    corp_rows, cos, rounds = [], [], []
+    for d in details[:80]:
+        h = zlib.crc32(d["channel_id"].encode()) % 100
+        st = next(s for c, s in cut if h < c)
+        name = d["channel"]
+        co = None if st in (None, 1) else f"{name} Media Co." if st in (2, 3) else f"{name} Holdings"
+        raised = None
+        if co:
+            cos.append({"company": co, "creator": name, "relationship": "Owns", "type": "Holding" if st >= 4 else "Operating",
+                        "parent": None, "what": "SYNTHETIC: made-up company", "status": "Sold" if st == 6 else "Active",
+                        "source": None, "confidence": "Inferred", "last_checked": None})
+        if st in (5, 6):
+            raised = float(2 + h % 18)
+            rounds.append({"round_date": f"2025-{1 + h % 12:02d}-15", "company": co, "creator": name, "round": "Seed" if h % 2 else "Series A",
+                           "amount_m": raised, "valuation_m": raised * 6, "currency": "USD", "lead_investors": inv[h % len(inv)],
+                           "other_investors": inv[(h + 2) % len(inv)], "source": None, "confidence": "Inferred", "last_checked": None})
+        corp_rows.append({"creator": name, "channel_id": d["channel_id"], "in_terminal": "Yes", "stage": st,
+                          "stage_name": {1: "No company found", 2: "Payout LLC", 3: "Operating company", 4: "Holding company",
+                                         5: "Outside capital", 6: "Exited"}.get(st),
+                          "main_company": co, "outside_money": None if st is None else "Yes" if raised else "None found",
+                          "raised_usd_m": raised, "research_status": "To research" if st is None else "Done",
+                          "confidence": None if st is None else "Inferred", "source": None, "notes": "SYNTHETIC: made-up company data",
+                          "last_checked": None, "channel": name, "niche": d.get("niche"), "niche_code": d.get("niche_code"),
+                          "subscribers": d.get("subscribers"), "view_growth_28d": d.get("view_growth_28d"),
+                          "growth_vs_niche": d.get("growth_vs_niche"), "cvs": d.get("cvs"), "tier": d.get("tier"), "tracked": True,
+                          "companies": 1 if co else 0, "last_round": rounds[-1]["round_date"] if raised else None})
+    return corp_rows, cos, rounds
+
+
 def creator_series(con) -> list[dict]:
     """The tear sheet's chart: each creator's last 90 days of views gained and subscribers, one row per creator."""
     if not _has(con, "channel_daily"):
@@ -404,6 +464,9 @@ def build(con, out_dir: Path = OUT, source: str = "live", public: bool = False) 
         "platform_lead": platform_lead(con, label),
         "platform_movement": platform_movement(con, label),
     }
+    sets["corp"] = corp(con, sets["creator_details"])
+    sets["corp_companies"] = corp_companies(con)
+    sets["corp_rounds"] = corp_rounds(con)
     if source == "synthetic":
         # the demo shows every screen filled in: made-up news, title formats and screening counts, all labeled synthetic
         as_of_d = con.execute("SELECT max(snapshot_date) FROM channel_snapshots").fetchone()[0] or dt.date.today()
@@ -412,6 +475,7 @@ def build(con, out_dir: Path = OUT, source: str = "live", public: bool = False) 
         sets["coverage"] = _demo_coverage(con, label)
         if not sets["alerts"]:
             sets["alerts"] = _demo_alerts(sets["screener"])
+        sets["corp"], sets["corp_companies"], sets["corp_rounds"] = _demo_corp(sets["creator_details"])
     if public:
         sets["news"] = [n for n in sets["news"] if n.get("status") != "draft"]
     for name, rows in sets.items():

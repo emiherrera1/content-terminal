@@ -88,6 +88,11 @@ def _notes(ctx):
     return f"{notes.load(ctx.con)} Creator Capital notes"
 
 
+def _companies(ctx):
+    from . import companies
+    return companies.load(ctx.con)
+
+
 def _tag(ctx):
     from . import tagging
     return f"{tagging.tag_packaging(ctx.con)} packaging, {tagging.tag_entities(ctx.con)} entity mentions"
@@ -176,6 +181,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("classify_channels", _classify_channels, retries=1),
         Stage("classify_videos", _classify_videos, retries=1),
         Stage("notes", _notes, retries=1),
+        Stage("companies", _companies, retries=1),
         Stage("news", _news, retries=1),
         Stage("tag", _tag),
         Stage("comments", _comments, retries=1),

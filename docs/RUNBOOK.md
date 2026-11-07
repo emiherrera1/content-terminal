@@ -50,6 +50,7 @@ whether the last daily and weekly runs had failures. It exits 1 when anything is
 | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | publishing terminal.cvaccelerator.com | not yet: see `site/README.md` |
 | `FORMATS_SHEET_CSV_URL` | the site's Formats view | optional: the sheet's publish-to-web CSV link |
 | `NOTES_SHEET_CSV_URL` | Creator Capital daily notes in News and Platform | a CSV link to a tab with only Date, Category, Label, Headline, Note, Sources, POSTED (never the Flags or Gmail columns) |
+| `COMPANIES_SHEET_CSV_URL` | Companies view (stage ladder, Undercapitalized, Deals, Investors) and the Company block on tear sheets | the "Publish to web" CSV link of the Creator Companies sheet (CVA Work / Fund). The job reads only its three Feed tabs (gid 10, 11, 12), which hold Public rows; Private rows never leave the sheet |
 
 The site password is not a GitHub secret. It lives only in Cloudflare (`TERMINAL_PASSWORD` on the Pages project).
 
@@ -66,6 +67,7 @@ Keys never go in chat, code or config files.
 | RPM bands | 5.9 | Replace the placeholder bands under `rpm_bands` in `config/formulas.yaml` and set `source:` to where they came from. Until then every earnings figure is labeled `placeholder`. |
 | TikTok, Instagram | 9.1-9.4 | Add the secrets, list handles in `config/channels_tiktok.csv` / `config/channels_instagram.csv` (column `handle`), and implement `fetch()` in `terminal/sources.py` (the class docstrings say what each API returns). Everything downstream already runs on any platform. |
 | Creator Capital daily notes | News view, Platform news | Set `NOTES_SHEET_CSV_URL`, or drop an export at `data/inputs/daily_notes.csv`. Drafts show with a DRAFT tag; `notes.include_drafts: false` in `config/settings.yaml` shows posted notes only. A note deleted from the sheet leaves the terminal on the next run. |
+| Creator Companies sheet | Companies view, tear sheet Company block, `ask_creator_companies`, `ask_creator_rounds` | Set `COMPANIES_SHEET_CSV_URL`, or drop exports at `data/inputs/companies_{creators,companies,rounds}.csv`. The sheet is the record: each daily run replaces the three tables. A blank stage means not researched yet; stage 1 means researched and nothing found. Every row carries a source and a confidence (Confirmed, Reported, Inferred). |
 | Packaging and entity tags | 2.11, 6.2 | Already on, rule-based. Edit `config/ctncs/packaging.csv` (draft CTNCS v3 codes) and `config/entities.csv`. |
 
 ## When something breaks
@@ -114,7 +116,7 @@ the tests check that the formulas recover them. Use it to see a change end to en
 Claude's MotherDuck connector (Claude > Customize > Connectors > MotherDuck > Connect, then sign in to MotherDuck)
 reads the database directly. The pipeline's `ask` stage rebuilds a set of plain-English views for it after every run
 (`terminal/ask.py`): `ask_guide` lists them; `ask_creators`, `ask_niches`, `ask_niche_history`, `ask_creator_history`,
-`ask_topic_attention`, `ask_news`, `ask_tier_changes`, `ask_glossary` and `ask_topics` use names instead of codes and
+`ask_topic_attention`, `ask_news`, `ask_tier_changes`, `ask_creator_companies`, `ask_creator_rounds`, `ask_glossary` and `ask_topics` use names instead of codes and
 carry a definition on every view and key column. In the connector's settings, set the write tool (`query_rw`) to
 **Blocked** so chat can read but never change the data. Each chat query uses a little of the MotherDuck Lite plan's
 10 compute hours a month.
