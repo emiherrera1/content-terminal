@@ -14,7 +14,7 @@ import os
 import urllib.request
 from pathlib import Path
 
-from . import coverage
+from . import coverage, surface
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site" / "public" / "data"
@@ -463,6 +463,8 @@ def build(con, out_dir: Path = OUT, source: str = "live", public: bool = False) 
         "platform_series": platform_series(con),
         "platform_lead": platform_lead(con, label),
         "platform_movement": platform_movement(con, label),
+        "surface": surface.cells(con, label, sector),
+        "skew": surface.skew(con, label, sector),
     }
     sets["corp"] = corp(con, sets["creator_details"])
     sets["corp_companies"] = corp_companies(con)

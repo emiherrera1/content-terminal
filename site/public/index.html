@@ -171,6 +171,18 @@ window.dash = (() => {
 .ct .cmb[aria-pressed=true]{background:var(--acc);color:#000;text-shadow:none}
 .ct .compbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px}
 .ct .compbar .seg{display:inline-flex}
+.ct .ssel{all:unset;cursor:pointer;border:1px solid var(--line);padding:3px 8px;font-size:10px;max-width:18rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--acc)}
+.ct .ssel option{background:var(--panel);color:var(--tx)}
+.ct .sstrip{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ct .sstrip span{flex:1;min-width:9rem;padding:4px 8px;color:var(--tm);font-size:10px;border-right:1px solid var(--line)}
+.ct .sstrip b{color:var(--tx);margin-left:6px}
+.ct .sbox{position:relative;padding:4px}
+.ct .sbox canvas{display:block;width:100%;touch-action:pan-y;cursor:grab}
+.ct .sbox canvas:active{cursor:grabbing}
+.ct .stip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--acc);padding:4px 6px;font-size:10px;color:var(--tx);white-space:nowrap;z-index:2}
+.ct #surf-tbl td,.ct #surf-tbl th{text-align:right} .ct #surf-tbl td:first-child,.ct #surf-tbl th:first-child{text-align:left}
+.ct #surf-tbl.rank tbody tr{cursor:pointer}
+.ct .schart{padding:4px 8px} .ct .schart text{fill:var(--tm);font-size:10px} .ct .schart .ax line,.ct .schart .ax path{stroke:var(--line)}
 .ct .cpick{display:flex;align-items:center;gap:6px;border:1px solid var(--line);padding:2px 6px;flex:1;min-width:12rem}
 .ct .cpick b{color:var(--acc)}
 .ct .cpick input{all:unset;flex:1;color:var(--tx);font-family:inherit;text-transform:uppercase;min-width:0}
@@ -280,6 +292,7 @@ window.dash = (() => {
     <button class="fn" role="tab" data-v="des">DES<small>F9</small></button>
     <button class="fn" role="tab" data-v="watch">Watchlist</button>
     <button class="fn" role="tab" data-v="corp">Companies</button>
+    <button class="fn" role="tab" data-v="surf">Surface</button>
     <button class="fn" role="tab" data-v="help">Help<small>F1</small></button>
     <span class="clock" id="clock">—</span>
   </div>
@@ -353,6 +366,18 @@ window.dash = (() => {
         <div class="cnote" id="corp-note"></div>
         <div class="pb" style="max-height:none"><table id="corp-tbl"><thead></thead><tbody></tbody></table></div>
         <div class="cnote" id="corp-count"></div>
+      </section>
+      <section class="view" id="surf" hidden>
+        <div class="ph"><span>Niche surface</span><span class="meta" id="surf-src">reach by creator size and video age · drawn like a vol surface</span></div>
+        <div class="compbar">
+          <span class="seg" id="surf-tab"><button class="cmb" data-t="3d" aria-pressed="true">3D surface</button><button class="cmb" data-t="table" aria-pressed="false">Table</button><button class="cmb" data-t="skew" aria-pressed="false">Skew</button><button class="cmb" data-t="term" aria-pressed="false">Term</button><button class="cmb" data-t="rank" aria-pressed="false">Rank</button></span>
+          <select class="ssel" id="surf-scope" aria-label="Which niches"></select>
+          <span class="seg" id="surf-metric"><button class="cmb" data-m="reach" aria-pressed="true">Reach</button><button class="cmb" data-m="disp" aria-pressed="false">Spread</button></span>
+        </div>
+        <div class="sstrip" id="surf-strip"></div>
+        <div class="sbox" id="surf-box"><canvas id="surf-cv" aria-label="3D surface: reach by creator size and video age. Drag to rotate."></canvas><div class="stip" id="surf-tip" hidden></div></div>
+        <div class="pb" id="surf-pb" style="max-height:none" hidden><table id="surf-tbl"><thead></thead><tbody></tbody></table></div>
+        <div class="cnote" id="surf-note"></div>
       </section>
       <section class="view" id="comp" hidden>
         <div class="ph"><span>Comp</span><span class="meta">two creators or two niches on the same metrics · or type COMP A VS B</span></div>
@@ -484,7 +509,7 @@ window.dash = (() => {
         <div class="ph"><span>Help</span><span class="meta">F1</span></div>
         <div class="pb"><dl>
           <dt>Commands</dt>
-          <dd>NICHE · TREND · CREATOR [search] · ALERTS · HMAP · WATCH · TEAR &lt;creator&gt; · COMP [A vs B] · CORP · UNDERCAP · DEALS · INVESTORS · PLATFORM · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
+          <dd>NICHE · TREND · CREATOR [search] · ALERTS · HMAP · WATCH · TEAR &lt;creator&gt; · COMP [A vs B] · CORP · UNDERCAP · DEALS · INVESTORS · SURF [niche] · SKEW · PLATFORM · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
           <dd>!LIFE, !GAME, !FINX … one sector's attention index (! for attention; $ still works).</dd><dd>SORT CCOS | SI | NGP | TVE | CHG on the niche table.</dd>
           <dd>Tab completes a command. Esc goes back to the niche overview and clears the search.</dd>
           <dt>TVE</dt><dd>Content supply: minutes published by tracked channels in the niche over 28 days.</dd>
@@ -1083,6 +1108,230 @@ dash.calc('drop_reasons', {
   const meta0 = () => dash.meta() || {};
   document.querySelectorAll('#corp-tab .cmb').forEach(b => b.addEventListener('click', () => { crp.tab = b.dataset.t; document.querySelectorAll('#corp-tab .cmb').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw(); }));
   function corpTab(t) { crp.tab = t; document.querySelectorAll('#corp-tab .cmb').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.t === t))); show('corp'); }
+  // ---- Niche surface: reach (median views per 100 subs) by creator size (like delta) and video age (like expiry)
+  const srf = {tab: '3d', scope: 'ALL', metric: 'reach', yaw: -0.62, pitch: 0.52, cells: [], hover: null};
+  const SRAMP = d3.interpolateRgbBasis(['#5b4fd6', '#3c8fe0', '#3fc9a0', '#9be05a', '#f2df4c', '#f5952e', '#d9442b']);
+  const sfmt = (m, v) => v == null ? '—' : m === 'reach' ? (v < 10 ? d3.format('.1f')(v) : d3.format(',.0f')(v)) : d3.format('.2f')(v);
+  const mname = m => m === 'reach' ? 'Reach' : 'Spread';
+  function surfTab(t) { srf.tab = t; document.querySelectorAll('#surf-tab .cmb').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.t === t))); show('surf'); }
+  document.querySelectorAll('#surf-tab .cmb').forEach(b => b.addEventListener('click', () => surfTab(b.dataset.t)));
+  document.querySelectorAll('#surf-metric .cmb').forEach(b => b.addEventListener('click', () => {
+    srf.metric = b.dataset.m; document.querySelectorAll('#surf-metric .cmb').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw(); }));
+  $('surf-scope').addEventListener('change', e => { srf.scope = e.target.value; if (srf.tab === 'rank') srf.tab = '3d'; surfTab(srf.tab); });
+
+  // the grid for one scope: sizes across, ages down, value per cell (null when too few videos)
+  function surfGrid(cells) {
+    const sizes = [], ages = [];
+    cells.forEach(c => { sizes[c.size_i] = c.size; ages[c.age_i] = c.age; });
+    const g = ages.map(() => sizes.map(() => null));
+    cells.forEach(c => { g[c.age_i][c.size_i] = c; });
+    return {sizes, ages, g};
+  }
+  const cval = (c, m) => c ? c[m] : null;
+  function surfSkew(grid) {   // small over big at 3M (or the oldest age with both ends)
+    if (!grid.ages.length) return null;
+    const S = grid.sizes.length - 1;
+    const ai = grid.ages.indexOf('3M') >= 0 ? grid.ages.indexOf('3M') : grid.ages.length - 1;
+    const a = cval(grid.g[ai][0], 'reach'), b = cval(grid.g[ai][S], 'reach');
+    return a != null && b ? a / b : null;
+  }
+
+  function drawSurf(all, skew) {
+    const synth = meta0().source === 'synthetic';
+    $('surf-src').textContent = synth ? 'SYNTHETIC: made-up creators and videos for the demo' : 'reach by creator size and video age · drawn like a vol surface';
+    // scope picker
+    const sel = $('surf-scope'), scopes = new Map();
+    all.forEach(c => { if (!scopes.has(c.scope)) scopes.set(c.scope, {label: c.scope_label, level: c.level, ok: 0}); if (c.reach != null) scopes.get(c.scope).ok++; });
+    if (!scopes.has(srf.scope)) srf.scope = 'ALL';
+    const key = [...scopes.keys()].join('|');
+    if (sel.dataset.key !== key) {
+      sel.textContent = ''; sel.dataset.key = key;
+      [['all', 'All niches'], ['sector', 'Sectors'], ['niche', 'Niches']].forEach(([lv, lab]) => {
+        const grp = document.createElement('optgroup'); grp.label = lab;
+        [...scopes].filter(([, v]) => v.level === lv && v.ok >= 3).sort((a, b) => a[1].label.localeCompare(b[1].label))
+          .forEach(([k, v]) => { const o = el('option', v.label); o.value = k; grp.append(o); });
+        if (grp.children.length) sel.append(grp);
+      });
+    }
+    sel.value = srf.scope; sel.hidden = srf.tab === 'rank';
+    $('surf-metric').hidden = srf.tab === 'rank';
+    const cells = all.filter(c => c.scope === srf.scope), grid = surfGrid(cells);
+    srf.cells = cells; srf.grid = grid;
+    // the strip, like IV30 / IV rank / IV pctl
+    const strip = $('surf-strip'); strip.textContent = '';
+    const item = (k, v) => { const sp = el('span', k); sp.append(el('b', v)); strip.append(sp); };
+    const mid = Math.floor(grid.sizes.length / 2), a1 = grid.ages.indexOf('1M');
+    const sk = skew.find(r => r.niche_code === srf.scope), skv = sk ? sk.skew : surfSkew(grid);
+    item('Median creator · 1M', a1 >= 0 ? sfmt('reach', cval(grid.g[a1][mid], 'reach')) + ' / 100 subs' : '—');
+    item('Skew small ÷ big', skv == null ? '—' : d3.format('.1f')(skv) + '×');
+    item('Spread · median 1M', a1 >= 0 ? sfmt('disp', cval(grid.g[a1][mid], 'disp')) : '—');
+    item(sk ? 'Skew pctl of niches' : 'Videos', sk ? (sk.skew_pctl == null ? '—' : String(sk.skew_pctl)) : num(d3.sum(cells, c => c.n)));
+    strip.hidden = srf.tab === 'rank';
+    const box = $('surf-box'), pb = $('surf-pb'), note = $('surf-note');
+    box.hidden = srf.tab !== '3d'; pb.hidden = srf.tab === '3d';
+    box.querySelectorAll('svg').forEach(x => x.remove()); pb.querySelectorAll('svg').forEach(x => x.remove());
+    $('surf-tbl').hidden = false; $('surf-tbl').classList.toggle('rank', srf.tab === 'rank');
+    const base = 'Reach = median views per 100 subscribers. Spread = interquartile range of ln(views): how hit-or-miss videos are. Size is each creator\'s subscriber percentile inside their own niche. Cells with fewer than 8 videos or 2 creators are blank; videos over a year old are left out.' + (synth ? ' SYNTHETIC data.' : '');
+    if (!cells.length && srf.tab !== 'rank') { note.textContent = 'No surface yet: it needs video and subscriber snapshots.'; box.hidden = true; return; }
+    if (srf.tab === '3d') { renderSurf(); note.textContent = 'Drag to rotate · hover a point for its numbers. ' + base; }
+    else if (srf.tab === 'table') { surfTable(grid); note.textContent = base; }
+    else if (srf.tab === 'skew') { $('surf-tbl').hidden = true; surfLines(pb, grid.sizes, grid.ages.map((a, i) => ({name: a, vals: grid.g[i].map(c => cval(c, srf.metric))})), 'Creator size in niche →'); note.textContent = 'Skew: one line per video age. Lines falling to the right mean small creators get more views per subscriber than big ones. ' + base; }
+    else if (srf.tab === 'term') { $('surf-tbl').hidden = true; surfLines(pb, grid.ages, grid.sizes.map((z, j) => ({name: z, vals: grid.ages.map((a, i) => cval(grid.g[i][j], srf.metric))})), 'Video age →'); note.textContent = 'Term: one line per creator size. How reach builds as videos age; a steep line means videos keep earning after launch week. ' + base; }
+    else { surfRank(skew); note.textContent = 'Skew = small creators\' reach ÷ big creators\' reach (smallest vs biggest third inside the niche, videos up to 3 months old; needs 2+ creators at each end). Steep skew means the audience still rewards new supply: the undersaturation signal. Term = median creator\'s reach at 3 months ÷ first week. Click a niche for its surface.' + (synth ? ' SYNTHETIC data.' : ''); }
+  }
+
+  function surfTable(grid) {
+    const t = $('surf-tbl'), head = t.tHead, tb = t.tBodies[0]; head.textContent = ''; tb.textContent = '';
+    const vals = grid.g.flat().map(c => cval(c, srf.metric)).filter(v => v != null);
+    const sc = srfScale(vals);
+    const hr = head.insertRow(); hr.append(el('th', 'Age ↓ / Size →')); grid.sizes.forEach(z => hr.append(el('th', z)));
+    grid.ages.forEach((a, i) => {
+      const tr = tb.insertRow(); tr.insertCell().textContent = a;
+      grid.g[i].forEach(c => { const td = tr.insertCell(), v = cval(c, srf.metric); td.textContent = sfmt(srf.metric, v);
+        if (v != null) { td.style.background = d3.color(SRAMP(sc(v))).copy({opacity: 0.28}) + ''; }
+        if (c) td.title = num(c.n) + ' videos · median ' + compact(c.med_subs) + ' subs'; });
+    });
+  }
+
+  function surfRank(skew) {
+    const t = $('surf-tbl'), head = t.tHead, tb = t.tBodies[0]; head.textContent = ''; tb.textContent = '';
+    const hr = head.insertRow(); ['Niche', 'Sector', 'Small', 'Median', 'Big', 'Skew', 'Spread', 'Term', 'Videos'].forEach((h, i) => { const th = el('th', h); if (i > 1 && i < 5 || i === 8) th.className = 'narrow'; hr.append(th); });
+    const q = st.q;
+    skew.filter(r => !q || (r.niche + ' ' + r.sector).toLowerCase().includes(q)).forEach(r => {
+      const tr = tb.insertRow();
+      const c = (v, cl) => { const td = tr.insertCell(); td.textContent = v; if (cl) td.className = cl; return td; };
+      c(r.niche); c(r.sector, 'dim');
+      c(sfmt('reach', r.small_reach), 'narrow'); c(sfmt('reach', r.mid_reach), 'narrow'); c(sfmt('reach', r.big_reach), 'narrow');
+      c(r.skew == null ? '—' : d3.format('.1f')(r.skew) + '×', r.skew > 4 ? 'up' : r.skew != null && r.skew < 1.5 ? 'dn' : '');
+      c(sfmt('disp', r.dispersion)); c(r.term == null ? '—' : d3.format('.1f')(r.term) + '×'); c(num(r.videos), 'narrow');
+      tr.addEventListener('click', () => { srf.scope = r.niche_code; surfTab('3d'); });
+    });
+  }
+
+  function srfScale(vals) {
+    const lo = d3.min(vals), hi = d3.max(vals);
+    if (srf.metric === 'reach' && lo > 0) { const s = d3.scaleLog().domain([lo, hi === lo ? lo * 2 : hi]).clamp(true); return v => s(v); }
+    const s = d3.scaleLinear().domain([lo, hi === lo ? lo + 1 : hi]).clamp(true); return v => s(v);
+  }
+
+  function surfLines(box, cats, series, xlab) {
+    const w = Math.max(280, box.clientWidth - 16), h = Math.min(360, Math.max(220, w * 0.5)), m = {t: 14, r: 96, b: 34, l: 48};
+    const vals = series.flatMap(s => s.vals).filter(v => v != null);
+    if (!vals.length) return;
+    const x = d3.scalePoint().domain(cats.map((c, i) => i)).range([m.l, w - m.r]).padding(0.3);
+    const y = (srf.metric === 'reach' && d3.min(vals) > 0 ? d3.scaleLog() : d3.scaleLinear()).domain(d3.extent(vals)).nice().range([h - m.b, m.t]);
+    const svg = d3.select(box).insert('svg', 'table').attr('class', 'schart').attr('width', w).attr('height', h);
+    svg.append('g').attr('class', 'ax').attr('transform', `translate(0,${h - m.b})`).call(d3.axisBottom(x).tickFormat(i => cats[i]));
+    svg.append('g').attr('class', 'ax').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5, srf.metric === 'reach' ? '~s' : '.1f'));
+    svg.append('text').attr('x', w - m.r).attr('y', h - 4).attr('text-anchor', 'end').text(xlab);
+    svg.append('text').attr('x', 4).attr('y', 10).text(mname(srf.metric));
+    const col = i => SRAMP(series.length > 1 ? i / (series.length - 1) : 0.5);
+    series.forEach((s, i) => {
+      const pts = s.vals.map((v, j) => [j, v]).filter(p => p[1] != null);
+      svg.append('path').attr('fill', 'none').attr('stroke', col(i)).attr('stroke-width', 2)
+        .attr('d', d3.line().x(p => x(p[0])).y(p => y(p[1]))(pts));
+      pts.forEach(p => svg.append('circle').attr('cx', x(p[0])).attr('cy', y(p[1])).attr('r', 2.5).attr('fill', col(i)));
+      if (pts.length) { const p = pts[pts.length - 1]; svg.append('text').attr('x', x(p[0]) + 6).attr('y', y(p[1]) + 3).style('fill', col(i)).text(s.name); }
+    });
+  }
+
+  // a small orthographic 3D renderer: quads sorted back to front, drag to turn
+  function renderSurf() {
+    const cv = $('surf-cv'), box = $('surf-box'), grid = srf.grid; if (!grid) return;
+    const W = Math.max(280, box.clientWidth - 8), H = Math.round(Math.min(560, Math.max(300, W * 0.62))), dpr = window.devicePixelRatio || 1;
+    cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + 'px';
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    const css = getComputedStyle(document.querySelector('.ct'));
+    const C = k => css.getPropertyValue(k).trim();
+    const m = srf.metric, S = grid.sizes.length, A = grid.ages.length;
+    const vals = grid.g.flat().map(c => cval(c, m)).filter(v => v != null);
+    if (!vals.length) return;
+    const sc = srfScale(vals), legW = 54;
+    const px = j => S > 1 ? -1 + 2 * j / (S - 1) : 0, py = i => A > 1 ? -1 + 2 * i / (A - 1) : 0, pz = v => -0.75 + 1.5 * sc(v);
+    const cy = Math.cos(srf.yaw), sy = Math.sin(srf.yaw), cp = Math.cos(srf.pitch), sp = Math.sin(srf.pitch);
+    const k = Math.min(W - legW, H) * (W < 600 ? 0.26 : 0.3), ox = (W - legW) / 2, oy = H / 2 + 6;
+    const P = (x, y, z) => { const x1 = x * cy - y * sy, y1 = x * sy + y * cy;
+      return {x: ox + k * x1, y: oy - k * (z * cp + y1 * sp), d: y1 * cp - z * sp}; };
+    const z0 = -0.75, z1 = 0.75;
+    ctx.lineWidth = 1; ctx.font = '10px ' + css.fontFamily;
+    // floor and the two back walls
+    const corners = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([x, y]) => ({x, y, p: P(x, y, z0)}));
+    const back = corners.slice().sort((a, b) => b.p.d - a.p.d)[0];
+    const poly = (pts, fill, stroke) => { ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath();
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.stroke(); } };
+    poly(corners.map(c => c.p), C('--panel'), C('--line'));
+    // wall at x = back.x and wall at y = back.y
+    poly([P(back.x, -1, z0), P(back.x, 1, z0), P(back.x, 1, z1), P(back.x, -1, z1)], null, C('--line'));
+    poly([P(-1, back.y, z0), P(1, back.y, z0), P(1, back.y, z1), P(-1, back.y, z1)], null, C('--line'));
+    ctx.strokeStyle = C('--line'); ctx.globalAlpha = 0.6;
+    // gridlines on the floor and walls
+    for (let j = 0; j < S; j++) { const a = P(px(j), -1, z0), b = P(px(j), 1, z0); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+    for (let i = 0; i < A; i++) { const a = P(-1, py(i), z0), b = P(1, py(i), z0); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+    // z ticks on the back walls
+    const lo = d3.min(vals), hi = d3.max(vals);
+    const zs = (m === 'reach' && lo > 0 ? d3.scaleLog() : d3.scaleLinear()).domain([lo, hi]);
+    let ticks = m === 'reach' && lo > 0
+      ? [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000].filter(t => t >= lo && t <= hi)
+      : zs.ticks(4).filter(t => t >= lo && t <= hi);
+    while (ticks.length > 5) ticks = ticks.filter((t, i) => i % 2 === 0);
+    const adj = corners.filter(c => (c.x === back.x) !== (c.y === back.y)).sort((a, b) => a.p.x - b.p.x)[0];
+    const zb = P(adj.x, adj.y, z0), zt = P(adj.x, adj.y, z1);
+    ctx.globalAlpha = 1; ctx.beginPath(); ctx.moveTo(zb.x, zb.y); ctx.lineTo(zt.x, zt.y); ctx.stroke(); ctx.globalAlpha = 0.6;
+    ticks.forEach(t => { const z = pz(t);
+      [[P(back.x, -1, z), P(back.x, 1, z)], [P(-1, back.y, z), P(1, back.y, z)]].forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }); });
+    ctx.globalAlpha = 1; ctx.fillStyle = C('--tm'); ctx.textAlign = 'right';
+    ticks.forEach(t => { const p = P(adj.x, adj.y, pz(t)); ctx.fillText(sfmt(m, t), p.x - 6, p.y + 3); });
+    // quads, back to front
+    const V = grid.g.map((row, i) => row.map((c, j) => { const v = cval(c, m); return v == null ? null : {...P(px(j), py(i), pz(v)), v, c, i, j}; }));
+    const quads = [];
+    for (let i = 0; i < A - 1; i++) for (let j = 0; j < S - 1; j++) {
+      const q = [V[i][j], V[i][j + 1], V[i + 1][j + 1], V[i + 1][j]];
+      if (q.every(Boolean)) quads.push({q, d: d3.mean(q, p => p.d), v: d3.mean(q, p => sc(p.v))});
+    }
+    quads.sort((a, b) => b.d - a.d).forEach(({q, v}) => { poly(q, d3.color(SRAMP(v)).copy({opacity: 0.88}) + '', 'rgba(0,0,0,0.45)'); });
+    // the median-creator line, like ATM
+    const mid = Math.floor(S / 2), mline = V.map(r => r[mid]).filter(Boolean);
+    if (mline.length > 1) { ctx.strokeStyle = C('--acc'); ctx.lineWidth = 2.5; ctx.beginPath(); mline.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke(); ctx.lineWidth = 1;
+      const far = mline.slice().sort((a, b) => b.d - a.d)[0]; ctx.fillStyle = C('--acc'); ctx.fillText('MEDIAN', far.x + 6, far.y - 6); }
+    // vertices with no quad still show as dots
+    V.flat().filter(Boolean).forEach(p => { ctx.fillStyle = SRAMP(sc(p.v)); ctx.beginPath(); ctx.arc(p.x, p.y, 2.2, 0, 7); ctx.fill(); });
+    // axis labels on the near edges
+    ctx.fillStyle = C('--tm');
+    const nearY = -back.y, nearX = -back.x;
+    const cx = (x, t) => Math.max(4 + ctx.measureText(t).width / 2, Math.min(W - legW - ctx.measureText(t).width / 2, x));
+    grid.sizes.forEach((z, j) => { const p = P(px(j), nearY * 1.12, z0); ctx.textAlign = 'center'; const t = z.replace('Smallest', 'Small').replace('Biggest', 'Big'); ctx.fillText(t, cx(p.x, t), p.y + 12); });
+    grid.ages.forEach((a, i) => { const p = P(nearX * 1.15, py(i), z0); ctx.textAlign = 'left'; ctx.fillText(a, Math.min(p.x + 4, W - legW - 24), p.y + 10); });
+    ctx.fillStyle = C('--tx'); ctx.textAlign = 'left'; ctx.font = 'bold 10px ' + css.fontFamily;
+    ctx.fillText(m === 'reach' ? 'REACH · VIEWS / 100 SUBS' : 'SPREAD · IQR LN VIEWS', 8, 14);
+    const xa = P(0, nearY * 1.6, z0), ya = P(nearX * 1.6, 0, z0);
+    ctx.textAlign = 'center'; ctx.fillText('CREATOR SIZE', cx(xa.x, 'CREATOR SIZE'), Math.min(xa.y + 14, H - 4)); ctx.fillText('VIDEO AGE', cx(ya.x, 'VIDEO AGE'), Math.min(ya.y + 14, H - 4));
+    // color legend
+    const lx = W - legW + 14, ly0 = 30, ly1 = H - 40;
+    for (let y = ly0; y <= ly1; y++) { ctx.fillStyle = SRAMP(1 - (y - ly0) / (ly1 - ly0)); ctx.fillRect(lx, y, 8, 1); }
+    ctx.font = '10px ' + css.fontFamily; ctx.fillStyle = C('--tm'); ctx.textAlign = 'left';
+    ctx.fillText(sfmt(m, hi), lx - 2, ly0 - 8); ctx.fillText(sfmt(m, lo), lx - 2, ly1 + 14);
+    // hover marker
+    srf.pts = V.flat().filter(Boolean);
+    const h = srf.hover && srf.pts.find(p => p.i === srf.hover.i && p.j === srf.hover.j);
+    if (h) { ctx.strokeStyle = C('--tx'); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(h.x, h.y, 5, 0, 7); ctx.stroke(); ctx.lineWidth = 1; }
+  }
+  (() => {
+    const cv = $('surf-cv'), tip = $('surf-tip'); let drag = null;
+    cv.addEventListener('pointerdown', e => { drag = {x: e.clientX, y: e.clientY, yaw: srf.yaw, pitch: srf.pitch}; cv.setPointerCapture(e.pointerId); });
+    cv.addEventListener('pointerup', () => { drag = null; });
+    cv.addEventListener('pointercancel', () => { drag = null; });
+    cv.addEventListener('pointerleave', () => { if (!drag) { srf.hover = null; tip.hidden = true; renderSurf(); } });
+    cv.addEventListener('pointermove', e => {
+      const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+      if (drag) { srf.yaw = drag.yaw + (e.clientX - drag.x) * 0.01; srf.pitch = Math.max(0.08, Math.min(1.35, drag.pitch + (e.clientY - drag.y) * 0.01)); tip.hidden = true; renderSurf(); return; }
+      const near = (srf.pts || []).map(p => ({p, d: Math.hypot(p.x - mx, p.y - my)})).sort((a, b) => a.d - b.d)[0];
+      if (!near || near.d > 16) { if (srf.hover) { srf.hover = null; tip.hidden = true; renderSurf(); } return; }
+      const c = near.p.c; srf.hover = {i: near.p.i, j: near.p.j}; renderSurf();
+      tip.textContent = `${c.size} · ${c.age} · reach ${sfmt('reach', c.reach)} · spread ${sfmt('disp', c.disp)} · ${num(c.n)} videos · ${c.creators} creators · median ${compact(c.med_subs)} subs`;
+      tip.hidden = false; tip.style.left = Math.min(near.p.x + 12, r.width - tip.offsetWidth - 4) + 'px'; tip.style.top = Math.max(near.p.y - 28, 0) + 'px';
+    });
+    window.addEventListener('resize', () => { if (st.view === 'surf' && srf.tab === '3d') renderSurf(); });
+  })();
   function sparkChart(box, ser, h) {
     box.querySelectorAll('svg').forEach(x => x.remove());
     if (!ser || !ser.views || ser.views.filter(v => v != null).length < 2) { box.append(el('div', 'The chart fills in after a few days of history.', 'dim')); return; }
@@ -1458,6 +1707,8 @@ dash.calc('drop_reasons', {
     const cpx = dash.data('corp'), ccx = dash.data('corp_companies'), crx = dash.data('corp_rounds');
     if (cdx.status === 'ok' && st.view === 'corp') drawCorp(cpx.status === 'ok' ? cpx.data : [], ccx.status === 'ok' ? ccx.data : [], crx.status === 'ok' ? crx.data : [], cdx.data);
     if (ni.status === 'ok' && st.view === 'hmap') drawHeatmap(ni.data);
+    const sfx = dash.data('surface'), skx = dash.data('skew');
+    if (st.view === 'surf') drawSurf(sfx.status === 'ok' ? sfx.data : [], skx.status === 'ok' ? skx.data : []);
     const csx = dash.data('creator_series');
     if (cdx.status === 'ok' && ni.status === 'ok' && st.view === 'tear') drawTear(cdx.data, ni.data, csx.status === 'ok' ? csx.data : []);
     if (nw.status === 'ok') fillList('plat-news', nw.data.filter(n => n.category === 'PLATFORM').sort((a, b) => b.published.localeCompare(a.published)).slice(0, 8), 'No platform news yet.');
@@ -1470,7 +1721,7 @@ dash.calc('drop_reasons', {
     markTips();
   }
 
-  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'HMAP', 'WATCH', 'TEAR', 'COMP', 'CORP', 'UNDERCAP', 'DEALS', 'INVESTORS', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '!LIFE', '!GAME', '!FINX'];
+  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'HMAP', 'WATCH', 'TEAR', 'COMP', 'CORP', 'UNDERCAP', 'SURF', 'SKEW', 'DEALS', 'INVESTORS', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '!LIFE', '!GAME', '!FINX'];
   input.addEventListener('keydown', e => {
     if (e.key === 'Tab') {
       const v = input.value.trim().toUpperCase(); const m = CMDS.filter(c => c.startsWith(v));
@@ -1481,7 +1732,7 @@ dash.calc('drop_reasons', {
     const raw = input.value.trim(); input.value = ''; if (!raw) return;
     log.textContent += '> ' + raw.toUpperCase() + '\n';
     const [c, ...rest] = raw.split(/\s+/); const C = c.toUpperCase(), arg = rest.join(' ');
-    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, HMAP, WATCH, TEAR <creator>, COMP [A vs B], CORP, UNDERCAP, DEALS, INVESTORS, PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
+    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, HMAP, WATCH, TEAR <creator>, COMP [A vs B], CORP, UNDERCAP, DEALS, INVESTORS, SURF [niche], SKEW, PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
     else if (C === 'NICHE' || C === 'MARKET') { st.sector = null; show('niche'); say('Niche market overview'); }
     else if (C.startsWith('!') || C.startsWith('$')) { st.sector = '!' + C.slice(1); show('niche'); say('Index ' + st.sector); }
     else if (C === 'TREND') { show('trend'); say('Trend analysis: index average CCOS by day'); }
@@ -1513,6 +1764,15 @@ dash.calc('drop_reasons', {
       }
       show('comp'); say(parts.length === 2 ? 'Comparing ' + parts[0].toUpperCase() + ' vs ' + parts[1].toUpperCase() : 'Comp: pick two creators or niches, or type COMP A VS B');
     }
+    else if (C === 'SURF' || C === 'SURFACE') {
+      const want = arg.trim().toLowerCase(), sc = dash.data('surface');
+      if (want && sc.status === 'ok') {
+        const hit = sc.data.find(c => c.scope_label.toLowerCase() === want || c.scope.toLowerCase() === want) || sc.data.find(c => c.scope_label.toLowerCase().includes(want));
+        if (hit) srf.scope = hit.scope; else say('No surface for "' + arg.trim() + '"; showing all niches');
+      }
+      surfTab('3d'); say('Niche surface: reach by creator size and video age. Drag to rotate.');
+    }
+    else if (C === 'SKEW') { surfTab('rank'); say('Skew: niches ranked by small creators\' reach over big creators\' reach'); }
     else if (C === 'CORP' || C === 'COMPANIES') { corpTab('ladder'); say('Creator companies: stage ladder from no company to outside capital'); }
     else if (C === 'UNDERCAP' || C === 'UNDERCAPITALIZED') { corpTab('under'); say('Undercapitalized: growing creators with no outside capital found'); }
     else if (C === 'DEALS') { corpTab('deals'); say('Deals: financing rounds for creator companies'); }

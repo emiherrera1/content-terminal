@@ -12,6 +12,7 @@ names instead of codes, readable column names, and a comment on every view and k
     ask_topic_attention   attention, growth and demand signal for every CTNCS topic at every level, latest day
     ask_news              the News feed, including Creator Capital daily notes
     ask_tier_changes      creators moving between Watch, Priority and Diligence-ready
+    ask_niche_skew        reach by creator size per niche: the skew screen
     ask_creator_companies the company around each creator: stage, companies, financing (Creator Companies sheet)
     ask_creator_rounds    financing rounds for creator companies, with investors
     ask_glossary          every metric: what it measures, the formula, how to read it
@@ -22,9 +23,13 @@ Rebuilt by the pipeline's `ask` stage after every compute. Read-only by design: 
 import csv
 from pathlib import Path
 
+from . import surface
+
 ROOT = Path(__file__).resolve().parent.parent
 
 GUIDE = [
+    ("ask_niche_skew", "One row per niche: reach (median views per 100 subscribers, videos up to 3 months old) for the smallest, middle and biggest third of creators by subscribers, the skew (small over big) and dispersion (spread of ln views).",
+     "skew above 1 means small creators get more views per subscriber than big ones; the steeper it is, the more the niche still rewards new supply (the undersaturation signal). Thirds are within each niche. reach_3m_vs_first_week shows how much a video keeps earning after launch."),
     ("ask_creators", "One row per tracked creator: size, growth, consistency, hits, the Creator Viability Score (CVS) and its pillars, tier, gates and a 90-day earnings range.",
      "Growth figures need 28 days of history; CVS and tiers fill in after that. growth_vs_niche > 0 means the creator is outgrowing the median creator in its niche. Earnings use placeholder RPM bands when rpm_source = 'placeholder': treat as illustrative."),
     ("ask_niches", "One row per niche (CTNCS level 3) with today's opportunity metrics.",
@@ -185,6 +190,14 @@ def build(con) -> list[str]:
                    c.raised_usd_m, c.research_status, c.confidence, c.source, c.notes, c.last_checked, {growth}
             FROM creator_companies c {g}""")
         made.append("ask_creator_companies")
+    if have(*surface.REQUIRED):
+        con.execute(f"""CREATE OR REPLACE VIEW ask_niche_skew AS
+            SELECT t.name AS niche, k.niche_code, t.sector, k.videos, k.creators, k.small_reach AS small_creator_reach,
+                   k.mid_reach AS median_creator_reach, k.big_reach AS big_creator_reach, k.skew, k.dispersion,
+                   k.term AS reach_3m_vs_first_week
+            FROM ({surface.SKEW_SQL}) k LEFT JOIN ask_topics t ON t.code = k.niche_code""")
+        made.append("ask_niche_skew")
+
     if have("creator_rounds"):
         con.execute("""CREATE OR REPLACE VIEW ask_creator_rounds AS
             SELECT round_date, creator, company, round, amount_m, valuation_m, currency, lead_investors, other_investors,

@@ -68,6 +68,7 @@ Keys never go in chat, code or config files.
 | TikTok, Instagram | 9.1-9.4 | Add the secrets, list handles in `config/channels_tiktok.csv` / `config/channels_instagram.csv` (column `handle`), and implement `fetch()` in `terminal/sources.py` (the class docstrings say what each API returns). Everything downstream already runs on any platform. |
 | Creator Capital daily notes | News view, Platform news | Set `NOTES_SHEET_CSV_URL`, or drop an export at `data/inputs/daily_notes.csv`. Drafts show with a DRAFT tag; `notes.include_drafts: false` in `config/settings.yaml` shows posted notes only. A note deleted from the sheet leaves the terminal on the next run. |
 | Creator Companies sheet | Companies view, tear sheet Company block, `ask_creator_companies`, `ask_creator_rounds` | Set `COMPANIES_SHEET_CSV_URL`, or drop exports at `data/inputs/companies_{creators,companies,rounds}.csv`. The sheet is the record: each daily run replaces the three tables. A blank stage means not researched yet; stage 1 means researched and nothing found. Every row carries a source and a confidence (Confirmed, Reported, Inferred). |
+| Video and subscriber snapshots (already collected) | Surface view (3D surface, Table, Skew, Term, Rank), `SURF [niche]`, `SKEW`, `ask_niche_skew` | Nothing to set. Reach = median views per 100 subscribers by creator size (subscriber percentile inside the niche) and video age (7D to 1Y). Cells need 8+ videos from 2+ creators; videos over a year old are left out because we pull recent uploads. Skew = smallest third's reach / biggest third's, videos up to 3 months old. |
 | Packaging and entity tags | 2.11, 6.2 | Already on, rule-based. Edit `config/ctncs/packaging.csv` (draft CTNCS v3 codes) and `config/entities.csv`. |
 
 ## When something breaks
@@ -116,7 +117,7 @@ the tests check that the formulas recover them. Use it to see a change end to en
 Claude's MotherDuck connector (Claude > Customize > Connectors > MotherDuck > Connect, then sign in to MotherDuck)
 reads the database directly. The pipeline's `ask` stage rebuilds a set of plain-English views for it after every run
 (`terminal/ask.py`): `ask_guide` lists them; `ask_creators`, `ask_niches`, `ask_niche_history`, `ask_creator_history`,
-`ask_topic_attention`, `ask_news`, `ask_tier_changes`, `ask_creator_companies`, `ask_creator_rounds`, `ask_glossary` and `ask_topics` use names instead of codes and
+`ask_topic_attention`, `ask_news`, `ask_tier_changes`, `ask_creator_companies`, `ask_creator_rounds`, `ask_niche_skew`, `ask_glossary` and `ask_topics` use names instead of codes and
 carry a definition on every view and key column. In the connector's settings, set the write tool (`query_rw`) to
 **Blocked** so chat can read but never change the data. Each chat query uses a little of the MotherDuck Lite plan's
 10 compute hours a month.
