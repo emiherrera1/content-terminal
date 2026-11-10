@@ -133,6 +133,7 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
 );
 ALTER TABLE videos ADD COLUMN IF NOT EXISTS description VARCHAR;
 ALTER TABLE videos ADD COLUMN IF NOT EXISTS tags VARCHAR;
+ALTER TABLE videos ADD COLUMN IF NOT EXISTS paid_placement BOOLEAN;   -- YouTube's paid-promotion flag
 """
 
 

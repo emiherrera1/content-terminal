@@ -282,6 +282,38 @@ def corp(con, details: list[dict]) -> list[dict]:
     return out
 
 
+def business(con, label) -> list[dict]:
+    """Revenue streams and sponsors per creator, from the description parser (videos in the last 90 days)."""
+    if not _has(con, "creator_business") or not _has(con, "screener"):
+        return []
+    rows = _rows(con, """SELECT b.*, s.title AS channel, s.niche_code, s.subscribers FROM creator_business b
+                         JOIN screener s USING (channel_id) ORDER BY b.sponsored_share DESC, s.subscribers DESC""")
+    for r in rows:
+        r["niche"] = label(r["niche_code"])
+        r["streams"] = [x for x in (r["streams"] or [])]
+        r["top_sponsors"] = list(r["top_sponsors"] or [])
+    return rows
+
+
+def sponsors(con, label) -> list[dict]:
+    if not _has(con, "sponsor_map"):
+        return []
+    rows = _rows(con, "SELECT * FROM sponsor_map WHERE creators >= 2 ORDER BY creators DESC, videos DESC LIMIT 300")
+    for r in rows:
+        r["niches"] = "; ".join(sorted({label(c) for c in (r.pop("niche_codes") or [])}))
+    return rows
+
+
+def risk(con, label) -> list[dict]:
+    if not _has(con, "creator_risk") or not _has(con, "screener"):
+        return []
+    rows = _rows(con, """SELECT r.*, s.title AS channel, s.subscribers FROM creator_risk r JOIN screener s USING (channel_id)
+                         ORDER BY r.growth_per_risk DESC NULLS LAST""")
+    for r in rows:
+        r["niche"] = label(r["niche_code"])
+    return rows
+
+
 def corp_companies(con) -> list[dict]:
     return _rows(con, "SELECT * FROM creator_company_list") if _has(con, "creator_company_list") else []
 
@@ -475,6 +507,9 @@ def build(con, out_dir: Path = OUT, source: str = "live", public: bool = False) 
     sets["rates"] = rates.board(rpm=rpm)
     sets["rate_changes"] = rates.changes()
     sets["niche_rpm"] = rpm
+    sets["business"] = business(con, label)
+    sets["risk"] = risk(con, label)
+    sets["sponsors"] = sponsors(con, label)
     sets["corp"] = corp(con, sets["creator_details"])
     sets["corp_companies"] = corp_companies(con)
     sets["corp_rounds"] = corp_rounds(con)

@@ -16,6 +16,9 @@ names instead of codes, readable column names, and a comment on every view and k
     ask_platform_rates    each platform's creator share, last and next change (the rates board)
     ask_rate_changes      every dated change to a platform's creator share
     ask_niche_rpm         YouTube RPM by niche from TubeLab estimates
+    ask_creator_risk      volatility, beta, drawdown, growth per unit of risk per creator
+    ask_creator_business  revenue streams and sponsors per creator, from descriptions
+    ask_sponsors          sponsor brands across tracked creators
     ask_holders           funders of creator companies by type of capital (the Holders view)
     ask_holdings          one row per funder per round
     ask_creator_companies the company around each creator: stage, companies, financing (Creator Companies sheet)
@@ -33,6 +36,11 @@ from . import holders, rates, surface
 ROOT = Path(__file__).resolve().parent.parent
 
 GUIDE = [
+    ("ask_creator_risk", "One row per creator with 30+ days of history: annualized volatility of daily attention (7-day views), beta to the rest of their niche, max drawdown, annualized growth, growth per unit of volatility, and the share of views from their biggest video.",
+     "Read like a stock screen: beta above 1 moves more than the niche; a high growth_per_risk grows steadily; a high hit_share depends on one video. Windows are the last 90 days."),
+    ("ask_creator_business", "One row per creator with uploads in the last 90 days: share of videos with a sponsor, top sponsors, and the revenue streams their descriptions link to (Sponsorships, Affiliate, Membership, Course or community, Newsletter, Own site or store, Services, Crowdfunding).",
+     "Detected from descriptions and YouTube's paid-promotion flag, so a stream never mentioned in a description is missed. Shorteners such as bit.ly are not opened."),
+    ("ask_sponsors", "One row per sponsor brand seen in descriptions: how many tracked creators and videos it appears in, first and last seen.", "A brand seen at 2 or more creators is the reliable list; videos_90d shows who is spending now."),
     ("ask_holders", "One row per funder of creator companies: its type (Venture, Growth, Private equity, Credit, Creator finance, Revenue share, Catalog finance, Acquirer, Strategic, Family office, Accelerator, Angel, Founder), deals, deals led, companies backed and the instruments used.",
      "usd_rounds_joined_m adds up the USD rounds the funder took part in; amounts are per round, never the funder's own check."),
     ("ask_holdings", "One row per funder per round: the funder, its type and role (Lead or Participant), the company and creator, the round, its instrument (Equity, Debt, Buyout, Catalog license, Revenue share) and the round's size.",
@@ -226,6 +234,24 @@ def build(con) -> list[str]:
                    k.term AS reach_3m_vs_first_week
             FROM ({surface.SKEW_SQL}) k LEFT JOIN ask_topics t ON t.code = k.niche_code""")
         made.append("ask_niche_skew")
+
+    if have("creator_business", "screener"):
+        con.execute("""CREATE OR REPLACE VIEW ask_creator_business AS
+            SELECT s.title AS creator, b.channel_id, t.name AS niche, t.sector, b.videos_90d, b.sponsored_videos_90d,
+                   b.sponsored_share, b.paid_placement_videos, b.last_sponsored, array_to_string(b.top_sponsors, '; ') AS top_sponsors,
+                   array_to_string(b.streams, '; ') AS revenue_streams
+            FROM creator_business b JOIN screener s USING (channel_id) LEFT JOIN ask_topics t ON t.code = s.niche_code""")
+        made.append("ask_creator_business")
+    if have("creator_risk", "screener"):
+        con.execute("""CREATE OR REPLACE VIEW ask_creator_risk AS
+            SELECT s.title AS creator, r.channel_id, t.name AS niche, t.sector, r.days AS days_of_returns, r.volatility,
+                   r.beta, r.max_drawdown, r.growth, r.growth_per_risk, r.hit_share
+            FROM creator_risk r JOIN screener s USING (channel_id) LEFT JOIN ask_topics t ON t.code = r.niche_code""")
+        made.append("ask_creator_risk")
+    if have("sponsor_map"):
+        con.execute("""CREATE OR REPLACE VIEW ask_sponsors AS
+            SELECT brand, creators, videos, videos_90d, first_seen, last_seen FROM sponsor_map""")
+        made.append("ask_sponsors")
 
     if have("niche_rpm"):
         con.execute("""CREATE OR REPLACE VIEW ask_niche_rpm AS

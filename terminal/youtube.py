@@ -123,14 +123,19 @@ def pull_recent_videos(con, today: dt.date, per_channel: int = 50) -> int:
 
     vids, snaps = [], []
     for batch in _chunks(video_ids):
-        data = _get("videos", part="snippet,statistics,contentDetails", id=",".join(batch), maxResults=50)
+        try:   # the paid-promotion flag is a newer part; if the API ever refuses it, the pull carries on without it
+            data = _get("videos", part="snippet,statistics,contentDetails,paidProductPlacementDetails", id=",".join(batch), maxResults=50)
+        except requests.HTTPError:
+            data = _get("videos", part="snippet,statistics,contentDetails", id=",".join(batch), maxResults=50)
         for v in data.get("items", []):
             sn, st = v["snippet"], v.get("statistics", {})
             vids.append([v["id"], sn["channelId"], sn.get("title"), sn.get("publishedAt"),
-                         _duration_s(v["contentDetails"].get("duration")), (sn.get("description") or "")[:1000],
-                         ", ".join(sn.get("tags", [])[:15]) or None])
+                         _duration_s(v["contentDetails"].get("duration")), (sn.get("description") or "")[:5000],
+                         ", ".join(sn.get("tags", [])[:15]) or None,
+                         (v.get("paidProductPlacementDetails") or {}).get("hasPaidProductPlacement")])
             snaps.append([today, v["id"], int(st.get("viewCount", 0)), int(st.get("likeCount", 0)),
                           int(st.get("commentCount", 0))])
-    store.upsert(con, "videos", ["video_id", "channel_id", "title", "published_at", "duration_s", "description", "tags"], vids)
+    store.upsert(con, "videos", ["video_id", "channel_id", "title", "published_at", "duration_s", "description", "tags",
+                                 "paid_placement"], vids)
     store.upsert(con, "video_snapshots", ["snapshot_date", "video_id", "views", "likes", "comments"], snaps)
     return len(vids)

@@ -301,6 +301,7 @@ window.dash = (() => {
     <button class="fn" role="tab" data-v="watch">Watchlist</button>
     <button class="fn" role="tab" data-v="corp">Companies</button>
     <button class="fn" role="tab" data-v="hds">Holders</button>
+    <button class="fn" role="tab" data-v="risk">Risk</button>
     <button class="fn" role="tab" data-v="surf">Surface</button>
     <button class="fn" role="tab" data-v="help">Help<small>F1</small></button>
     <span class="clock" id="clock">—</span>
@@ -369,7 +370,7 @@ window.dash = (() => {
       <section class="view" id="corp" hidden>
         <div class="ph"><span>Creator companies</span><span class="meta" id="corp-src">from the Creator Companies sheet · every fact has a source</span></div>
         <div class="compbar">
-          <span class="seg" id="corp-tab"><button class="cmb" data-t="ladder" aria-pressed="true">Stage ladder</button><button class="cmb" data-t="under" aria-pressed="false">Undercapitalized</button><button class="cmb" data-t="deals" aria-pressed="false">Deals</button></span>
+          <span class="seg" id="corp-tab"><button class="cmb" data-t="ladder" aria-pressed="true">Stage ladder</button><button class="cmb" data-t="under" aria-pressed="false">Undercapitalized</button><button class="cmb" data-t="deals" aria-pressed="false">Deals</button><button class="cmb" data-t="streams" aria-pressed="false">Revenue streams</button><button class="cmb" data-t="sponsors" aria-pressed="false">Sponsors</button></span>
           <span class="seg" id="corp-stage"></span>
         </div>
         <div class="cnote" id="corp-note"></div>
@@ -387,6 +388,11 @@ window.dash = (() => {
         <div class="sbox" id="surf-box"><canvas id="surf-cv" aria-label="3D surface: reach by creator size and video age. Drag to rotate."></canvas><div class="stip" id="surf-tip" hidden></div></div>
         <div class="pb" id="surf-pb" style="max-height:none" hidden><table id="surf-tbl"><thead></thead><tbody></tbody></table></div>
         <div class="cnote" id="surf-note"></div>
+      </section>
+      <section class="view" id="risk" hidden>
+        <div class="ph"><span>Risk</span><span class="meta">volatility, beta, drawdown and growth per unit of risk · click a column to sort</span></div>
+        <div class="pb" style="max-height:none"><table id="risk-tbl"><thead></thead><tbody></tbody></table></div>
+        <div class="cnote" id="risk-note"></div>
       </section>
       <section class="view" id="hds" hidden>
         <div class="ph"><span>Holders</span><span class="meta" id="hds-src">who funds creator companies, by type of capital</span></div>
@@ -532,7 +538,7 @@ window.dash = (() => {
         <div class="ph"><span>Help</span><span class="meta">F1</span></div>
         <div class="pb"><dl>
           <dt>Commands</dt>
-          <dd>NICHE · TREND · CREATOR [search] · ALERTS · HMAP · WATCH · TEAR &lt;creator&gt; · COMP [A vs B] · CORP · UNDERCAP · DEALS · INVESTORS · HDS [company or funder] · SURF [niche] · SKEW · RATES · RPM · PLATFORM · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
+          <dd>NICHE · TREND · CREATOR [search] · ALERTS · HMAP · WATCH · TEAR &lt;creator&gt; · COMP [A vs B] · CORP · UNDERCAP · DEALS · INVESTORS · HDS [company or funder] · RISK · STREAMS · SPONSORS · SURF [niche] · SKEW · RATES · RPM · PLATFORM · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
           <dd>!LIFE, !GAME, !FINX … one sector's attention index (! for attention; $ still works).</dd><dd>SORT CCOS | SI | NGP | TVE | CHG on the niche table.</dd>
           <dd>Tab completes a command. Esc goes back to the niche overview and clears the search.</dd>
           <dt>TVE</dt><dd>Content supply: minutes published by tracked channels in the niche over 28 days.</dd>
@@ -1110,19 +1116,26 @@ dash.calc('drop_reasons', {
       });
       $('corp-note').textContent = 'Financing rounds for companies around creators, newest first. Amounts in millions; Undisclosed when the press did not report one.';
       $('corp-count').textContent = num(list.length) + ' rounds';
-    } else {
-      const inv = {};
-      rounds.forEach(r => [['lead', r.lead_investors], ['other', r.other_investors]].forEach(([role, s]) => (s || '').split(';').map(x => x.trim()).filter(Boolean).forEach(n => {
-        const o = inv[n] = inv[n] || {name: n, creators: new Set(), rounds: 0, leads: 0, usd: 0};
-        o.creators.add(r.creator); o.rounds++; if (role === 'lead') o.leads++; if (r.currency === 'USD' && r.amount_m != null) o.usd += N(r.amount_m);
-      })));
-      const list = Object.values(inv).filter(o => !q || (o.name + ' ' + [...o.creators].join(' ')).toLowerCase().includes(q))
-        .sort((a, b) => b.creators.size - a.creators.size || b.leads - a.leads || b.usd - a.usd);
-      H('Investor', 'Creators backed', 'Rounds', 'Led', 'In rounds totaling (USD)');
-      list.forEach(o => { const tr = tb.insertRow(); L(td(tr, o.name.toUpperCase())); L(td(tr, [...o.creators].join(', '))); td(tr, o.rounds, 'narrow'); td(tr, o.leads, 'narrow');
-        td(tr, o.usd ? usd(o.usd) : '—'); });
-      $('corp-note').textContent = 'Who backs companies around creators, from the rounds on the Deals tab. The total is the disclosed size of the rounds they joined, not their own check.';
-      $('corp-count').textContent = num(list.length) + ' investors';
+    } else if (crp.tab === 'streams') {
+      const bz = dash.data('business'), rowsB = bz.status === 'ok' ? bz.data : [];
+      const SH = [['Sponsorships', 'SPON'], ['Affiliate', 'AFF'], ['Membership', 'MEMB'], ['Course or community', 'COURSE'], ['Newsletter', 'NEWS'], ['Own site or store', 'STORE'], ['Services', 'SERV'], ['Crowdfunding', 'CROWD']];
+      H('Creator', 'Niche', 'Sponsored', 'Top sponsors', ...SH.map(x => x[1]));
+      [...hr.cells].slice(4).forEach((c, k) => { c.title = SH[k][0]; });
+      const list = rowsB.filter(r => !q || (r.channel + ' ' + (r.niche || '') + ' ' + r.top_sponsors.join(' ') + ' ' + r.streams.join(' ')).toLowerCase().includes(q));
+      list.forEach(r => { const tr = tb.insertRow(); L(td(tr, String(r.channel).toUpperCase())); L(td(tr, r.niche || '—', 'dim'));
+        td(tr, pct(N(r.sponsored_share)) + ' of ' + r.videos_90d, N(r.sponsored_share) >= 0.3 ? 'up' : ''); L(td(tr, r.top_sponsors.join(', ') || '—', 'dim'));
+        SH.forEach(([k]) => td(tr, r.streams.includes(k) ? '●' : '·', r.streams.includes(k) ? 'up' : 'dim')); });
+      $('corp-note').textContent = 'How each creator makes money beyond ads, read from their video descriptions over the last 90 days: sponsor links and wording, YouTube\'s paid-promotion flag, and links to affiliate stores, memberships, courses, newsletters, their own store, booking pages and crowdfunding. Detected, not reported: a stream never linked in a description is missed.' + (meta0().source === 'synthetic' ? ' SYNTHETIC sponsors and links on the demo.' : '');
+      $('corp-count').textContent = num(list.length) + ' creators';
+    } else if (crp.tab === 'sponsors') {
+      const sp = dash.data('sponsors'), rowsS = sp.status === 'ok' ? sp.data : [];
+      H('Sponsor', 'Creators', 'Videos', 'Last 90 days', 'First seen', 'Last seen', 'Niches');
+      const list = rowsS.filter(r => !q || (r.brand + ' ' + (r.niches || '')).toLowerCase().includes(q));
+      list.forEach(r => { const tr = tb.insertRow(); L(td(tr, String(r.brand).toUpperCase())); td(tr, num(r.creators)); td(tr, num(r.videos), 'narrow');
+        td(tr, num(r.videos_90d), r.videos_90d ? 'up' : 'dim'); td(tr, r.first_seen ? fmtDay(String(r.first_seen).slice(0, 10)) : '—', 'narrow dim');
+        td(tr, r.last_seen ? fmtDay(String(r.last_seen).slice(0, 10)) : '—', 'dim'); const nl = (r.niches || '').split('; ').filter(Boolean); const nc = L(td(tr, nl.length > 3 ? nl.slice(0, 3).join(', ') + ' +' + (nl.length - 3) : nl.join(', ') || '—', 'dim narrow')); nc.title = nl.join('; '); });
+      $('corp-note').textContent = 'Brands that sponsor tracked creators, from sponsor links in video descriptions (brand.yt.link, sponsor wording, promo codes, or a brand link shared by two or more creators). Ranked by how many creators each brand pays.' + (meta0().source === 'synthetic' ? ' SYNTHETIC brands on the demo.' : '');
+      $('corp-count').textContent = num(list.length) + ' sponsors seen at 2+ creators';
     }
     // small screens drop the same columns from the body that they drop from the header
     const nar = [...hr.cells].map(c => c.classList.contains('narrow'));
@@ -1131,6 +1144,31 @@ dash.calc('drop_reasons', {
   const meta0 = () => dash.meta() || {};
   document.querySelectorAll('#corp-tab .cmb').forEach(b => b.addEventListener('click', () => { crp.tab = b.dataset.t; document.querySelectorAll('#corp-tab .cmb').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw(); }));
   function corpTab(t) { crp.tab = t; document.querySelectorAll('#corp-tab .cmb').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.t === t))); show('corp'); }
+  // ---- Risk: volatility, beta to the niche, drawdown and growth per unit of risk, like a stock risk screen
+  const rsk = {sort: 'growth_per_risk', dir: -1};
+  const RCOLS = [['channel', 'Creator', null], ['niche', 'Niche', null, 1], ['volatility', 'Vol (ann.)', 'pct'], ['beta', 'Beta', 'f2'],
+    ['max_drawdown', 'Max DD', 'pct'], ['growth', 'Growth (ann.)', 'spct'], ['growth_per_risk', 'Growth ÷ vol', 'f2'], ['hit_share', 'Top video', 'pct', 1], ['days', 'Days', 'n', 1]];
+  function drawRisk(rows) {
+    const synth = meta0().source === 'synthetic';
+    const t = $('risk-tbl'), head = t.tHead, tb = t.tBodies[0]; head.textContent = ''; tb.textContent = '';
+    const hr = head.insertRow();
+    RCOLS.forEach(([k, lab, , nar]) => { const th = el('th', lab + (rsk.sort === k ? (rsk.dir < 0 ? ' ↓' : ' ↑') : '')); th.style.cursor = 'pointer';
+      if (k === 'channel' || k === 'niche') th.style.textAlign = 'left'; if (nar) th.className = 'narrow';
+      th.addEventListener('click', () => { rsk.dir = rsk.sort === k ? -rsk.dir : -1; rsk.sort = k; draw(); }); hr.append(th); });
+    const q = st.q, f = {pct: v => pct(v), f2: v => f2(v), spct: v => spct(v), n: v => num(v)};
+    const list = rows.filter(r => !q || (r.channel + ' ' + (r.niche || '')).toLowerCase().includes(q)).slice()
+      .sort((a, b) => { const x = a[rsk.sort], y = b[rsk.sort]; if (x == null) return 1; if (y == null) return -1;
+        return typeof x === 'string' ? rsk.dir * x.localeCompare(y) * -1 : rsk.dir * (N(x) - N(y)); });
+    list.forEach(r => { const tr = tb.insertRow(); tr.style.cursor = 'pointer'; tr.addEventListener('click', () => openTear(r.channel_id));
+      RCOLS.forEach(([k, , fm, nar]) => { const v = r[k], td = tr.insertCell();
+        td.textContent = v == null ? '—' : fm ? f[fm](N(v)) : k === 'channel' ? String(v).toUpperCase() : v;
+        if (k === 'channel' || k === 'niche') td.style.textAlign = 'left';
+        const cl = k === 'growth' || k === 'growth_per_risk' ? (N(v) > 0 ? 'up' : N(v) < 0 ? 'dn' : '') : k === 'beta' && v != null ? (N(v) > 1.2 ? 'amb' : '') : k === 'max_drawdown' && N(v) > 0.5 ? 'dn' : '';
+        td.className = [cl, nar ? 'narrow' : '', k === 'niche' ? 'dim' : ''].filter(Boolean).join(' '); }); });
+    if (!list.length) { const tr = tb.insertRow(), td = tr.insertCell(); td.colSpan = RCOLS.length; td.className = 'dim'; td.style.textAlign = 'left';
+      td.textContent = 'Risk stats need 30+ days of daily history per creator; they start filling in around mid-December 2026.'; }
+    $('risk-note').textContent = 'Attention = views gained per day, smoothed to a 7-day sum; its daily log change is read like a daily return over the last 90 days. Vol is annualized. Beta compares a creator to the rest of their niche (above 1 moves more than the niche). Max DD is the deepest fall from a peak. Growth ÷ vol is a Sharpe ratio with no risk-free rate. Top video is the share of recent views from one video. Click a creator for the tear sheet.' + (synth ? ' SYNTHETIC creators on the demo.' : '');
+  }
   // ---- Holders: who funds creator companies, by kind of capital (like HDS for a stock)
   const hds = {tab: 'holders', type: 'all', open: null, company: null};
   const HTYPE = {'Venture': ['VC', '#3a6fd8'], 'Growth': ['GROWTH', '#2f8f83'], 'Private equity': ['PE', '#8a5cc7'], 'Credit': ['CREDIT', '#c0702b'],
@@ -1629,6 +1667,16 @@ dash.calc('drop_reasons', {
       if (crow.notes) cbx.append(el('div', crow.notes, 'ts-txt'));
       const src = el('div', 'Confidence: ' + (crow.confidence || '—') + (crow.last_checked ? ' · checked ' + fmtDay(String(crow.last_checked).slice(0, 10)) : '') + ' · ', 'dim'); src.append(srcLink(crow.source)); cbx.append(src);
     }
+    // how the creator makes money beyond ads, read from their descriptions
+    const bzz = dash.data('business'), brow = bzz.status === 'ok' ? bzz.data.find(x => x.channel_id === c.channel_id) : null;
+    const rkk = dash.data('risk'), rrow = rkk.status === 'ok' ? rkk.data.find(x => x.channel_id === c.channel_id) : null;
+    if (rrow) cbx.append(el('div', 'Risk (90 days): vol ' + pct(N(rrow.volatility)) + (rrow.beta != null ? ' · beta ' + f2(N(rrow.beta)) : '') +
+      ' · max drawdown ' + pct(N(rrow.max_drawdown)) + (rrow.growth_per_risk != null ? ' · growth ÷ vol ' + f2(N(rrow.growth_per_risk)) : ''), 'ts-txt'));
+    if (brow) {
+      const bl = el('div', 'Business (last 90 days): ' + pct(N(brow.sponsored_share)) + ' of ' + brow.videos_90d + ' videos sponsored' +
+        (brow.top_sponsors.length ? ' (' + brow.top_sponsors.join(', ') + ')' : '') + (brow.streams.length ? ' · streams: ' + brow.streams.join(', ') : ''), 'ts-txt');
+      cbx.append(bl);
+    }
     box.append(cbx);
     const foot = el('div', 'Data as of ' + fmtDay(meta.as_of || '') + '. ' + (meta.source === 'synthetic' ? 'SYNTHETIC: a made-up creator, not a result. ' : '') +
       (c.rpm_source === 'placeholder' ? 'Earnings use placeholder RPM bands until real ones are set (5.9). ' : '') +
@@ -1892,6 +1940,8 @@ dash.calc('drop_reasons', {
     const cpx = dash.data('corp'), ccx = dash.data('corp_companies'), crx = dash.data('corp_rounds');
     if (cdx.status === 'ok' && st.view === 'corp') drawCorp(cpx.status === 'ok' ? cpx.data : [], ccx.status === 'ok' ? ccx.data : [], crx.status === 'ok' ? crx.data : [], cdx.data);
     if (ni.status === 'ok' && st.view === 'hmap') drawHeatmap(ni.data);
+    const rkx = dash.data('risk');
+    if (st.view === 'risk' && rkx.status === 'ok') drawRisk(rkx.data);
     const hhx = dash.data('holders'), hgx = dash.data('holdings');
     if (st.view === 'hds' && hhx.status === 'ok') drawHds(hhx.data, hgx.status === 'ok' ? hgx.data : []);
     const rtx = dash.data('rates'), rcx = dash.data('rate_changes'), rpx = dash.data('niche_rpm');
@@ -1910,7 +1960,7 @@ dash.calc('drop_reasons', {
     markTips();
   }
 
-  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'HMAP', 'WATCH', 'TEAR', 'COMP', 'CORP', 'UNDERCAP', 'SURF', 'SKEW', 'RATES', 'RPM', 'HDS', 'HOLDERS', 'DEALS', 'INVESTORS', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '!LIFE', '!GAME', '!FINX'];
+  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'HMAP', 'WATCH', 'TEAR', 'COMP', 'CORP', 'UNDERCAP', 'SURF', 'SKEW', 'RATES', 'RPM', 'HDS', 'HOLDERS', 'STREAMS', 'SPONSORS', 'RISK', 'DEALS', 'INVESTORS', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '!LIFE', '!GAME', '!FINX'];
   input.addEventListener('keydown', e => {
     if (e.key === 'Tab') {
       const v = input.value.trim().toUpperCase(); const m = CMDS.filter(c => c.startsWith(v));
@@ -1921,7 +1971,7 @@ dash.calc('drop_reasons', {
     const raw = input.value.trim(); input.value = ''; if (!raw) return;
     log.textContent += '> ' + raw.toUpperCase() + '\n';
     const [c, ...rest] = raw.split(/\s+/); const C = c.toUpperCase(), arg = rest.join(' ');
-    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, HMAP, WATCH, TEAR <creator>, COMP [A vs B], CORP, UNDERCAP, DEALS, INVESTORS, HDS [company or funder], SURF [niche], SKEW, RATES, RPM, PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
+    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, HMAP, WATCH, TEAR <creator>, COMP [A vs B], CORP, UNDERCAP, DEALS, INVESTORS, HDS [company or funder], RISK, STREAMS, SPONSORS, SURF [niche], SKEW, RATES, RPM, PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
     else if (C === 'NICHE' || C === 'MARKET') { st.sector = null; show('niche'); say('Niche market overview'); }
     else if (C.startsWith('!') || C.startsWith('$')) { st.sector = '!' + C.slice(1); show('niche'); say('Index ' + st.sector); }
     else if (C === 'TREND') { show('trend'); say('Trend analysis: index average CCOS by day'); }
@@ -1967,6 +2017,9 @@ dash.calc('drop_reasons', {
     else if (C === 'CORP' || C === 'COMPANIES') { corpTab('ladder'); say('Creator companies: stage ladder from no company to outside capital'); }
     else if (C === 'UNDERCAP' || C === 'UNDERCAPITALIZED') { corpTab('under'); say('Undercapitalized: growing creators with no outside capital found'); }
     else if (C === 'DEALS') { corpTab('deals'); say('Deals: financing rounds for creator companies'); }
+    else if (C === 'RISK') { show('risk'); say('Risk: volatility, beta to the niche, drawdown, growth per unit of risk'); }
+    else if (C === 'STREAMS') { corpTab('streams'); say('Revenue streams: how creators make money beyond ads, from their descriptions'); }
+    else if (C === 'SPONSORS') { corpTab('sponsors'); say('Sponsors: brands paying tracked creators'); }
     else if (C === 'INVESTORS' || C === 'HDS' || C === 'HOLDERS') {
       const want = arg.trim().toLowerCase(), hg = dash.data('holdings');
       hds.company = null; hds.open = null; hds.type = 'all';

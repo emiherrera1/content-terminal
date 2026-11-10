@@ -88,6 +88,26 @@ def _daily_factor(curve: pd.Series, day: dt.date, lag_weeks: float = 0) -> float
     return float(math.exp(np.interp((t - curve.index[0]) / pd.Timedelta(days=1), x, curve.values)))
 
 
+# made-up sponsors and links for the description parser; a separate generator so the rest of the world is unchanged
+DEMO_SPONSORS = ["examplesleep", "samplevpn", "placeholderbank", "demogreens", "mockmeals"]
+
+
+def _demo_description(vid: str, channel_id: str, word: str, brand: str) -> str:
+    import random
+    r, c = random.Random(vid), random.Random(channel_id)
+    lines = [f"Today: {word}. Thanks to {brand}."]
+    if r.random() < 0.3:
+        sp = c.choice(DEMO_SPONSORS) if r.random() < 0.7 else r.choice(DEMO_SPONSORS)
+        lines.append(f"This video is sponsored by {sp}. Use code DEMO for 20% off: https://{sp}.example/demo")
+    if c.random() < 0.5:
+        lines.append("Gear I use: https://amzn.to/demo")
+    if c.random() < 0.3:
+        lines.append("Join the community: https://patreon.com/demo")
+    if c.random() < 0.2:
+        lines.append(f"Merch: https://{channel_id.lower().replace(':', '')}.myshopify.com")
+    return "\n".join(lines)
+
+
 def build(con, end: dt.date | None = None, seed: int = 7, n_youtube: int = 72, n_tiktok: int = 16, n_instagram: int = 12) -> dict:
     rng = np.random.default_rng(seed)
     end = end or dt.date.today() - dt.timedelta(days=1)
@@ -152,7 +172,7 @@ def build(con, end: dt.date | None = None, seed: int = 7, n_youtube: int = 72, n
             lam = float(rng.uniform(0.08, 0.35))
             tail = float(rng.uniform(0.01, 0.05))
             vids.append((vid, c["channel_id"], title, dt.datetime.combine(pub_day, dt.time(15)), dur,
-                         f"Today: {word}. Thanks to {brand}.", f"{word}, {niche}"))
+                         _demo_description(vid, c["channel_id"], word, brand), f"{word}, {niche}"))
             parts = topic.split(".")
             vcls.append((vid, topic, parts[0], ".".join(parts[:2]), ".".join(parts[:3]), topic if len(parts) == 4 else None,
                          fmt_ids.get(fmt), fmt, float(rng.uniform(0.55, 0.99)), "demo"))

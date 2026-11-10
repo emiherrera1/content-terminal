@@ -93,6 +93,16 @@ def _companies(ctx):
     return companies.load(ctx.con)
 
 
+def _risk(ctx):
+    from . import risk
+    return risk.build(ctx.con)
+
+
+def _business(ctx):
+    from . import business
+    return business.build(ctx.con, ctx.today)
+
+
 def _rpm(ctx):
     from . import rates
     return rates.load_rpm(ctx.con, ctx.today)
@@ -189,9 +199,11 @@ JOBS: dict[str, list[Stage]] = {
         Stage("companies", _companies, retries=1),
         Stage("news", _news, retries=1),
         Stage("tag", _tag),
+        Stage("business", _business),
         Stage("comments", _comments, retries=1),
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
+        Stage("risk", _risk),
         Stage("ask", _ask),
         Stage("quality_gate", _quality_gate),
         Stage("export", _export, critical=True),
@@ -204,6 +216,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("niche_rpm", _rpm, retries=1),
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
+        Stage("risk", _risk),
         Stage("ask", _ask),
         Stage("audit_sheet", _audit_sheet),
         Stage("export", _export, critical=True),
@@ -212,8 +225,10 @@ JOBS: dict[str, list[Stage]] = {
     # everything that needs no API: rebuild every table from what is stored (after a formula or config change)
     "rebuild": [
         Stage("tag", _tag),
+        Stage("business", _business),
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
+        Stage("risk", _risk),
         Stage("ask", _ask),
         Stage("quality_gate", _quality_gate),
         Stage("export", _export, critical=True),
