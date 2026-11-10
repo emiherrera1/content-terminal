@@ -300,7 +300,7 @@ def sponsors(con, label) -> list[dict]:
         return []
     rows = _rows(con, "SELECT * FROM sponsor_map WHERE creators >= 2 ORDER BY creators DESC, videos DESC LIMIT 300")
     for r in rows:
-        r["niches"] = "; ".join(sorted({label(c) for c in (r.pop("niche_codes") or [])}))
+        r["niches"] = "; ".join(sorted({label(c) for c in (r.pop("niche_codes") or []) if c} - {None}))
     return rows
 
 

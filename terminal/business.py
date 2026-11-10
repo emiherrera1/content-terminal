@@ -32,12 +32,28 @@ IGNORE = {"youtube.com", "youtu.be", "instagram.com", "tiktok.com", "facebook.co
           "pubmed.ncbi.nlm.nih.gov", "pmc.ncbi.nlm.nih.gov", "ncbi.nlm.nih.gov", "doi.org", "nejm.org", "nature.com",
           "sciencedirect.com", "academic.oup.com", "jamanetwork.com", "thelancet.com", "bmj.com", "cdc.gov", "nih.gov",
           "apps.apple.com", "play.google.com", "bit.ly", "tinyurl.com", "shorturl.at", "ow.ly", "buff.ly", "rebrand.ly",
-          "cutt.ly", "is.gd", "lnk.to", "smarturl.it", "hyperurl.co", "glnk.io", "opr.as", "dada.link", "linkin.bio"}
+          "cutt.ly", "is.gd", "lnk.to", "smarturl.it", "hyperurl.co", "glnk.io", "opr.as", "dada.link", "linkin.bio",
+          # research, news, reference and other links that cite rather than pay
+          "apple.com", "bsky.app", "lickd.co", "creativecommons.org", "researchgate.net", "springer.com", "wiley.com",
+          "frontiersin.org", "mdpi.com", "lww.com", "ahajournals.org", "tandfonline.com", "cell.com", "science.org",
+          "plos.org", "journals.plos.org", "biorxiv.org", "medrxiv.org", "arxiv.org", "ssrn.com", "jstor.org",
+          "nytimes.com", "wsj.com", "bloomberg.com", "cnbc.com", "reuters.com", "bbc.com", "bbc.co.uk", "theguardian.com",
+          "washingtonpost.com", "cnn.com", "forbes.com", "apnews.com", "npr.org", "economist.com", "ft.com", "axios.com",
+          "statista.com", "who.int", "mayoclinic.org", "clevelandclinic.org", "examine.com", "healthline.com", "webmd.com"}
+# public-sector, academic and non-profit domains never count as sponsors
+IGNORE_SUFFIX = (".gov", ".edu", ".mil", ".int", ".ac.uk", ".gov.uk", ".edu.au", ".org")
+# deep-link services put the brand in the first label (headspace-web.app.link)
+DEEP_LINK = (".yt.link", ".app.link", ".onelink.me", ".page.link", ".sng.link", ".test-app.link")
+NOT_A_BRAND = {"onelink", "go", "app", "yt", "link", "www", "l", "s", "t", "m", "on", "get", "try", "join", "ref", "shop", "store", "my"}
 STREAM_HOSTS = {
     "Affiliate": ["amzn.to", "amazon.com", "amazon.ca", "amazon.co.uk", "link.amazon", "a.co", "amzlink.to", "geni.us",
                   "shopmy.us", "go.shopmy.us", "go.shopmy", "shopltk.com", "on.ltk.com", "liketoknow.it", "ltk.app",
                   "tidd.ly", "go.magik.ly", "rstyle.me", "howl.me", "howl.link", "kit.co", "share.epidemicsound.com",
-                  "skimresources.com", "go.skimresources.com", "awin1.com", "click.linksynergy.com", "bestbuy.com"],
+                  "skimresources.com", "go.skimresources.com", "awin1.com", "click.linksynergy.com", "bestbuy.com",
+                  # affiliate networks (Impact, CJ, Partnerize, Levanta, ShareASale) and referral programs
+                  "pxf.io", "sjv.io", "7eer.net", "ojrq.net", "evyy.net", "mtko.net", "anrdoezrs.net", "jdoqocy.com",
+                  "tkqlhce.com", "dpbolvw.net", "kqzyfj.com", "prf.hn", "lvnta.com", "shareasale.com", "avantlink.com",
+                  "pjtra.com", "epidemicsound.com", "storyblocks.com", "artlist.io"],
     "Membership": ["patreon.com", "ko-fi.com", "buymeacoffee.com", "memberful.com", "supporter.fm", "fourthwall.com/supporters"],
     "Course or community": ["skool.com", "teachable.com", "thinkific.com", "kajabi.com", "mykajabi.com", "podia.com",
                             "stan.store", "gumroad.com", "maven.com", "circle.so", "udemy.com", "learnworlds.com"],
@@ -60,7 +76,7 @@ ALIASES = {"drinklmnt": "LMNT", "ankerfast": "Anker", "monarchmoney": "Monarch M
            "ugreen": "UGREEN", "dbrand": "dbrand", "hostinger": "Hostinger", "incogni": "Incogni", "saily": "Saily",
            "quince": "Quince", "bombas": "Bombas", "whoop": "WHOOP", "airalo": "Airalo", "odoo": "Odoo", "seed": "Seed",
            "ritual": "Ritual", "cometeer": "Cometeer", "casetify": "CASETiFY", "paperlike": "Paperlike", "chime": "Chime",
-           "curology": "Curology", "headspace": "Headspace", "zocdoc": "Zocdoc", "webull": "Webull", "autods": "AutoDS"}
+           "curology": "Curology", "headspace": "Headspace", "functionhealth": "Function Health", "timeline": "Timeline", "zocdoc": "Zocdoc", "webull": "Webull", "autods": "AutoDS"}
 _TLD2 = {"co.uk", "com.au", "co.nz", "com.br", "co.jp"}
 
 
@@ -79,15 +95,22 @@ def stream_of(h: str, path: str = "") -> str | None:
     return None
 
 
-def brand_of(h: str) -> str:
-    """drinklmnt.com -> LMNT; monarchmoney.yt.link -> Monarch Money; shop.anker.com -> Anker."""
-    if h.endswith(".yt.link"):
-        core = h[: -len(".yt.link")].split(".")[-1]
+def ignored(h: str) -> bool:
+    return h in IGNORE or any(h.endswith("." + i) for i in IGNORE) or h.endswith(IGNORE_SUFFIX)
+
+
+def brand_of(h: str) -> str | None:
+    """drinklmnt.com -> LMNT; monarchmoney.yt.link -> Monarch Money; shop.anker.com -> Anker; None when no brand shows."""
+    dl = next((d for d in DEEP_LINK if h.endswith(d)), None)
+    if dl:
+        core = h[: -len(dl)].split(".")[-1].split("-")[0]
     else:
         parts = h.split(".")
         tail = 3 if ".".join(parts[-2:]) in _TLD2 else 2
         core = BRAND_PREFIX.sub("", ".".join(parts[:-tail + 1] if len(parts) > tail else parts[:1]))
         core = core.split(".")[-1] if core else parts[0]
+    if not core or core.lower() in NOT_A_BRAND:
+        return None
     return ALIASES.get(core.lower(), core[:1].upper() + core[1:])
 
 
@@ -105,8 +128,7 @@ def build(con, today: dt.date | None = None, window_days: int = 90) -> str:
     # pass 1: which hosts each creator links to, and how widely each host is used
     per_video, host_channels, chan_videos, chan_host_videos = [], defaultdict(set), Counter(), defaultdict(Counter)
     for vid, ch, pub, desc, flag in rows:
-        ls = [(h, p) for h, p in links(desc) if not (h in IGNORE or any(h.endswith("." + i) for i in IGNORE))
-              or stream_of(h, p)]
+        ls = [(h, p) for h, p in links(desc) if not ignored(h) or stream_of(h, p)]
         hosts = {h for h, _ in ls}
         per_video.append((vid, ch, pub, desc, flag, ls))
         chan_videos[ch] += 1
@@ -126,8 +148,10 @@ def build(con, today: dt.date | None = None, window_days: int = 90) -> str:
                 streams.add(s)
             elif (ch, h) in own:
                 streams.add("Own site or store")
-            elif h.endswith(".yt.link") or words or len(host_channels[h]) >= 2:
-                sponsors.add(brand_of(h))
+            elif h.endswith(DEEP_LINK) or words or len(host_channels[h]) >= 2:
+                b = brand_of(h)
+                if b:
+                    sponsors.add(b)
         if sponsors or flag:
             streams.add("Sponsorships")
         vrows.append((vid, ch, pub, flag, words, "; ".join(sorted(sponsors)) or None, "; ".join(s for s in STREAMS if s in streams) or None))
