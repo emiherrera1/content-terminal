@@ -13,6 +13,9 @@ names instead of codes, readable column names, and a comment on every view and k
     ask_news              the News feed, including Creator Capital daily notes
     ask_tier_changes      creators moving between Watch, Priority and Diligence-ready
     ask_niche_skew        reach by creator size per niche: the skew screen
+    ask_platform_rates    each platform's creator share, last and next change (the rates board)
+    ask_rate_changes      every dated change to a platform's creator share
+    ask_niche_rpm         YouTube RPM by niche from TubeLab estimates
     ask_creator_companies the company around each creator: stage, companies, financing (Creator Companies sheet)
     ask_creator_rounds    financing rounds for creator companies, with investors
     ask_glossary          every metric: what it measures, the formula, how to read it
@@ -23,11 +26,15 @@ Rebuilt by the pipeline's `ask` stage after every compute. Read-only by design: 
 import csv
 from pathlib import Path
 
-from . import surface
+from . import rates, surface
 
 ROOT = Path(__file__).resolve().parent.parent
 
 GUIDE = [
+    ("ask_platform_rates", "One row per platform monetization program: the creator's published share (or dollar rate), whether it is disclosed, the last change and the next scheduled one, with a source and verified date.",
+     "creator_share is a percent when unit is %, or dollars per unit (Roblox $/Robux). disclosed = No means the platform publishes no share (TikTok, Spotify); use ask_niche_rpm for what creators actually earn on YouTube."),
+    ("ask_rate_changes", "Every dated change to a platform's creator share, effective or scheduled (the decisions log).", "Join to ask_platform_rates by program id through the board; status = scheduled are announced future changes."),
+    ("ask_niche_rpm", "YouTube RPM by niche (dollars per 1,000 views), from TubeLab's channel estimates, latest monthly pull.", "Estimates, not reported earnings: rpm_mid is the median of each sampled channel's estimated range."),
     ("ask_niche_skew", "One row per niche: reach (median views per 100 subscribers, videos up to 3 months old) for the smallest, middle and biggest third of creators by subscribers, the skew (small over big) and dispersion (spread of ln views).",
      "skew above 1 means small creators get more views per subscriber than big ones; the steeper it is, the more the niche still rewards new supply (the undersaturation signal). Thirds are within each niche. reach_3m_vs_first_week shows how much a video keeps earning after launch."),
     ("ask_creators", "One row per tracked creator: size, growth, consistency, hits, the Creator Viability Score (CVS) and its pillars, tier, gates and a 90-day earnings range.",
@@ -107,10 +114,26 @@ def _glossary(con) -> None:
     con.executemany("INSERT INTO ask_glossary VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", rows)
 
 
+def _rates(con) -> None:
+    con.execute("""CREATE OR REPLACE TABLE ask_platform_rates (platform VARCHAR, program VARCHAR, revenue_type VARCHAR,
+        creator_share DOUBLE, unit VARCHAR, disclosed VARCHAR, what_it_is VARCHAR, note VARCHAR, last_change_date VARCHAR,
+        last_change DOUBLE, last_change_unit VARCHAR, last_change_what VARCHAR, next_change_date VARCHAR, next_change_what VARCHAR,
+        verified VARCHAR, stale BOOLEAN, source VARCHAR)""")
+    con.executemany("INSERT INTO ask_platform_rates VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    [(r["platform"], r["program"], r["revenue"], r["level"], r["unit"] or None, r["disclosed"], r["basis"],
+                      r["note"] or None, r["last_date"], r["last_change"], r["last_change_unit"], r["last_what"], r["next_date"],
+                      r["next_what"], r["verified"], r["stale"], r["source"]) for r in rates.board()])
+    con.execute("""CREATE OR REPLACE TABLE ask_rate_changes (program_id VARCHAR, date VARCHAR, old_level DOUBLE, new_level DOUBLE,
+        status VARCHAR, what_changed VARCHAR, source VARCHAR)""")
+    con.executemany("INSERT INTO ask_rate_changes VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    [(c["id"], c["date"], c["old"], c["new"], c["status"], c["what"], c["source"]) for c in rates.changes()])
+
+
 def build(con) -> list[str]:
     _topics(con)
     _glossary(con)
-    made = ["ask_topics", "ask_glossary"]
+    _rates(con)
+    made = ["ask_topics", "ask_glossary", "ask_platform_rates", "ask_rate_changes"]
     have = lambda *t: all(_has(con, x) for x in t)
 
     if have("screener"):
@@ -197,6 +220,13 @@ def build(con) -> list[str]:
                    k.term AS reach_3m_vs_first_week
             FROM ({surface.SKEW_SQL}) k LEFT JOIN ask_topics t ON t.code = k.niche_code""")
         made.append("ask_niche_skew")
+
+    if have("niche_rpm"):
+        con.execute("""CREATE OR REPLACE VIEW ask_niche_rpm AS
+            SELECT r.as_of, t.name AS niche, r.niche_code, t.sector, r.channels, r.rpm_low, r.rpm_mid, r.rpm_high, r.source
+            FROM niche_rpm r LEFT JOIN ask_topics t ON t.code = r.niche_code
+            WHERE r.as_of = (SELECT max(as_of) FROM niche_rpm)""")
+        made.append("ask_niche_rpm")
 
     if have("creator_rounds"):
         con.execute("""CREATE OR REPLACE VIEW ask_creator_rounds AS

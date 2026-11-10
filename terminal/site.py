@@ -14,7 +14,7 @@ import os
 import urllib.request
 from pathlib import Path
 
-from . import coverage, surface
+from . import coverage, rates, surface
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site" / "public" / "data"
@@ -466,6 +466,15 @@ def build(con, out_dir: Path = OUT, source: str = "live", public: bool = False) 
         "surface": surface.cells(con, label, sector),
         "skew": surface.skew(con, label, sector),
     }
+    rpm = rates.latest_rpm(con, label)
+    if source == "synthetic":
+        codes = [r[0] for r in con.execute("SELECT DISTINCT niche_code FROM channel_niche").fetchall()] if _has(con, "channel_niche") else []
+        as_of_r = con.execute("SELECT max(snapshot_date) FROM channel_snapshots").fetchone()[0] or dt.date.today()
+        rpm = rates.demo_rpm([(c, label(c)) for c in codes], as_of_r)
+    # the policy rates are public facts with sources, the same on both sites; the RPM side is synthetic on the demo
+    sets["rates"] = rates.board(rpm=rpm)
+    sets["rate_changes"] = rates.changes()
+    sets["niche_rpm"] = rpm
     sets["corp"] = corp(con, sets["creator_details"])
     sets["corp_companies"] = corp_companies(con)
     sets["corp_rounds"] = corp_rounds(con)

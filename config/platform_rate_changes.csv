@@ -1,0 +1,15 @@
+id,date,old,new,status,what,source
+yt_shorts,2023-02-01,,45,effective,Shorts ad revenue sharing begins at 45% (replaces the Shorts Fund),https://tubefilter.com/2023/01/10/youtube-shorts-ad-revenue-sharing-begin-new-partner-program/
+yt_shorts,2027-02-01,45,45,scheduled,Rate unchanged; Shorts earnings need 10M qualified Shorts views in 90 days,https://www.newscaststudio.com/2026/08/10/youtube-partner-program-monetization-changes-2027/
+twitch_plus,2023-10-01,50,70,effective,Partner Plus: 70% on the first $100K a year for 350+ paid subs held 3 months,https://pcgamer.com/twitch-is-finally-giving-some-streamers-a-bigger-slice-of-the-money-pie-but-there-are-some-big-conditions-too
+twitch_plus,2024-05-01,70,70,effective,$100K cap removed; Plus Program opens to Affiliates with a 60% tier,https://www.mediapost.com/publications/article/393006/
+kick_subs,2022-12-01,,95,effective,Kick launches with a 95% creator share,https://techcrunch.com/2023/06/27/kick-lures-disenchanted-twitch-streamers-for-now-explained
+roblox_devex,2025-09-05,0.0035,0.0038,effective,DevEx rate raised 8.5%,https://gam3s.gg/news/roblox-increases-creator-payouts
+roblox_devex18,2026-06-08,0.0038,0.005396,effective,42% higher rate for age-checked US 18+ spend in eligible games,https://www.tubefilter.com/?p=192104
+fn_pool,2023-03-22,,40,effective,Creator Economy 2.0: 40% of net revenue to the engagement pool,https://www.kitguru.net/page/248/!https:/www.kitguru.net/gaming/mustafa-mahmoud/epic-revamps-fortnite-monetisation-giving-creators-40-of-net-revenue
+fn_items,2026-01-09,,100,effective,In-island item sales open at a 100% launch rate,https://www.fortnite.com/news/fortnite-developers-will-soon-be-able-to-sell-in-game-items
+fn_items,2027-02-01,100,50,scheduled,Launch rate ends; the standard 50% applies,https://www.fortnite.com/news/fortnite-developers-will-soon-be-able-to-sell-in-game-items
+patreon,2025-08-04,92,90,effective,Standard 10% fee for new creators (Pro was 8%),https://support.patreon.com/hc/en-us/articles/36426991446797
+apple_pod,2021-06-15,,70,effective,Apple Podcasts Subscriptions launch: 70% year one and 85% after,https://www.macrumors.com/2021/06/15/apple-launches-podcasts-subscriptions/
+x_pool,2024-11-08,,25,effective,Payouts move from ads in replies to up to 25% of Premium revenue,https://www.socialmediatoday.com/news/x-removes-ad-revenue-share-creator-payments-program/729408/
+spotify_spp,2026-01-07,,,effective,Eligibility thresholds lowered (12 to 3 episodes; 10K to 2K hours),https://www.techcrunch.com/2026/01/07/spotify-lowers-monetization-threshold-for-video-podcasts

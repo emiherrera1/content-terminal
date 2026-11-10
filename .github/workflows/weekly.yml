@@ -19,6 +19,7 @@ jobs:
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
           FORMATS_SHEET_CSV_URL: ${{ secrets.FORMATS_SHEET_CSV_URL }}
+          TUBELAB_API_KEY: ${{ secrets.TUBELAB_API_KEY }}
           TERMINAL_DB: md:content_terminal
       # dev.content-terminal.pages.dev (latest code) and terminal.cvaccelerator.com (the frozen beta)
       - if: always()

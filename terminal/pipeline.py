@@ -93,6 +93,11 @@ def _companies(ctx):
     return companies.load(ctx.con)
 
 
+def _rpm(ctx):
+    from . import rates
+    return rates.load_rpm(ctx.con, ctx.today)
+
+
 def _tag(ctx):
     from . import tagging
     return f"{tagging.tag_packaging(ctx.con)} packaging, {tagging.tag_entities(ctx.con)} entity mentions"
@@ -196,6 +201,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("google_trends", _trends, retries=2),
         Stage("outcome_csvs", _outcome_csvs),
         Stage("outside_estimates", _outside),
+        Stage("niche_rpm", _rpm, retries=1),
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
         Stage("ask", _ask),
