@@ -175,6 +175,7 @@ window.dash = (() => {
 .ct .ssel option{background:var(--panel);color:var(--tx)}
 .ct #rates-tbl td{text-align:right} .ct #rates-tbl td:nth-child(2){white-space:normal;min-width:8rem} .ct #rates-tbl tr.rrow{cursor:pointer} .ct #rates-tbl tr.undis td{color:var(--tm)}
 .ct #rates-tbl td.amb{color:var(--amb)} .ct #rates-tbl td.rdet{text-align:left;text-transform:none;background:var(--hl);padding:8px 12px;line-height:1.6}
+.ct .ptile{display:inline-block;min-width:1.9em;margin-right:6px;padding:0 3px;border-radius:2px;color:#fff;font-size:9px;line-height:1.5;text-align:center;font-weight:700;vertical-align:1px}
 .ct #rates-tbl .rh b{color:var(--acc);font-weight:400} .ct #rates-tbl a{color:var(--acc)}
 .ct .sstrip{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .ct .sstrip span{flex:1;min-width:9rem;padding:4px 8px;color:var(--tm);font-size:10px;border-right:1px solid var(--line)}
@@ -296,7 +297,6 @@ window.dash = (() => {
     <button class="fn" role="tab" data-v="watch">Watchlist</button>
     <button class="fn" role="tab" data-v="corp">Companies</button>
     <button class="fn" role="tab" data-v="surf">Surface</button>
-    <button class="fn" role="tab" data-v="rates">Rates</button>
     <button class="fn" role="tab" data-v="help">Help<small>F1</small></button>
     <span class="clock" id="clock">—</span>
   </div>
@@ -383,13 +383,6 @@ window.dash = (() => {
         <div class="pb" id="surf-pb" style="max-height:none" hidden><table id="surf-tbl"><thead></thead><tbody></tbody></table></div>
         <div class="cnote" id="surf-note"></div>
       </section>
-      <section class="view" id="rates" hidden>
-        <div class="ph"><span>Platform monetization rates</span><span class="meta">the creator's cut, read like a policy rate · click a row for its history</span></div>
-        <div class="compbar"><span class="seg" id="rates-tab"><button class="cmb" data-t="board" aria-pressed="true">Rates</button><button class="cmb" data-t="changes" aria-pressed="false">Changes</button><button class="cmb" data-t="rpm" aria-pressed="false">RPM by niche</button></span></div>
-        <div class="pb" style="max-height:none"><table id="rates-tbl"><thead></thead><tbody></tbody></table></div>
-        <div class="sstrip"><span id="rates-foot"></span></div>
-        <div class="cnote" id="rates-note"></div>
-      </section>
       <section class="view" id="comp" hidden>
         <div class="ph"><span>Comp</span><span class="meta">two creators or two niches on the same metrics · or type COMP A VS B</span></div>
         <div class="compbar">
@@ -406,6 +399,13 @@ window.dash = (() => {
         <div class="ph"><span>Platforms</span><span class="meta">YouTube · TikTok · Instagram · Formula Library 9.1–9.4</span></div>
         <div class="cov-top" id="plat-cards"></div>
         <div class="cnote" id="plat-note"></div>
+        <div id="rates">
+        <div class="ph"><span>Monetization rates</span><span class="meta">the creator's cut, read like a policy rate · click a row for its history</span></div>
+        <div class="compbar"><span class="seg" id="rates-tab"><button class="cmb" data-t="board" aria-pressed="true">Rates</button><button class="cmb" data-t="changes" aria-pressed="false">Changes</button><button class="cmb" data-t="rpm" aria-pressed="false">RPM by niche</button></span></div>
+        <div class="pb" style="max-height:none"><table id="rates-tbl"><thead></thead><tbody></tbody></table></div>
+        <div class="sstrip"><span id="rates-foot"></span></div>
+        <div class="cnote" id="rates-note"></div>
+        </div>
         <div class="ph"><span>Platform news</span><span class="meta">platform changes, features and policies · newest first</span></div>
         <div class="pnews" id="plat-news"></div>
         <div class="ph"><span>Attention by platform</span><span class="meta">7-day average, indexed to 100 · platforms count views differently, so compare movement</span></div>
@@ -1121,7 +1121,8 @@ dash.calc('drop_reasons', {
   function corpTab(t) { crp.tab = t; document.querySelectorAll('#corp-tab .cmb').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.t === t))); show('corp'); }
   // ---- Platform monetization rates: the creator's published share, read like a central bank board
   const rts = {tab: 'board', open: null};
-  function ratesTab(t) { rts.tab = t; document.querySelectorAll('#rates-tab .cmb').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.t === t))); show('rates'); }
+  function ratesTab(t, jump) { rts.tab = t; document.querySelectorAll('#rates-tab .cmb').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.t === t)));
+    if (jump) { show('platform'); $('rates').scrollIntoView({block: 'start'}); } else draw(); }
   document.querySelectorAll('#rates-tab .cmb').forEach(b => b.addEventListener('click', () => ratesTab(b.dataset.t)));
   const rlevel = r => r.level == null ? 'Undisclosed' : r.unit === '%' ? d3.format('.0f')(r.level) + '%' : '$' + d3.format('.4~f')(r.level) + (r.unit.includes('Robux') ? ' / R$' : '');
   const rchange = r => {
@@ -1132,6 +1133,12 @@ dash.calc('drop_reasons', {
     return [s + (v > 0 ? ' ↑' : ' ↓'), v > 0 ? 'up' : 'dn'];
   };
   const shortDay = d => d ? d.slice(5) : '—';
+  // a small tile per platform, like a country flag: a two-letter code on a color, not the platform's logo
+  const PTILE = {YouTube: ['YT', '#c4302b'], TikTok: ['TT', '#1f1f1f'], Instagram: ['IG', '#b13a8a'], Twitch: ['TW', '#6441a5'], Kick: ['KI', '#3e9b2f'],
+    Rumble: ['RU', '#5a8f29'], Roblox: ['RB', '#5b5f66'], Fortnite: ['FN', '#3a6fd8'], Patreon: ['PA', '#c8553d'], Substack: ['SS', '#d4661e'],
+    'Apple Podcasts': ['AP', '#8e44ad'], X: ['X', '#2b2b2b'], Spotify: ['SP', '#1f8f4e']};
+  const ptile = name => { const [t, c] = PTILE[name] || [name.slice(0, 2).toUpperCase(), '#444'];
+    const b = el('span', t, 'ptile'); b.style.background = c; b.setAttribute('aria-hidden', 'true'); return b; };
   function drawRates(rows, chg, rpm) {
     const synth = meta0().source === 'synthetic';
     const t = $('rates-tbl'), head = t.tHead, tb = t.tBodies[0]; head.textContent = ''; tb.textContent = '';
@@ -1143,7 +1150,7 @@ dash.calc('drop_reasons', {
       rows.filter(r => !q || (r.platform + ' ' + r.program + ' ' + r.revenue).toLowerCase().includes(q)).forEach(r => {
         const tr = tb.insertRow(); tr.className = 'rrow' + (r.disclosed === 'No' ? ' undis' : '');
         const c = (v, cl) => { const td = tr.insertCell(); td.textContent = v; if (cl) td.className = cl; return td; };
-        c(r.platform).style.textAlign = 'left'; const p = c(r.program); p.style.textAlign = 'left';
+        const pc = c(r.platform + ' '); pc.style.textAlign = 'left'; pc.textContent = ''; pc.append(ptile(r.platform), r.platform); const p = c(r.program); p.style.textAlign = 'left';
         c(rlevel(r), r.level == null ? 'dim' : '');
         const [cv, cc] = rchange(r); c(cv, cc);
         c(r.last_date || '—', 'narrow dim');
@@ -1171,7 +1178,7 @@ dash.calc('drop_reasons', {
       chg.filter(x => !q || (x.what + ' ' + (byId[x.id] || {}).platform).toLowerCase().includes(q)).forEach(x => {
         const r = byId[x.id] || {}, tr = tb.insertRow();
         const c = (v, cl) => { const td = tr.insertCell(); td.textContent = v; if (cl) td.className = cl; return td; };
-        c(x.date); c((r.platform || '') + ' · ' + (r.program || x.id)).style.textAlign = 'left';
+        c(x.date); const pc = c(''); pc.style.textAlign = 'left'; if (r.platform) pc.append(ptile(r.platform)); pc.append((r.platform || '') + ' · ' + (r.program || x.id));
         const fmt = v => v == null ? '' : r.unit === '%' ? d3.format('.0f')(v) + '%' : '$' + d3.format('.4~f')(v);
         c(x.old == null ? (x.new == null ? '—' : 'new ' + fmt(x.new)) : fmt(x.old) + ' → ' + fmt(x.new), x.new > x.old ? 'up' : x.new < x.old ? 'dn' : 'dim');
         const w = c(x.what + ' '); w.style.textAlign = 'left'; w.style.whiteSpace = 'normal';
@@ -1793,7 +1800,7 @@ dash.calc('drop_reasons', {
     if (cdx.status === 'ok' && st.view === 'corp') drawCorp(cpx.status === 'ok' ? cpx.data : [], ccx.status === 'ok' ? ccx.data : [], crx.status === 'ok' ? crx.data : [], cdx.data);
     if (ni.status === 'ok' && st.view === 'hmap') drawHeatmap(ni.data);
     const rtx = dash.data('rates'), rcx = dash.data('rate_changes'), rpx = dash.data('niche_rpm');
-    if (st.view === 'rates' && rtx.status === 'ok') drawRates(rtx.data, rcx.status === 'ok' ? rcx.data : [], rpx.status === 'ok' ? rpx.data : []);
+    if (st.view === 'platform' && rtx.status === 'ok') drawRates(rtx.data, rcx.status === 'ok' ? rcx.data : [], rpx.status === 'ok' ? rpx.data : []);
     const sfx = dash.data('surface'), skx = dash.data('skew');
     if (st.view === 'surf') drawSurf(sfx.status === 'ok' ? sfx.data : [], skx.status === 'ok' ? skx.data : []);
     const csx = dash.data('creator_series');
@@ -1859,8 +1866,8 @@ dash.calc('drop_reasons', {
       }
       surfTab('3d'); say('Niche surface: reach by creator size and video age. Drag to rotate.');
     }
-    else if (C === 'RATES') { ratesTab('board'); say('Platform monetization rates: the creator\'s share by program, last and next change'); }
-    else if (C === 'RPM') { ratesTab('rpm'); say('YouTube RPM by niche (TubeLab estimates)'); }
+    else if (C === 'RATES') { ratesTab('board', true); say('Platform monetization rates: the creator\'s share by program, last and next change'); }
+    else if (C === 'RPM') { ratesTab('rpm', true); say('YouTube RPM by niche (TubeLab estimates)'); }
     else if (C === 'SKEW') { surfTab('rank'); say('Skew: niches ranked by small creators\' reach over big creators\' reach'); }
     else if (C === 'CORP' || C === 'COMPANIES') { corpTab('ladder'); say('Creator companies: stage ladder from no company to outside capital'); }
     else if (C === 'UNDERCAP' || C === 'UNDERCAPITALIZED') { corpTab('under'); say('Undercapitalized: growing creators with no outside capital found'); }
