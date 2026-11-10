@@ -14,7 +14,7 @@ import os
 import urllib.request
 from pathlib import Path
 
-from . import coverage, rates, surface
+from . import coverage, holders, rates, surface
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site" / "public" / "data"
@@ -487,6 +487,11 @@ def build(con, out_dir: Path = OUT, source: str = "live", public: bool = False) 
         if not sets["alerts"]:
             sets["alerts"] = _demo_alerts(sets["screener"])
         sets["corp"], sets["corp_companies"], sets["corp_rounds"] = _demo_corp(sets["creator_details"])
+    hold = holders.holdings(sets["corp_rounds"], {} if source == "synthetic" else None)
+    if source == "synthetic":
+        hold = holders.demo_types(hold)
+    sets["holdings"] = hold
+    sets["holders"] = holders.holders(hold, {} if source == "synthetic" else None)
     if public:
         sets["news"] = [n for n in sets["news"] if n.get("status") != "draft"]
     for name, rows in sets.items():

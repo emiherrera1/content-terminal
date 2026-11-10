@@ -16,6 +16,8 @@ names instead of codes, readable column names, and a comment on every view and k
     ask_platform_rates    each platform's creator share, last and next change (the rates board)
     ask_rate_changes      every dated change to a platform's creator share
     ask_niche_rpm         YouTube RPM by niche from TubeLab estimates
+    ask_holders           funders of creator companies by type of capital (the Holders view)
+    ask_holdings          one row per funder per round
     ask_creator_companies the company around each creator: stage, companies, financing (Creator Companies sheet)
     ask_creator_rounds    financing rounds for creator companies, with investors
     ask_glossary          every metric: what it measures, the formula, how to read it
@@ -26,11 +28,15 @@ Rebuilt by the pipeline's `ask` stage after every compute. Read-only by design: 
 import csv
 from pathlib import Path
 
-from . import rates, surface
+from . import holders, rates, surface
 
 ROOT = Path(__file__).resolve().parent.parent
 
 GUIDE = [
+    ("ask_holders", "One row per funder of creator companies: its type (Venture, Growth, Private equity, Credit, Creator finance, Revenue share, Catalog finance, Acquirer, Strategic, Family office, Accelerator, Angel, Founder), deals, deals led, companies backed and the instruments used.",
+     "usd_rounds_joined_m adds up the USD rounds the funder took part in; amounts are per round, never the funder's own check."),
+    ("ask_holdings", "One row per funder per round: the funder, its type and role (Lead or Participant), the company and creator, the round, its instrument (Equity, Debt, Buyout, Catalog license, Revenue share) and the round's size.",
+     "Filter funder_type or instrument to see private equity, credit or buyouts; round_amount_m is the whole round."),
     ("ask_platform_rates", "One row per platform monetization program: the creator's published share (or dollar rate), whether it is disclosed, the last change and the next scheduled one, with a source and verified date.",
      "creator_share is a percent when unit is %, or dollars per unit (Roblox $/Robux). disclosed = No means the platform publishes no share (TikTok, Spotify); use ask_niche_rpm for what creators actually earn on YouTube."),
     ("ask_rate_changes", "Every dated change to a platform's creator share, effective or scheduled (the decisions log).", "Join to ask_platform_rates by program id through the board; status = scheduled are announced future changes."),
@@ -227,6 +233,24 @@ def build(con) -> list[str]:
             FROM niche_rpm r LEFT JOIN ask_topics t ON t.code = r.niche_code
             WHERE r.as_of = (SELECT max(as_of) FROM niche_rpm)""")
         made.append("ask_niche_rpm")
+
+    if have("creator_rounds"):
+        cur = con.execute("SELECT * FROM creator_rounds")
+        cols = [d[0] for d in cur.description]
+        hold = holders.holdings([dict(zip(cols, r)) for r in cur.fetchall()])
+        con.execute("""CREATE OR REPLACE TABLE ask_holdings (funder VARCHAR, funder_type VARCHAR, role VARCHAR, company VARCHAR,
+            creator VARCHAR, round VARCHAR, instrument VARCHAR, round_date DATE, round_amount_m DOUBLE, valuation_m DOUBLE,
+            currency VARCHAR, source VARCHAR, confidence VARCHAR)""")
+        con.executemany("INSERT INTO ask_holdings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [(h["funder"], h["type"], h["role"], h["company"], h["creator"], h["round"], h["instrument"], h["round_date"],
+                          h["amount_m"], h["valuation_m"], h["currency"], h["source"], h["confidence"]) for h in hold])
+        con.execute("""CREATE OR REPLACE TABLE ask_holders (funder VARCHAR, funder_type VARCHAR, deals INTEGER, deals_led INTEGER,
+            companies INTEGER, company_list VARCHAR, instruments VARCHAR, usd_rounds_joined_m DOUBLE, last_deal_date VARCHAR,
+            last_company VARCHAR, note VARCHAR)""")
+        con.executemany("INSERT INTO ask_holders VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [(h["funder"], h["type"], h["deals"], h["led"], h["companies"], h["company_list"], h["instruments"],
+                          h["in_rounds_m"], h["last_date"], h["last_company"], h["note"]) for h in holders.holders(hold)])
+        made += ["ask_holders", "ask_holdings"]
 
     if have("creator_rounds"):
         con.execute("""CREATE OR REPLACE VIEW ask_creator_rounds AS
