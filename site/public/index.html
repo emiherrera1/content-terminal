@@ -85,6 +85,17 @@ window.dash = (() => {
 .ct .fn:hover{background:var(--hl)} .ct .fn[aria-selected=true]{background:var(--acc);color:var(--bg);text-shadow:none}
 .ct .fn[aria-selected=true] small{color:var(--bg)}
 .ct .fn[aria-disabled=true]{color:var(--td);cursor:not-allowed;border-style:dashed}
+.ct .mk{all:unset;cursor:pointer;padding:2px 10px;border:1px solid var(--amb);color:var(--amb);font-weight:700;white-space:nowrap}
+.ct .mk:hover{background:var(--hl)} .ct .mk[aria-selected=true]{background:var(--amb);color:#000;text-shadow:none}
+.ct .fns{border-bottom:1px solid var(--line)} .ct .fntitle{color:var(--tm);margin-right:8px;white-space:nowrap}
+.ct .fns .fn{font-weight:700} .ct .fns .fn small{font-weight:400;text-transform:lowercase}
+.ct .secbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:5px 8px;border-bottom:1px solid var(--line);background:var(--hl);min-height:1.6em}
+.ct .secbar>b{color:var(--acc);font-size:13px} .ct .seckey{background:var(--amb);color:#000;padding:0 5px;font-weight:700;margin-left:-8px}
+.ct .secst i{font-style:normal;color:var(--tm)} .ct .secx{all:unset;cursor:pointer;color:var(--tm);padding:0 4px} .ct .secx:hover{color:var(--red)}
+.ct .hgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line)}
+.ct .hbox{background:var(--bg);min-width:0;overflow:hidden} .ct .hbox table{width:100%} .ct .hbox table{table-layout:fixed} .ct .hbox td,.ct .hbox th{overflow:hidden;text-overflow:ellipsis} .ct .hbox td:first-child,.ct .hbox th:first-child{width:62%}
+@container (max-width:900px){.ct .hgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container (max-width:560px){.ct .hgrid{grid-template-columns:minmax(0,1fr)}}
 .ct .clock{margin-left:auto;font-size:22px;font-weight:700;white-space:nowrap}
 .ct .search{margin:6px 8px;border:1px solid var(--line);display:flex}
 .ct .search input{all:unset;flex:1;padding:4px 8px;color:var(--tx);font-family:inherit;text-transform:uppercase}
@@ -283,34 +294,30 @@ window.dash = (() => {
   <div class="tk"><span class="lab">Creators</span><div class="vp" id="tk-creators" data-source="screener"><div class="run"></div></div></div>
   <div class="tk"><span class="lab">Index</span><div class="vp" id="tk-index" data-source="indices"><div class="run"></div></div></div>
 
-  <div class="fbar" role="tablist" aria-label="Functions">
+  <div class="fbar" id="mkeys" role="tablist" aria-label="Markets">
     <span class="stamp" id="stamp">—</span>
-    <button class="fn" role="tab" data-v="niche" aria-selected="true">Niche<small>F2</small></button>
-    <button class="fn" role="tab" data-v="trend">Trend<small>F3</small></button>
-    <button class="fn" role="tab" data-v="hmap">Heatmap</button>
-    <button class="fn" role="tab" data-v="creator">Creator<small>F4</small></button>
-    <button class="fn" role="tab" data-v="alerts">Alerts<small>F5</small></button>
-    <button class="fn" data-act="analyze" title="Analyze the top niche, or type ANALYZE <niche>">Analyze</button>
-    <button class="fn" role="tab" data-v="comp">Comp</button>
-    <button class="fn" aria-disabled="true" title="Not built yet: needs ~90 days of history">Forecast</button>
-    <button class="fn" role="tab" data-v="platform">Platform<small>F10</small></button>
-    <button class="fn" role="tab" data-v="news">News<small>F6</small></button>
-    <button class="fn" role="tab" data-v="formats">Formats<small>F7</small></button>
-    <button class="fn" role="tab" data-v="coverage">Coverage<small>F8</small></button>
-    <button class="fn" role="tab" data-v="des">DES<small>F9</small></button>
-    <button class="fn" role="tab" data-v="watch">Watchlist</button>
-    <button class="fn" role="tab" data-v="corp">Companies</button>
-    <button class="fn" role="tab" data-v="hds">Holders</button>
-    <button class="fn" role="tab" data-v="risk">Risk</button>
-    <button class="fn" role="tab" data-v="surf">Surface</button>
-    <button class="fn" role="tab" data-v="help">Help<small>F1</small></button>
+    <button class="mk" data-k="home" aria-selected="true">HOME</button><button class="mk" data-k="crtr" aria-selected="false">CRTR</button><button class="mk" data-k="niche" aria-selected="false">NICHE</button><button class="mk" data-k="corp" aria-selected="false">CORP</button><button class="mk" data-k="plat" aria-selected="false">PLAT</button><button class="mk" data-k="news" aria-selected="false">NEWS</button><button class="mk" data-k="help" aria-selected="false">HELP</button>
     <span class="clock" id="clock">—</span>
   </div>
+  <div class="secbar" id="secbar" aria-live="polite"></div>
+  <div class="fbar fns" id="fnbar" role="tablist" aria-label="Functions"></div>
   <label class="search"><input id="search" type="search" placeholder="Search creators and niches..." aria-label="Search creators and niches" autocomplete="off"></label>
 
   <div class="grid">
     <div class="panel" id="main">
-      <section class="view" id="niche">
+      <section class="view" id="home">
+        <div class="ph"><span>WEI · Market monitors</span><span class="meta" data-source="summary" data-field="asOf" data-row="0">—</span></div>
+        <div class="hgrid">
+          <div class="hbox"><div class="ph"><span>Sector indexes</span><span class="meta">CCOS · click to open</span></div><table id="h-wei"></table></div>
+          <div class="hbox"><div class="ph"><span>Niche movers</span><span class="meta">7-day change · click to load</span></div><table id="h-niche"></table></div>
+          <div class="hbox"><div class="ph"><span>MOST · creator movers</span><span class="meta">vs niche · click to load</span></div><table id="h-most"></table></div>
+          <div class="hbox"><div class="ph"><span>ALRT · spikes today</span><span class="meta">σ vs 28 days</span></div><table id="h-alrt"></table></div>
+          <div class="hbox"><div class="ph"><span>TOP · news</span><span class="meta">ranked</span></div><table id="h-top"></table></div>
+          <div class="hbox"><div class="ph"><span>RATE · platform rates</span><span class="meta">next and last changes</span></div><table id="h-rate"></table></div>
+        </div>
+        <div class="cnote" id="home-note"></div>
+      </section>
+      <section class="view" id="niche" hidden>
         <div class="ph"><span>Niche market overview</span><span class="meta" data-source="summary" data-field="asOf" data-row="0">—</span></div>
         <div class="pb" id="sectors"></div>
       </section>
@@ -537,10 +544,14 @@ window.dash = (() => {
       <section class="view help" id="help" hidden>
         <div class="ph"><span>Help</span><span class="meta">F1</span></div>
         <div class="pb"><dl>
+          <dt>How it is organized</dt>
+          <dd>Market keys across the top: HOME (monitors), CRTR (creators, read like stocks), NICHE (sectors and niches, read like indexes), CORP (creator companies, read like private markets), PLAT (platforms, read like macro and rates), NEWS, HELP. Each key has its own function codes in the strip below it.</dd>
+          <dd>Load a security by typing its name and key: MRBEAST CRTR, FITNESS NICHE. Add a function to jump straight there: MRBEAST CRTR RISK. The loaded security stays in the bar under the keys while you move between functions; list functions are filtered to it. ✕ unloads it.</dd>
+          <dd>CRTR: DES (tear sheet) · SRCH · RISK · BIZ · CORP · HDS · COMP · WTCH · CN. NICHE: DES (analysis) · NI · GP · IMAP · SURF · SKEW · RPM · FMT · COV. CORP: LADR · UCAP · DEAL · HDS · BIZ · SPON. PLAT: PLAT · RATE · RPM. HOME: WEI · MOST · ALRT · TOP · RATE.</dd>
           <dt>Commands</dt>
           <dd>NICHE · TREND · CREATOR [search] · ALERTS · HMAP · WATCH · TEAR &lt;creator&gt; · COMP [A vs B] · CORP · UNDERCAP · DEALS · INVESTORS · HDS [company or funder] · RISK · STREAMS · SPONSORS · SURF [niche] · SKEW · RATES · RPM · PLATFORM · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
           <dd>!LIFE, !GAME, !FINX … one sector's attention index (! for attention; $ still works).</dd><dd>SORT CCOS | SI | NGP | TVE | CHG on the niche table.</dd>
-          <dd>Tab completes a command. Esc goes back to the niche overview and clears the search.</dd>
+          <dd>Tab completes a command. Esc goes back HOME, unloads the security and clears the search.</dd>
           <dt>TVE</dt><dd>Content supply: minutes published by tracked channels in the niche over 28 days.</dd>
           <dt>SI</dt><dd>Saturation, 0 to 1: uploads per 1,000 views gained over 28 days, against the median niche (0.5).</dd>
           <dt>NGP</dt><dd>Growth: views gained in the last 7 days ÷ the 7 before. 1.00 is flat.</dd>
@@ -714,7 +725,7 @@ dash.calc('drop_reasons', {
   const fmtDay = d => d ? `${MON.at(Number(d.slice(5, 7)) - 1)} ${Number(d.slice(8, 10))}, ${d.slice(0, 4)}` : '—';
   const SORTS = {CCOS: 'ccos', SI: 'si', NGP: 'ngp', TVE: 'tve', CHG: 'chg'};
   const COLORS = ['#ffb340', '#7dd3ff', '#e8e4da', '#ff8ad8', '#b39dff', '#4dd2c0'];
-  const st = {view: 'niche', sector: null, q: '', sort: 'ccos'};
+  const st = {view: 'home', sector: null, q: '', sort: 'ccos', sec: null};
   const $ = id => document.getElementById(id);
   const el = (tag, text, c) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (c) e.className = c; return e; };
   const td = (tr, text, c) => { const x = tr.insertCell(); x.textContent = text; if (c) x.className = c; return x; };
@@ -733,11 +744,10 @@ dash.calc('drop_reasons', {
   function show(v) {
     st.view = v;
     document.querySelectorAll('.ct .view').forEach(s => { s.hidden = s.id !== v; });
-    document.querySelectorAll('.ct .fn[data-v]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.v === v)));
+    if (typeof syncNav === 'function') syncNav(v);
     dash.setLink(v); draw();
   }
-  document.querySelectorAll('.ct .fn[data-v]').forEach(b => b.addEventListener('click', () => { if (b.dataset.v === 'niche') st.sector = null; show(b.dataset.v); }));
-  document.querySelectorAll('.ct .fn[aria-disabled=true]').forEach(b => b.addEventListener('click', () => say(b.textContent + ': not built yet')));
+
   $('search').addEventListener('input', e => { st.q = e.target.value.trim().toLowerCase(); draw(); });
 
   function fillTicker(id, items) {
@@ -892,7 +902,7 @@ dash.calc('drop_reasons', {
     if (top.length) { lines.push('', 'Fastest vs niche:'); top.forEach(r => lines.push('  ' + r.channel.toUpperCase() + '  ' + spct(N(r.growth_vs_niche)))); }
     log.textContent += lines.join('\n') + '\n\n'; log.scrollTop = log.scrollHeight;
   }
-  document.querySelector('.ct .fn[data-act=analyze]').addEventListener('click', () => { log.textContent += '> ANALYZE\n'; analyze(''); });
+
 
   const fst = {f: 'all', k: 'performance', dir: -1, q: ''};
   document.querySelectorAll('.ct .flt').forEach(b => b.addEventListener('click', () => {
@@ -1047,7 +1057,10 @@ dash.calc('drop_reasons', {
     $('wl-count').textContent = num(rows.length) + ' creators shown' + (pipe.mode === 'guest' ? '' : ' · ' + num(inPipe) + ' in the pipeline') +
       (cd.every(c => c.cvs == null) ? ' · scores fill in once 28 days of history exist' : '');
   }
-  function openTear(id) { wst.open = id; show('tear'); }
+  function openTear(id) { wst.open = id;
+    const cd = dash.data('creator_details'), c = cd.status === 'ok' ? cd.data.find(r => r.channel_id === id) : null;
+    if (c) st.sec = {type: 'crtr', id, label: c.channel};
+    nav.lock = true; nav.key = 'crtr'; nav.fn = 'DES'; try { show('tear'); } finally { nav.lock = false; } renderSec(); }
   // ---- Companies: the stage ladder, undercapitalized creators, deals and investors (Creator Companies sheet)
   const STG = {1: 'No company found', 2: 'Payout LLC', 3: 'Operating company', 4: 'Holding company', 5: 'Outside capital', 6: 'Exited'};
   const crp = {tab: 'ladder', stage: 'all'};
@@ -1144,6 +1157,135 @@ dash.calc('drop_reasons', {
   const meta0 = () => dash.meta() || {};
   document.querySelectorAll('#corp-tab .cmb').forEach(b => b.addEventListener('click', () => { crp.tab = b.dataset.t; document.querySelectorAll('#corp-tab .cmb').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw(); }));
   function corpTab(t) { crp.tab = t; document.querySelectorAll('#corp-tab .cmb').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.t === t))); show('corp'); }
+  // ---- Bloomberg-style navigation: market keys, a loaded security, and function codes run on it
+  // Each function: code, title, view it opens, and how it opens. scoped = filtered to the loaded security when one is loaded.
+  const KEYS = {
+    home: {label: 'HOME', title: 'Market monitors', fns: [
+      ['WEI', 'Sector and niche indexes on one board', () => show('home')],
+      ['MOST', 'Biggest movers against their niche', () => { st.sec = null; setQ(''); show('creator'); }],
+      ['ALRT', 'Spike alerts today', () => show('alerts')],
+      ['TOP', 'Top news', () => show('news')],
+      ['RATE', 'Platform monetization rates', () => ratesTab('board', true)]]},
+    crtr: {label: 'CRTR', title: 'Creators, read like stocks', fns: [
+      ['DES', 'Tear sheet for the loaded creator', () => secCreator() ? openTear(st.sec.id) : (say('Load a creator first: type a name, then CRTR'), show('creator'))],
+      ['SRCH', 'Creator screener', () => show('creator'), true],
+      ['RISK', 'Volatility, beta, drawdown', () => show('risk'), true],
+      ['BIZ', 'Revenue streams and sponsors', () => corpTab('streams'), true],
+      ['CORP', 'The company around the creator', () => corpTab('ladder'), true],
+      ['HDS', 'Who funds the creator\'s companies', () => { hds.company = null; hdsTab('company'); }, true],
+      ['COMP', 'Compare two creators', () => { if (secCreator()) { cst.mode = 'creators'; cst.a = st.sec.label; $('comp-a').value = st.sec.label; } show('comp'); }],
+      ['WTCH', 'Watchlist and pipeline', () => show('watch'), true],
+      ['CN', 'News naming the creator', () => show('news'), true]]},
+    niche: {label: 'NICHE', title: 'Sectors and niches, read like indexes', fns: [
+      ['DES', 'Analysis of the loaded niche', () => { analyze(st.sec && st.sec.type === 'niche' ? st.sec.label : ''); show('niche'); }],
+      ['NI', 'Niche board', () => show('niche'), true],
+      ['GP', 'Index trend over time', () => show('trend')],
+      ['IMAP', 'Heatmap of attention', () => show('hmap')],
+      ['SURF', 'Reach surface by creator size and video age', () => { if (st.sec && st.sec.type === 'niche') srf.scope = st.sec.id; surfTab('3d'); }],
+      ['SKEW', 'Niches ranked by skew', () => surfTab('rank'), true],
+      ['RPM', 'YouTube RPM by niche', () => ratesTab('rpm', true), true],
+      ['FMT', 'Title formats', () => show('formats')],
+      ['COV', 'Coverage: tracked and screened', () => show('coverage'), true]]},
+    corp: {label: 'CORP', title: 'Creator companies, read like private markets', fns: [
+      ['LADR', 'Stage ladder', () => corpTab('ladder'), true],
+      ['UCAP', 'Undercapitalized creators', () => corpTab('under'), true],
+      ['DEAL', 'Financing rounds', () => corpTab('deals'), true],
+      ['HDS', 'Holders by type of capital', () => { hds.company = null; hdsTab('holders'); }, true],
+      ['BIZ', 'Revenue streams', () => corpTab('streams'), true],
+      ['SPON', 'Sponsor brands', () => corpTab('sponsors'), true]]},
+    plat: {label: 'PLAT', title: 'Platforms, read like macro and rates', fns: [
+      ['PLAT', 'Platform overview, attention and lead-lag', () => show('platform')],
+      ['RATE', 'Monetization rates', () => ratesTab('board', true)],
+      ['RPM', 'RPM by niche', () => ratesTab('rpm', true), true]]},
+    news: {label: 'NEWS', title: 'News', fns: [['TOP', 'Top and time-ordered news', () => show('news'), true]]},
+    help: {label: 'HELP', title: 'Help and definitions', fns: [['HELP', 'Commands and keys', () => show('help')], ['DEF', 'Metric definitions (DES <code>)', () => show('des')]]},
+  };
+  // which key and function a view belongs to, so a view opened from anywhere lights up the right place
+  const HOME_OF = {home: ['home', 'WEI'], creator: ['crtr', 'SRCH'], tear: ['crtr', 'DES'], risk: ['crtr', 'RISK'], watch: ['crtr', 'WTCH'], comp: ['crtr', 'COMP'],
+    alerts: ['home', 'ALRT'], niche: ['niche', 'NI'], trend: ['niche', 'GP'], hmap: ['niche', 'IMAP'], surf: ['niche', 'SURF'], formats: ['niche', 'FMT'],
+    coverage: ['niche', 'COV'], corp: ['corp', 'LADR'], hds: ['corp', 'HDS'], platform: ['plat', 'PLAT'], news: ['news', 'TOP'], help: ['help', 'HELP'], des: ['help', 'DEF']};
+  const nav = {key: 'home', fn: 'WEI'};
+  const secCreator = () => st.sec && st.sec.type === 'crtr';
+  function setQ(v) { $('search').value = v; st.q = (v || '').toLowerCase(); }
+  function renderKeys() {
+    document.querySelectorAll('#mkeys .mk').forEach(b => b.setAttribute('aria-selected', String(b.dataset.k === nav.key)));
+    const bar = $('fnbar'); bar.textContent = '';
+    const k = KEYS[nav.key];
+    bar.append(el('span', k.label + ' · ' + k.title, 'fntitle'));
+    k.fns.forEach(([code, title, , scoped]) => {
+      const b = el('button', code, 'fn'); b.title = title + (scoped && st.sec ? ' (filtered to ' + st.sec.label + ')' : '');
+      b.setAttribute('aria-selected', String(code === nav.fn)); b.addEventListener('click', () => runFn(nav.key, code)); bar.append(b);
+      const sm = el('small', title.split(/[,:(]/)[0].toLowerCase()); b.append(sm);
+    });
+  }
+  function runFn(key, code) {
+    const f = KEYS[key].fns.find(x => x[0] === code); if (!f) return false;
+    nav.key = key; nav.fn = code;
+    if (f[3]) setQ(st.sec ? st.sec.label : st.q); else if (st.sec && st.q === st.sec.label.toLowerCase()) setQ('');
+    nav.lock = true; try { f[2](); } finally { nav.lock = false; } renderKeys(); renderSec(); return true;
+  }
+  function syncNav(v) {
+    const h = HOME_OF[v]; if (!h) return;
+    // keep the current key when it also offers this view (CRTR BIZ and CORP BIZ both open the streams tab)
+    if (!nav.lock) { nav.key = h[0]; nav.fn = h[1]; }
+    nav.view = v; renderKeys();
+  }
+  function loadSec(type, term) {
+    const t = (term || '').trim().toLowerCase(); if (!t) return false;
+    if (st.sec && st.q === st.sec.label.toLowerCase()) setQ('');
+    if (type === 'crtr') {
+      const cd = dash.data('creator_details'); if (cd.status !== 'ok') return false;
+      const hit = cd.data.find(c => c.channel.toLowerCase() === t) || cd.data.find(c => c.channel.toLowerCase().includes(t));
+      if (!hit) { say("No creator matches '" + term.toUpperCase() + "'"); return false; }
+      st.sec = {type, id: hit.channel_id, label: hit.channel}; nav.key = 'crtr'; runFn('crtr', 'DES'); say(hit.channel.toUpperCase() + ' CRTR loaded · functions: ' + KEYS.crtr.fns.map(x => x[0]).join(' '));
+    } else {
+      const ni = dash.data('niches'), sf = dash.data('surface'); if (ni.status !== 'ok') return false;
+      const hit = ni.data.find(r => r.niche.toLowerCase() === t) || ni.data.find(r => r.niche.toLowerCase().includes(t) || r.tag.toLowerCase() === t);
+      if (!hit) { say("No niche matches '" + term.toUpperCase() + "'"); return false; }
+      st.sec = {type, id: hit.niche_code || hit.tag, label: hit.niche}; runFn('niche', 'DES'); say(hit.niche.toUpperCase() + ' NICHE loaded · functions: ' + KEYS.niche.fns.map(x => x[0]).join(' '));
+    }
+    return true;
+  }
+  function renderSec() {
+    const box = $('secbar'); box.textContent = '';
+    if (!st.sec) { box.append(el('span', 'No security loaded · type a creator or niche name, then CRTR or NICHE (e.g. MRBEAST CRTR, FITNESS NICHE)', 'dim')); return; }
+    const x = el('button', '✕', 'secx'); x.title = 'Unload'; x.addEventListener('click', () => { const was = st.sec.label.toLowerCase(); st.sec = null; if (st.q === was) setQ(''); renderSec(); renderKeys(); draw(); });
+    const name = el('b', st.sec.label.toUpperCase() + ' '); const tag = el('span', st.sec.type === 'crtr' ? 'CRTR' : 'NICHE', 'seckey');
+    box.append(x, name, tag);
+    const stat = (k, v, cl) => { const s = el('span', null, 'secst'); s.append(el('i', k + ' '), el('b', v, cl || '')); box.append(s); };
+    if (st.sec.type === 'crtr') {
+      const cd = dash.data('creator_details'), c = cd.status === 'ok' ? cd.data.find(r => r.channel_id === st.sec.id) : null;
+      if (c) { stat('SUBS', compact(N(c.subscribers))); stat('VIEWS 28D', c.view_growth_28d == null ? '—' : spct(N(c.view_growth_28d)), cls(N(c.view_growth_28d)));
+        stat('VS NICHE', c.growth_vs_niche == null ? '—' : spct(N(c.growth_vs_niche)), cls(N(c.growth_vs_niche))); stat('CVS', c.cvs == null ? '—' : d3.format('.1f')(N(c.cvs)));
+        stat('TIER', c.tier || '—'); stat('NICHE', c.niche || '—'); }
+    } else {
+      const ni = dash.data('niches'), n = ni.status === 'ok' ? ni.data.find(r => r.niche === st.sec.label) : null;
+      if (n) { stat('CCOS', f2(N(n.ccos))); stat('CHG 7D', spct(N(n.chg)), cls(N(n.chg))); stat('TREND', n.trend, tcls(n.trend)); stat('SI', f3(N(n.si))); stat('RISK', n.risk, rcls(n.risk)); if (n.sector) stat('SECTOR', n.sector); }
+    }
+  }
+  document.querySelectorAll('#mkeys .mk').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; runFn(k, KEYS[k].fns[0][0]); }));
+  // the home board: market-wide monitors on one screen
+  function drawHome() {
+    const ix = dash.data('indices'), ni = dash.data('niches'), sc = dash.data('screener'), al = dash.data('alerts'), nw = dash.data('news'), rt = dash.data('rates');
+    const box = (id, rows, cols, onClick) => { const t = $(id); t.textContent = ''; const h = t.createTHead().insertRow();
+      cols.forEach(([lab, , l]) => { const th = el('th', lab); if (l) th.style.textAlign = 'left'; h.append(th); });
+      const b = t.createTBody(); if (!rows.length) { const r = b.insertRow(), c = r.insertCell(); c.colSpan = cols.length; c.className = 'dim'; c.textContent = 'Nothing yet.'; c.style.textAlign = 'left'; }
+      rows.forEach(r => { const tr = b.insertRow(); if (onClick) { tr.style.cursor = 'pointer'; tr.addEventListener('click', () => onClick(r)); }
+        cols.forEach(([, fn, l]) => { const [v, cl] = fn(r); const c = tr.insertCell(); c.textContent = v; if (cl) c.className = cl; if (l) c.style.textAlign = 'left'; }); }); };
+    if (ix.status === 'ok') box('h-wei', ix.data.slice().sort((a, b) => N(b.avg_ccos) - N(a.avg_ccos)),
+      [['Index', r => [tk(r.sector) + ' ' + r.sector.toUpperCase()], 1], ['CCOS', r => [r.avg_ccos == null ? '—' : f2(r.avg_ccos)]], ['Chg 7D', r => [spct(r.chg), cls(r.chg)]]],
+      r => { st.sector = tk(r.sector); nav.key = 'niche'; nav.fn = 'NI'; show('niche'); });
+    if (ni.status === 'ok') box('h-niche', ni.data.slice().sort((a, b) => N(b.chg) - N(a.chg)).slice(0, 8),
+      [['Niche', r => [r.niche.toUpperCase()], 1], ['CCOS', r => [f2(N(r.ccos))]], ['Chg 7D', r => [spct(N(r.chg)), cls(N(r.chg))]]], r => loadSec('niche', r.niche));
+    if (sc.status === 'ok') box('h-most', sc.data.filter(r => r.growth_vs_niche != null).sort((a, b) => N(b.growth_vs_niche) - N(a.growth_vs_niche)).slice(0, 8),
+      [['Creator', r => [r.channel.toUpperCase()], 1], ['Subs', r => [compact(N(r.subscribers))]], ['Vs niche', r => [spct(N(r.growth_vs_niche)), cls(N(r.growth_vs_niche))]]], r => loadSec('crtr', r.channel));
+    if (al.status === 'ok') box('h-alrt', al.data.slice(0, 6), [['Creator', r => [r.channel.toUpperCase()], 1], ['σ', r => [d3.format('.1f')(N(r.z_score)), 'up']]], r => loadSec('crtr', r.channel));
+    if (nw.status === 'ok') box('h-top', nw.data.slice().sort((a, b) => N(b.score) - N(a.score)).slice(0, 6), [['Headline', r => [r.title], 1], ['Cat', r => [r.category, 'dim']]], () => runFn('news', 'TOP'));
+    if (rt.status === 'ok') box('h-rate', rt.data.filter(r => r.next_date || r.last_date).sort((a, b) => String(b.next_date || '0').localeCompare(String(a.next_date || '0')) || String(b.last_date).localeCompare(String(a.last_date))).slice(0, 6),
+      [['Program', r => [r.platform + ' · ' + r.program], 1], ['Share', r => [r.level == null ? 'n/d' : r.unit === '%' ? d3.format('.0f')(r.level) + '%' : '$' + d3.format('.4~f')(r.level)]],
+       ['Next', r => [r.next_date || '—', r.next_date ? 'amb' : 'dim']]], () => runFn('plat', 'RATE'));
+    const synth = meta0().source === 'synthetic'; $('home-note').textContent = 'Click any row to load it. ' + (synth ? 'SYNTHETIC creators and niches on the demo; platform rates are real.' : '');
+  }
   // ---- Risk: volatility, beta to the niche, drawdown and growth per unit of risk, like a stock risk screen
   const rsk = {sort: 'growth_per_risk', dir: -1};
   const RCOLS = [['channel', 'Creator', null], ['niche', 'Niche', null, 1], ['volatility', 'Vol (ann.)', 'pct'], ['beta', 'Beta', 'f2'],
@@ -1940,6 +2082,8 @@ dash.calc('drop_reasons', {
     const cpx = dash.data('corp'), ccx = dash.data('corp_companies'), crx = dash.data('corp_rounds');
     if (cdx.status === 'ok' && st.view === 'corp') drawCorp(cpx.status === 'ok' ? cpx.data : [], ccx.status === 'ok' ? ccx.data : [], crx.status === 'ok' ? crx.data : [], cdx.data);
     if (ni.status === 'ok' && st.view === 'hmap') drawHeatmap(ni.data);
+    if (st.view === 'home') drawHome();
+    renderSec();
     const rkx = dash.data('risk');
     if (st.view === 'risk' && rkx.status === 'ok') drawRisk(rkx.data);
     const hhx = dash.data('holders'), hgx = dash.data('holdings');
@@ -1960,7 +2104,7 @@ dash.calc('drop_reasons', {
     markTips();
   }
 
-  const CMDS = ['HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'HMAP', 'WATCH', 'TEAR', 'COMP', 'CORP', 'UNDERCAP', 'SURF', 'SKEW', 'RATES', 'RPM', 'HDS', 'HOLDERS', 'STREAMS', 'SPONSORS', 'RISK', 'DEALS', 'INVESTORS', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '!LIFE', '!GAME', '!FINX'];
+  const CMDS = ['HOME', 'CRTR', 'PLAT', 'WEI', 'MOST', 'ALRT', 'TOP', 'GP', 'IMAP', 'FMT', 'COV', 'NI', 'LADR', 'UCAP', 'DEAL', 'BIZ', 'SPON', 'SRCH', 'WTCH', 'CN', 'DEF', 'RATE', 'HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'HMAP', 'WATCH', 'TEAR', 'COMP', 'CORP', 'UNDERCAP', 'SURF', 'SKEW', 'RATES', 'RPM', 'HDS', 'HOLDERS', 'STREAMS', 'SPONSORS', 'RISK', 'DEALS', 'INVESTORS', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '!LIFE', '!GAME', '!FINX'];
   input.addEventListener('keydown', e => {
     if (e.key === 'Tab') {
       const v = input.value.trim().toUpperCase(); const m = CMDS.filter(c => c.startsWith(v));
@@ -1971,6 +2115,22 @@ dash.calc('drop_reasons', {
     const raw = input.value.trim(); input.value = ''; if (!raw) return;
     log.textContent += '> ' + raw.toUpperCase() + '\n';
     const [c, ...rest] = raw.split(/\s+/); const C = c.toUpperCase(), arg = rest.join(' ');
+    const words = raw.split(/\s+/), lastW = words[words.length - 1].toUpperCase();
+    // MRBEAST CRTR / FITNESS NICHE [FN]: load a security, optionally run a function on it
+    const keyAt = words.reduce((at, w, i) => i > 0 && ['CRTR', 'NICHE'].includes(w.toUpperCase()) ? i : at, -1);
+    if (keyAt > 0) {
+      const kind = words[keyAt].toUpperCase() === 'NICHE' ? 'niche' : 'crtr', fn = (words[keyAt + 1] || '').toUpperCase();
+      if (loadSec(kind, words.slice(0, keyAt).join(' ')) && fn) runFn(kind, fn) || say("No function '" + fn + "' on " + kind.toUpperCase());
+      return;
+    }
+    const KEYNAMES = {HOME: 'home', CRTR: 'crtr', CORP_: 'corp', PLAT: 'plat', NICHE_: 'niche', GO: null};
+    if (!arg && (C === 'HOME' || C === 'CRTR' || C === 'PLAT')) { const k = KEYNAMES[C]; runFn(k, KEYS[k].fns[0][0]); say(KEYS[k].label + ': ' + KEYS[k].fns.map(x => x[0]).join(' ')); return; }
+    if (!arg && ['WEI', 'MOST', 'ALRT', 'TOP', 'GP', 'IMAP', 'FMT', 'COV', 'NI', 'LADR', 'UCAP', 'DEAL', 'BIZ', 'SPON', 'SRCH', 'WTCH', 'CN', 'DEF', 'RATE'].includes(C)) {
+      const k = KEYS[nav.key].fns.some(x => x[0] === C) ? nav.key : Object.keys(KEYS).find(k => KEYS[k].fns.some(x => x[0] === C));
+      runFn(k, C); say(C + ': ' + KEYS[k].fns.find(x => x[0] === C)[1]); return;
+    }
+    if (!arg && KEYS[nav.key].fns.some(x => x[0] === C)) { runFn(nav.key, C); say(C + ': ' + KEYS[nav.key].fns.find(x => x[0] === C)[1]); return; }
+    if (!arg && C === 'DES' && st.sec) { runFn(st.sec.type === 'crtr' ? 'crtr' : 'niche', 'DES'); return; }
     if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, HMAP, WATCH, TEAR <creator>, COMP [A vs B], CORP, UNDERCAP, DEALS, INVESTORS, HDS [company or funder], RISK, STREAMS, SPONSORS, SURF [niche], SKEW, RATES, RPM, PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
     else if (C === 'NICHE' || C === 'MARKET') { st.sector = null; show('niche'); say('Niche market overview'); }
     else if (C.startsWith('!') || C.startsWith('$')) { st.sector = '!' + C.slice(1); show('niche'); say('Index ' + st.sector); }
@@ -2040,11 +2200,12 @@ dash.calc('drop_reasons', {
   document.getElementById('terminal').addEventListener('keydown', e => {
     const map = {F1: 'help', F2: 'niche', F3: 'trend', F4: 'creator', F5: 'alerts', F6: 'news', F7: 'formats', F8: 'coverage', F9: 'des', F10: 'platform'};
     if (map[e.key]) { e.preventDefault(); show(map[e.key]); }
-    if (e.key === 'Escape') { $('search').value = ''; st.q = ''; st.sector = null; show('niche'); }
+    if (e.key === 'Escape') { $('search').value = ''; st.q = ''; st.sector = null; st.sec = null; runFn('home', 'WEI'); }
   });
 
   const start = document.getElementById(location.hash.slice(1));
-  if (start && start.classList.contains('view')) show(start.id);
+  if (start && start.classList.contains('view')) show(start.id); else show('home');
+  window.scrollTo(0, 0);
   dash.onData(draw);
   // who is signed in: guests (for example a grant committee) never see the deal pipeline
   fetch('api/whoami', {credentials: 'same-origin', cache: 'no-store'}).then(r => r.ok ? r.json() : null).catch(() => null).then(w => {
