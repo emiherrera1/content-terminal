@@ -111,6 +111,16 @@ window.dash = (() => {
 .ct #command-line .log{display:none;position:absolute;left:0;right:0;top:100%;z-index:20;height:auto;max-height:12rem;background:var(--panel);border:1px solid var(--line);border-top:0;padding:6px 8px;box-shadow:0 6px 16px rgba(0,0,0,.5)}
 .ct #command-line.open .log{display:block}
 .ct #command-line.palopen .log{display:none!important}
+.ct #command-line{display:flex;align-items:center;flex-wrap:wrap} .ct #command-line .prompt{flex:1;min-width:0}
+.ct .sayline{color:var(--tm);font-size:11px;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 8px;transition:opacity .4s}
+.ct .sayline.fade{opacity:0}
+.ct .logbtn{background:none;border:1px solid var(--line);color:var(--tm);font:inherit;font-size:10px;padding:2px 7px;margin-right:8px;cursor:pointer}
+.ct .logbtn[aria-pressed=true]{color:#000;background:var(--tx)}
+.ct .ndes{margin:8px;border:1px solid var(--line);background:#161514;padding:10px 12px;position:relative}
+.ct .ndes h3{margin:0 0 6px;font-size:12px;color:var(--acc)} .ct .ndes .x{position:absolute;right:8px;top:6px;background:none;border:0;color:var(--tm);cursor:pointer;font:inherit}
+.ct .ndes dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 18px;margin:0}
+.ct .ndes dt{color:var(--tm);font-size:10px} .ct .ndes dd{margin:0;font-weight:700}
+.ct .ndes .tops{margin-top:8px;color:var(--tm);font-size:11px}
 .ct .pal{position:absolute;left:0;right:0;top:100%;z-index:30;background:var(--panel);border:1px solid var(--line);border-top:0;
   max-height:70vh;overflow-y:auto;padding:6px 0 10px;box-shadow:0 10px 24px rgba(0,0,0,.6);text-transform:none}
 .ct .pal .ph2{color:var(--tm);font-weight:700;padding:10px 12px 4px 92px;font-size:11px;letter-spacing:.04em}
@@ -369,6 +379,7 @@ window.dash = (() => {
   <div class="panel cl" id="command-line">
         <pre class="log" id="log" aria-live="polite"></pre>
     <label class="prompt"><b>SEARCH</b><input id="cmd" type="text" placeholder="Try: Doctor Mike, fitness, top news" autocomplete="off" spellcheck="false" aria-label="Search creators, niches and functions" role="combobox" aria-expanded="false" aria-controls="pal"></label>
+    <span class="sayline" id="sayline" aria-live="polite"></span><button type="button" class="logbtn" id="logbtn" aria-pressed="false" title="Show the history of commands and messages">Log</button>
     <div class="pal" id="pal" role="listbox" hidden></div>
   </div>
   <div class="secbar" id="secbar" aria-live="polite"></div>
@@ -391,6 +402,7 @@ window.dash = (() => {
       </section>
       <section class="view" id="niche" hidden>
         <div class="ph"><span>Niche market overview</span><span class="meta" data-source="summary" data-field="asOf" data-row="0">—</span></div>
+        <div class="ndes" id="ndes" hidden></div>
         <div class="pb" id="sectors"></div>
       </section>
       <section class="view" id="trend" hidden>
@@ -819,8 +831,11 @@ dash.calc('drop_reasons', {
   // the log drops down under the command line while it is in use, then folds away
   const cl = document.getElementById('command-line'); let clTimer = null;
   const openLog = ms => { cl.classList.add('open'); log.scrollTop = log.scrollHeight; clearTimeout(clTimer); if (ms) clTimer = setTimeout(() => { if (document.activeElement !== input) cl.classList.remove('open'); }, ms); };
-  input.addEventListener('blur', () => openLog(matchMedia('(max-width: 640px)').matches ? 800 : 2500));
-  const say = t => { log.textContent += '» ' + t + '\n'; openLog(document.activeElement === input ? 0 : 5000); };
+  let sayTimer = null;
+  const say = t => { log.textContent += '» ' + t + '\n'; log.scrollTop = log.scrollHeight;
+    const sl = $('sayline'); sl.textContent = t; sl.title = t; sl.classList.remove('fade'); clearTimeout(sayTimer); sayTimer = setTimeout(() => sl.classList.add('fade'), 6000); };
+  $('logbtn').addEventListener('click', () => { const on = !cl.classList.contains('open'); clearTimeout(clTimer); cl.classList.toggle('open', on);
+    $('logbtn').setAttribute('aria-pressed', String(on)); if (on) log.scrollTop = log.scrollHeight; });
 
   // ---- search palette: suggestions as you type, plus a plain-language menu of what the terminal can do
   const pal = $('pal'); const palst = {items: [], i: -1};
@@ -1123,12 +1138,16 @@ dash.calc('drop_reasons', {
     if (!n) { say("No niche matches '" + term.toUpperCase() + "'"); return; }
     const top = sc.status === 'ok' ? sc.data.filter(r => r.niche === n.niche).sort((a, b) => N(b.growth_vs_niche) - N(a.growth_vs_niche)).slice(0, 3) : [];
     const status = n.trend === 'UP' ? 'Growing' : n.trend === 'DOWN' ? 'Declining' : 'Stable';
-    const lines = ['', 'Analysis for ' + n.niche.toUpperCase() + ' (' + n.tag + ', ' + n.sector.toUpperCase() + ')', '------------------------',
-      'TVE:     ' + num(Math.round(N(n.tve))) + ' content minutes, 28d', 'SI:      ' + f3(N(n.si)), 'NGP:     ' + f2(N(n.ngp)),
-      'CCOS:    ' + f2(N(n.ccos)), 'Trend:   ' + n.trend, 'Risk:    ' + n.risk + ' (volatility ' + f3(N(n.volatility)) + ', top-3 share ' + pct(N(n.cr3)) + ')',
-      'Change:  ' + spct(N(n.chg)), '', 'Status: ' + status, 'Risk level: ' + n.risk];
-    if (top.length) { lines.push('', 'Fastest vs niche:'); top.forEach(r => lines.push('  ' + r.channel.toUpperCase() + '  ' + spct(N(r.growth_vs_niche)))); }
-    log.textContent += lines.join('\n') + '\n\n'; log.scrollTop = log.scrollHeight;
+    const box = $('ndes'); box.textContent = ''; box.hidden = false;
+    const x = el('button', '✕', 'x'); x.type = 'button'; x.title = 'Close'; x.onclick = () => { box.hidden = true; }; box.append(x);
+    box.append(el('h3', n.niche.toUpperCase() + ' · ' + n.tag + ' · ' + String(n.sector).toUpperCase() + ' · ' + status.toUpperCase()));
+    const dl = el('dl');
+    [['CCOS', f2(N(n.ccos))], ['Change 7D', spct(N(n.chg))], ['Trend', n.trend], ['Growth (NGP)', f2(N(n.ngp))], ['Saturation (SI)', f3(N(n.si))],
+     ['Content minutes 28D', num(Math.round(N(n.tve)))], ['Risk', n.risk], ['Volatility', f3(N(n.volatility))], ['Top-3 share', pct(N(n.cr3))]]
+      .forEach(([k, v]) => { const d = el('div'); d.append(el('dt', k), el('dd', v)); dl.append(d); });
+    box.append(dl);
+    if (top.length) box.append(el('div', 'Fastest vs niche: ' + top.map(r => r.channel.toUpperCase() + ' ' + spct(N(r.growth_vs_niche))).join(' · '), 'tops'));
+    say(n.niche + ' loaded: CCOS ' + f2(N(n.ccos)) + ', ' + status.toLowerCase());
   }
 
 
@@ -1208,7 +1227,7 @@ dash.calc('drop_reasons', {
         tip.style.left = Math.max(0, Math.min(x, W - tip.offsetWidth - 4)) + 'px'; tip.style.top = Math.max(0, Math.min(y, H - tip.offsetHeight - 4)) + 'px';
       });
       t.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
-      t.addEventListener('click', () => { log.textContent += '> ANALYZE ' + String(n.niche).toUpperCase() + '\n'; analyze(n.niche); });
+      t.addEventListener('click', () => { log.textContent += '> ANALYZE ' + String(n.niche).toUpperCase() + '\n'; analyze(n.niche); show('niche'); });
       box.append(t);
     });
   }
@@ -2565,7 +2584,7 @@ dash.calc('drop_reasons', {
       } else { hdsTab('holders'); say('Holders: who funds creator companies, by type of capital'); }
     }
     else if (C === 'PLATFORM') { show('platform'); say('Platforms: attention, who moves first, and this week\'s movement'); }
-    else if (C === 'ANALYZE') { analyze(arg); }
+    else if (C === 'ANALYZE') { analyze(arg); show('niche'); }
     else if (C === 'SORT') { const k = SORTS[arg.toUpperCase()]; if (k) { st.sort = k; show('niche'); say('Niches sorted by ' + arg.toUpperCase()); } else say('Sort by: ' + Object.keys(SORTS).join(', ')); }
     else if (C === 'CLEAR') log.textContent = '';
     else say("Unknown command '" + raw.toUpperCase() + "'. Type 'help'.");
