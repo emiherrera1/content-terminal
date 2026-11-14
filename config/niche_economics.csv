@@ -1,0 +1,24 @@
+niche_code,rpm_low,rpm_high,shorts_rpm_low,shorts_rpm_high,sponsor_cpm_low,sponsor_cpm_high,rpm_basis,sponsor_basis
+# Published ranges, used until TubeLab prices each niche. rpm_low is vidIQ's creator-reported range floor; rpm_high is
+# Fluxnote's "typical US RPM"; the terminal's middle case is their geometric mean. Shorts RPM is vidIQ's $0.01-$0.07 for
+# every niche. Sponsor CPM is OutlierKit's 2026 integration rate card (dollars per 1,000 views of a sponsored video).
+# Sources: https://vidiq.com/blog/post/youtube-rpm/  https://fluxnote.io/blog/youtube-rpm-by-niche-2026
+#          https://outlierkit.com/resources/youtube-sponsorship-rates/
+03.07,2,5.5,0.01,0.07,15,25,Health / Fitness; Fitness & Sports,Lifestyle / Vlog
+03.08,2,6,0.01,0.07,18,30,Food / Cooking,Cooking / Food
+03.09,2,5,0.01,0.07,18,35,Most niches $2-4 (vidIQ); Beauty & Fashion,Beauty / Skincare
+03.47,2,6,0.01,0.07,15,25,Education / How-To (proxy),Lifestyle / Vlog
+03.61,2,7.5,0.01,0.07,20,40,Most niches $2-4 (vidIQ); Motivation / Self-Help (proxy),Education / Self-Improvement
+04.10,4,13,0.01,0.07,25,45,Technology / Software; Tech & AI,Tech / Reviews
+04.12,1,4,0.01,0.07,15,25,Entertainment / Vlogs; Comedy / Entertainment (proxy),Lifestyle / Vlog
+04.13,4,13,0.01,0.07,28,55,Technology / Software; Tech & AI,AI Tools / Productivity
+08.22,4,28,0.01,0.07,30,60,Finance / Investing; Personal Finance / Investing,Personal Finance / Investing
+08.23,4,18,0.01,0.07,28,55,Digital Marketing / Business; Business & Entrepreneurship,AI Tools / Productivity
+08.24,4,18,0.01,0.07,28,55,Digital Marketing / Business; Business & Entrepreneurship,AI Tools / Productivity
+08.25,4,28,0.01,0.07,30,60,Finance / Investing; Personal Finance / Investing,Personal Finance / Investing
+08.46,2,11,0.01,0.07,20,40,Education / How-To; Careers & Job Search,Education / Self-Improvement
+08.62,4,22,0.01,0.07,30,60,Real Estate,Personal Finance / Investing
+09.26,2,14,0.01,0.07,15,25,Health / Fitness; Health & Wellness,Lifestyle / Vlog
+09.27,2,7.5,0.01,0.07,20,40,Health / Fitness; Motivation / Self-Help (proxy),Education / Self-Improvement
+09.28,2,14,0.01,0.07,15,25,Health / Fitness; Health & Wellness,Lifestyle / Vlog
+09.49,2,14,0.01,0.07,20,40,Health / Fitness; Health & Wellness,Education / Self-Improvement

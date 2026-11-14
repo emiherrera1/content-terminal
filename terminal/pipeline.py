@@ -103,6 +103,11 @@ def _business(ctx):
     return business.build(ctx.con, ctx.today)
 
 
+def _revenue(ctx):
+    from . import revenue
+    return revenue.build(ctx.con, ctx.today)
+
+
 def _rpm(ctx):
     from . import rates
     return rates.load_rpm(ctx.con, ctx.today)
@@ -204,6 +209,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
         Stage("risk", _risk),
+        Stage("revenue", _revenue),
         Stage("ask", _ask),
         Stage("quality_gate", _quality_gate),
         Stage("export", _export, critical=True),
@@ -217,6 +223,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
         Stage("risk", _risk),
+        Stage("revenue", _revenue),
         Stage("ask", _ask),
         Stage("audit_sheet", _audit_sheet),
         Stage("export", _export, critical=True),
@@ -229,6 +236,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
         Stage("risk", _risk),
+        Stage("revenue", _revenue),
         Stage("ask", _ask),
         Stage("quality_gate", _quality_gate),
         Stage("export", _export, critical=True),

@@ -47,7 +47,7 @@ def test_earnings_are_a_labeled_range(world):
     con, _ = world
     lo, hi, src = con.execute("SELECT min(earnings_high_90d - earnings_low_90d), max(earnings_high_90d), any_value(rpm_source) "
                               "FROM creator_earnings").fetchone()
-    assert lo >= 0 and hi > 0 and src == "placeholder"
+    assert lo >= 0 and hi > 0 and src == "Published range"
 
 
 def test_three_platforms_and_a_composite(world):

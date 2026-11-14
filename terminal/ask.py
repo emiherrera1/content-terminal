@@ -16,6 +16,7 @@ names instead of codes, readable column names, and a comment on every view and k
     ask_platform_rates    each platform's creator share, last and next change (the rates board)
     ask_rate_changes      every dated change to a platform's creator share
     ask_niche_rpm         YouTube RPM by niche from TubeLab estimates
+    ask_creator_revenue   estimated monthly revenue (ads + sponsors), catalog value and financing capacity per creator
     ask_creator_risk      volatility, beta, drawdown, growth per unit of risk per creator
     ask_creator_business  revenue streams and sponsors per creator, from descriptions
     ask_sponsors          sponsor brands across tracked creators
@@ -36,6 +37,8 @@ from . import holders, rates, surface
 ROOT = Path(__file__).resolve().parent.parent
 
 GUIDE = [
+    ("ask_creator_revenue", "One row per creator: estimated monthly ad and sponsor revenue (low, mid, high), the RPM used and where it came from, the present value of the existing catalog over 5 years, and how much an advance or a loan that catalog and revenue could support.",
+     "Every dollar is an estimate. RPM is TubeLab's niche estimate when rpm_source says so, otherwise the published range for the niche. Catalog value counts no new uploads. Use mid for a single figure and quote the low-high range."),
     ("ask_creator_risk", "One row per creator with 30+ days of history: annualized volatility of daily attention (7-day views), beta to the rest of their niche, max drawdown, annualized growth, growth per unit of volatility, and the share of views from their biggest video.",
      "Read like a stock screen: beta above 1 moves more than the niche; a high growth_per_risk grows steadily; a high hit_share depends on one video. Windows are the last 90 days."),
     ("ask_creator_business", "One row per creator with uploads in the last 90 days: share of videos with a sponsor, top sponsors, and the revenue streams their descriptions link to (Sponsorships, Affiliate, Membership, Course or community, Newsletter, Own site or store, Services, Crowdfunding).",
@@ -242,6 +245,15 @@ def build(con) -> list[str]:
                    array_to_string(b.streams, '; ') AS revenue_streams
             FROM creator_business b JOIN screener s USING (channel_id) LEFT JOIN ask_topics t ON t.code = s.niche_code""")
         made.append("ask_creator_business")
+    if have("creator_revenue", "screener"):
+        con.execute("""CREATE OR REPLACE VIEW ask_creator_revenue AS
+            SELECT s.title AS creator, r.channel_id, coalesce(t.name, r.niche_code) AS niche, r.views_30d, r.shorts_share,
+                   r.rpm_source, r.rpm_low, r.rpm_mid, r.rpm_high, r.ad_low, r.ad_mid, r.ad_high,
+                   r.sponsored_per_month, r.sponsor_low, r.sponsor_mid, r.sponsor_high, r.total_low, r.total_mid, r.total_high,
+                   r.catalog_low, r.catalog_mid, r.catalog_high, r.catalog_half_life_months, r.decay_k,
+                   r.advance_capacity, r.debt_capacity
+            FROM creator_revenue r JOIN screener s USING (channel_id) LEFT JOIN ask_topics t ON t.code = r.niche_code""")
+        made.append("ask_creator_revenue")
     if have("creator_risk", "screener"):
         con.execute("""CREATE OR REPLACE VIEW ask_creator_risk AS
             SELECT s.title AS creator, r.channel_id, t.name AS niche, t.sector, r.days AS days_of_returns, r.volatility,

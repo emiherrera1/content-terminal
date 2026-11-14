@@ -314,6 +314,17 @@ def risk(con, label) -> list[dict]:
     return rows
 
 
+def revenue(con, label) -> list[dict]:
+    """Estimated monthly revenue, catalog value and financing capacity per creator (terminal/revenue.py)."""
+    if not _has(con, "creator_revenue") or not _has(con, "screener"):
+        return []
+    rows = _rows(con, """SELECT r.*, s.title AS channel, s.subscribers FROM creator_revenue r JOIN screener s USING (channel_id)
+                         ORDER BY r.catalog_mid DESC NULLS LAST""")
+    for r in rows:
+        r["niche"] = label(r["niche_code"])
+    return rows
+
+
 def corp_companies(con) -> list[dict]:
     return _rows(con, "SELECT * FROM creator_company_list") if _has(con, "creator_company_list") else []
 
@@ -509,6 +520,7 @@ def build(con, out_dir: Path = OUT, source: str = "live", public: bool = False) 
     sets["niche_rpm"] = rpm
     sets["business"] = business(con, label)
     sets["risk"] = risk(con, label)
+    sets["revenue"] = revenue(con, label)
     sets["sponsors"] = sponsors(con, label)
     sets["corp"] = corp(con, sets["creator_details"])
     sets["corp_companies"] = corp_companies(con)

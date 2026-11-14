@@ -27,6 +27,11 @@ def sql(cfg: dict) -> str:
     d = rpm["default"]
     by = rpm.get("by_niche") or {}
     src = str(rpm.get("source", "placeholder")).replace("'", "")
+    if not by:   # one source of truth for RPM: the published ranges the revenue estimates use
+        from .revenue import economics
+        by = {k: {"long_low": v["rpm_low"], "long_high": v["rpm_high"], "shorts_low": v["shorts_rpm_low"],
+                  "shorts_high": v["shorts_rpm_high"]} for k, v in economics().items()}
+        src = "Published range"
     band_rows = ", ".join(f"('{k}', {float(v.get('long_low', d['long_low']))}, {float(v.get('long_high', d['long_high']))}, "
                           f"{float(v.get('shorts_low', d['shorts_low']))}, {float(v.get('shorts_high', d['shorts_high']))})"
                           for k, v in by.items()) or "(NULL, NULL, NULL, NULL, NULL)"
@@ -127,7 +132,7 @@ SELECT v.channel_id, n.niche_code, coalesce(v.long_views_90d, 0) AS long_views_9
        coalesce(v.long_views_90d, 0) / 1000 * coalesce(b.long_high, {float(d['long_high'])})
          + coalesce(v.shorts_views_90d, 0) / 1000 * coalesce(b.shorts_high, {float(d['shorts_high'])}) AS earnings_high_90d,
        '{src}' AS rpm_source
-FROM v90 v LEFT JOIN channel_niche n USING (channel_id) LEFT JOIN bands b ON b.niche = n.niche_code;
+FROM v90 v LEFT JOIN channel_niche n USING (channel_id) LEFT JOIN bands b ON n.niche_code = b.niche OR starts_with(n.niche_code, b.niche || '.');
 
 -- 6.2 entity_daily: views gained by videos that name each entity
 CREATE OR REPLACE TABLE entity_daily AS

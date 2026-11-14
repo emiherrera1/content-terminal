@@ -443,6 +443,11 @@ window.dash = (() => {
         <div class="pb" style="max-height:none"><table id="risk-tbl"><thead></thead><tbody></tbody></table></div>
         <div class="cnote" id="risk-note"></div>
       </section>
+      <section class="view" id="rev" hidden>
+        <div class="ph"><span>Revenue and catalog value</span><span class="meta">estimates · monthly revenue, what the catalog is worth, what it could finance · click a column to sort</span></div>
+        <div class="pb" style="max-height:none"><table id="rev-tbl"><thead></thead><tbody></tbody></table></div>
+        <div class="cnote" id="rev-note"></div>
+      </section>
       <section class="view" id="hds" hidden>
         <div class="ph"><span>Holders</span><span class="meta" id="hds-src">who funds creator companies, by type of capital</span></div>
         <div class="compbar"><span class="seg" id="hds-tab"><button class="cmb" data-t="holders" aria-pressed="true">Holders</button><button class="cmb" data-t="company" aria-pressed="false">By company</button><button class="cmb" data-t="chart" aria-pressed="false">Chart</button></span>
@@ -1209,6 +1214,7 @@ dash.calc('drop_reasons', {
     crtr: {label: 'CRTR', title: 'Creators, read like stocks', fns: [
       ['DES', 'Tear sheet for the loaded creator', () => secCreator() ? openTear(st.sec.id) : (say('Load a creator first: type a name, then CRTR'), show('creator'))],
       ['SRCH', 'Creator screener', () => show('creator'), true],
+      ['REV', 'Revenue estimates and catalog value', () => show('rev'), true],
       ['RISK', 'Volatility, beta, drawdown', () => show('risk'), true],
       ['BIZ', 'Revenue streams and sponsors', () => corpTab('streams'), true],
       ['CORP', 'The company around the creator', () => corpTab('ladder'), true],
@@ -1241,7 +1247,7 @@ dash.calc('drop_reasons', {
     help: {label: 'HELP', title: 'Help and definitions', fns: [['HELP', 'Commands and keys', () => show('help')], ['DEF', 'Metric definitions (DES <code>)', () => show('des')]]},
   };
   // which key and function a view belongs to, so a view opened from anywhere lights up the right place
-  const HOME_OF = {home: ['home', 'WEI'], creator: ['crtr', 'SRCH'], tear: ['crtr', 'DES'], risk: ['crtr', 'RISK'], watch: ['crtr', 'WTCH'], comp: ['crtr', 'COMP'],
+  const HOME_OF = {home: ['home', 'WEI'], creator: ['crtr', 'SRCH'], tear: ['crtr', 'DES'], risk: ['crtr', 'RISK'], rev: ['crtr', 'REV'], watch: ['crtr', 'WTCH'], comp: ['crtr', 'COMP'],
     alerts: ['home', 'ALRT'], niche: ['niche', 'NI'], trend: ['niche', 'GP'], hmap: ['niche', 'IMAP'], surf: ['niche', 'SURF'], formats: ['niche', 'FMT'],
     coverage: ['niche', 'COV'], corp: ['corp', 'LADR'], hds: ['corp', 'HDS'], platform: ['plat', 'PLAT'], news: ['news', 'TOP'], help: ['help', 'HELP'], des: ['help', 'DEF']};
   const nav = {key: 'home', fn: 'WEI'};
@@ -1360,6 +1366,38 @@ dash.calc('drop_reasons', {
     if (!list.length) { const tr = tb.insertRow(), td = tr.insertCell(); td.colSpan = RCOLS.length; td.className = 'dim'; td.style.textAlign = 'left';
       td.textContent = 'Risk stats need 30+ days of daily history per creator; they start filling in around mid-December 2026.'; }
     $('risk-note').textContent = 'Attention = views gained per day, smoothed to a 7-day sum; its daily log change is read like a daily return over the last 90 days. Vol is annualized. Beta compares a creator to the rest of their niche (above 1 moves more than the niche). Max DD is the deepest fall from a peak. Growth ÷ vol is a Sharpe ratio with no risk-free rate. Top video is the share of recent views from one video. Click a creator for the tear sheet.';
+  }
+  // ---- Revenue: estimated monthly revenue, catalog value (USCAP) and financing capacity per creator
+  const rvs = {sort: 'catalog_mid', dir: -1};
+  const range = (r, k) => r[k + '_low'] == null ? '' : money(N(r[k + '_low'])) + '–' + money(N(r[k + '_high']));
+  const VCOLS = [['channel', 'Creator', null], ['niche', 'Niche', null, 1], ['total_mid', 'Rev / mo', 'm'], ['ad_mid', 'Ads', 'm', 1],
+    ['sponsor_mid', 'Sponsors', 'm', 1], ['rpm_mid', 'RPM', 'rpm', 1], ['catalog_mid', 'Catalog value', 'm'], ['catalog_half_life_months', 'Half-life', 'mo', 1],
+    ['advance_capacity', 'Advance', 'm'], ['debt_capacity', 'Debt cap.', 'm', 1]];
+  function drawRev(rows) {
+    const t = $('rev-tbl'), head = t.tHead, tb = t.tBodies[0]; head.textContent = ''; tb.textContent = '';
+    const hr = head.insertRow();
+    VCOLS.forEach(([k, lab, , nar]) => { const th = el('th', lab + (rvs.sort === k ? (rvs.dir < 0 ? ' ↓' : ' ↑') : '')); th.style.cursor = 'pointer';
+      if (k === 'channel' || k === 'niche') th.style.textAlign = 'left'; if (nar) th.className = 'narrow';
+      th.addEventListener('click', () => { rvs.dir = rvs.sort === k ? -rvs.dir : -1; rvs.sort = k; draw(); }); hr.append(th); });
+    const q = st.q;
+    const list = rows.filter(r => !q || (r.channel + ' ' + (r.niche || '')).toLowerCase().includes(q)).slice()
+      .sort((a, b) => { const x = a[rvs.sort], y = b[rvs.sort]; if (x == null) return 1; if (y == null) return -1;
+        return typeof x === 'string' ? rvs.dir * x.localeCompare(y) * -1 : rvs.dir * (N(x) - N(y)); });
+    list.forEach(r => { const tr = tb.insertRow(); tr.style.cursor = 'pointer'; tr.addEventListener('click', () => openTear(r.channel_id));
+      VCOLS.forEach(([k, , fm, nar]) => { const v = r[k], td = tr.insertCell();
+        td.textContent = v == null ? '—' : fm === 'm' ? money(N(v)) : fm === 'rpm' ? '$' + f2(N(v)) + (r.rpm_source === 'TubeLab estimate' ? ' TL' : '')
+          : fm === 'mo' ? v + ' mo' : k === 'channel' ? String(v).toUpperCase() : v;
+        if (k === 'total_mid') td.title = 'Range ' + range(r, 'total') + ' a month';
+        if (k === 'catalog_mid') td.title = 'Range ' + range(r, 'catalog');
+        if (k === 'rpm_mid') td.title = r.rpm_source + ': ' + r.rpm_basis + ' (range $' + f2(N(r.rpm_low)) + '–$' + f2(N(r.rpm_high)) + ')';
+        if (k === 'channel' || k === 'niche') td.style.textAlign = 'left';
+        td.className = [nar ? 'narrow' : '', k === 'niche' ? 'dim' : ''].filter(Boolean).join(' '); }); });
+    if (!list.length) { const tr = tb.insertRow(), td = tr.insertCell(); td.colSpan = VCOLS.length; td.className = 'dim'; td.style.textAlign = 'left';
+      td.textContent = 'Revenue estimates need a week of daily views per creator.'; }
+    const tl = rows.some(r => r.rpm_source === 'TubeLab estimate');
+    $('rev-note').textContent = 'Estimates, middle case; hover a figure for its low–high range. Rev / mo = ads (last 30 days of views × RPM, Shorts at Shorts RPM) + sponsors (sponsored videos a month × typical views × sponsor rate). ' +
+      'RPM is ' + (tl ? 'TubeLab\'s niche estimate where marked TL, otherwise ' : '') + 'the published range for the niche. Catalog value is the present value of five years of ad revenue from videos already posted, at 12% a year, with no new uploads. ' +
+      'Half-life is the months until the catalog\'s monthly views halve. Advance is 60% of the low-case catalog value over 3 years; debt capacity is the loan that 30% of low-case monthly revenue repays over 3 years at 15%. Click a creator for the tear sheet.';
   }
   // ---- Holders: who funds creator companies, by kind of capital (like HDS for a stock)
   const hds = {tab: 'holders', type: 'all', open: null, company: null};
@@ -1863,6 +1901,10 @@ dash.calc('drop_reasons', {
     // how the creator makes money beyond ads, read from their descriptions
     const bzz = dash.data('business'), brow = bzz.status === 'ok' ? bzz.data.find(x => x.channel_id === c.channel_id) : null;
     const rkk = dash.data('risk'), rrow = rkk.status === 'ok' ? rkk.data.find(x => x.channel_id === c.channel_id) : null;
+    const rvv = dash.data('revenue'), vrow = rvv.status === 'ok' ? rvv.data.find(x => x.channel_id === c.channel_id) : null;
+    if (vrow) cbx.append(el('div', 'Revenue (estimate): ' + money(N(vrow.total_mid)) + ' a month (' + range(vrow, 'total') + '; ads ' + money(N(vrow.ad_mid)) +
+      ', sponsors ' + money(N(vrow.sponsor_mid)) + ') · catalog value ' + money(N(vrow.catalog_mid)) + ' (' + range(vrow, 'catalog') + ')' +
+      ' · advance ' + money(N(vrow.advance_capacity)) + ' · debt capacity ' + money(N(vrow.debt_capacity)), 'ts-txt'));
     if (rrow) cbx.append(el('div', 'Risk (90 days): vol ' + pct(N(rrow.volatility)) + (rrow.beta != null ? ' · beta ' + f2(N(rrow.beta)) : '') +
       ' · max drawdown ' + pct(N(rrow.max_drawdown)) + (rrow.growth_per_risk != null ? ' · growth ÷ vol ' + f2(N(rrow.growth_per_risk)) : ''), 'ts-txt'));
     if (brow) {
@@ -2137,6 +2179,8 @@ dash.calc('drop_reasons', {
     renderSec();
     const rkx = dash.data('risk');
     if (st.view === 'risk' && rkx.status === 'ok') drawRisk(rkx.data);
+    const rvx = dash.data('revenue');
+    if (st.view === 'rev' && rvx.status === 'ok') drawRev(rvx.data);
     const hhx = dash.data('holders'), hgx = dash.data('holdings');
     if (st.view === 'hds' && hhx.status === 'ok') drawHds(hhx.data, hgx.status === 'ok' ? hgx.data : []);
     const rtx = dash.data('rates'), rcx = dash.data('rate_changes'), rpx = dash.data('niche_rpm');
@@ -2228,6 +2272,7 @@ dash.calc('drop_reasons', {
     else if (C === 'CORP' || C === 'COMPANIES') { corpTab('ladder'); say('Creator companies: stage ladder from no company to outside capital'); }
     else if (C === 'UNDERCAP' || C === 'UNDERCAPITALIZED') { corpTab('under'); say('Undercapitalized: growing creators with no outside capital found'); }
     else if (C === 'DEALS') { corpTab('deals'); say('Deals: financing rounds for creator companies'); }
+    else if (C === 'REV' || C === 'REVENUE' || C === 'USCAP') { show('rev'); say('Revenue: estimated monthly revenue, catalog value and what it could finance'); }
     else if (C === 'RISK') { show('risk'); say('Risk: volatility, beta to the niche, drawdown, growth per unit of risk'); }
     else if (C === 'STREAMS') { corpTab('streams'); say('Revenue streams: how creators make money beyond ads, from their descriptions'); }
     else if (C === 'SPONSORS') { corpTab('sponsors'); say('Sponsors: brands paying tracked creators'); }

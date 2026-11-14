@@ -99,7 +99,7 @@ later:                       # formulas that need months of history, outside dat
 # 5.9 RPM bands, USD per 1,000 views. PLACEHOLDERS until replaced with published benchmarks or creator data;
 # the earnings table carries rpm_source so a placeholder can never be read as a measured figure.
 rpm_bands:
-  source: placeholder
+  source: placeholder        # with by_niche empty, config/niche_economics.csv supplies the bands ("Published range")
   default: {long_low: 2.0, long_high: 6.0, shorts_low: 0.03, shorts_high: 0.08}
   by_niche: {}
 
