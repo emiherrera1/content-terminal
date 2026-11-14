@@ -257,6 +257,17 @@ window.dash = (() => {
 .ct .stip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--acc);padding:4px 6px;font-size:10px;color:var(--tx);white-space:nowrap;z-index:2}
 .ct #surf-tbl td,.ct #surf-tbl th{text-align:right} .ct #surf-tbl td:first-child,.ct #surf-tbl th:first-child{text-align:left}
 .ct #surf-tbl.rank tbody tr{cursor:pointer}
+/* ---- stock-style charts: range bars, area or candles, last-value line, volume pane */
+.ct .stk{text-transform:none;font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;padding:4px 8px}
+.ct .stk-top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px;padding:4px 2px 8px}
+.ct .stk-rng{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--tx);min-width:0;flex:1 1 300px}
+.ct .stk-rng .lb{color:var(--tm);white-space:nowrap} .ct .stk-rng .v{white-space:nowrap}
+.ct .stk-rng .bar{position:relative;flex:1;min-width:60px;height:2px;background:#3a3836}
+.ct .stk-rng .bar i{position:absolute;top:-5px;width:12px;height:12px;border-radius:50%;background:#f2f0ea;margin-left:-6px}
+.ct .stk-ctl{display:flex;gap:2px;margin-left:auto} .ct .stk-ctl button{background:none;border:1px solid var(--line);color:var(--tm);font:inherit;font-size:10px;padding:2px 7px;cursor:pointer}
+.ct .stk-ctl button[aria-pressed=true]{color:#000;background:var(--tx);border-color:var(--tx)}
+.ct .stk svg{display:block;background:#161514} .ct .stk svg text{font-size:11px;fill:#8f8a80}
+.ct .stk .tipx{position:absolute;pointer-events:none;background:#000;border:1px solid var(--line);padding:4px 8px;font-size:11px;white-space:nowrap;display:none;z-index:5}
 .ct .schart{padding:4px 8px} .ct .schart text{fill:var(--tm);font-size:10px} .ct .schart .ax line,.ct .schart .ax path{stroke:var(--line)}
 .ct .cpick{display:flex;align-items:center;gap:6px;border:1px solid var(--line);padding:2px 6px;flex:1;min-width:12rem}
 .ct .cpick b{color:var(--acc)}
@@ -955,18 +966,26 @@ dash.calc('drop_reasons', {
     if (!rows.length || !box.clientWidth) return;
     const sectors = [...new Set(rows.map(r => r.sector))];
     const ser = sectors.map((s, i) => ({s, c: COLORS[i % COLORS.length], pts: rows.filter(r => r.sector === s).map(r => ({d: new Date(r.day), day: r.day, v: N(r.avg_ccos)}))}));
-    const w = box.clientWidth - 16, m = {t: 8, r: 8, b: 18, l: 38};
+    const w = box.clientWidth - 16, m = {t: 10, r: 64, b: 20, l: 8};
     const x = d3.scaleUtc(d3.extent(rows, r => new Date(r.day)), [m.l, w - m.r]);
     const y = d3.scaleLinear(d3.extent(rows, r => N(r.avg_ccos)), [h - m.b, m.t]).nice();
-    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${w} ${h}`).attr('height', h);
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${w} ${h}`).attr('height', h).style('background', '#161514');
     svg.append('g').selectAll('line').data(y.ticks(5)).join('line').attr('x1', m.l).attr('x2', w - m.r)
-      .attr('y1', d => y(d)).attr('y2', d => y(d)).attr('stroke', '#2a2724');
-    svg.append('g').selectAll('text').data(y.ticks(5)).join('text').attr('x', m.l - 4).attr('y', d => y(d) + 3).attr('text-anchor', 'end').text(d => d3.format('.1f')(d));
-    svg.append('g').selectAll('text').data(x.ticks(Math.max(2, Math.floor(w / 90)))).join('text')
+      .attr('y1', d => y(d)).attr('y2', d => y(d)).attr('stroke', '#2c2a28');
+    svg.append('g').selectAll('text').data(y.ticks(5)).join('text').attr('x', w - m.r + 8).attr('y', d => y(d) + 4).attr('fill', '#8f8a80').text(d => d3.format('.1f')(d));
+    svg.append('g').selectAll('text').data(x.ticks(Math.max(2, Math.floor(w / 90))).filter(d => x(d) > m.l + 22 && x(d) < w - m.r - 10)).join('text')
       .attr('x', d => x(d)).attr('y', h - 4).attr('text-anchor', 'middle').text(d => `${MON.at(d.getUTCMonth())} ${d.getUTCDate()}`);
-    ser.forEach(s => svg.append('path').attr('d', d3.line(p => x(p.d), p => y(p.v))(s.pts)).attr('fill', 'none')
-      .attr('stroke', s.c).attr('stroke-width', 2).attr('stroke-linejoin', 'round').attr('stroke-linecap', 'round')
-      .style('filter', 'drop-shadow(0 0 2px ' + s.c + ')'));
+    const tags = ser.map(s => ({s, lp: s.pts[s.pts.length - 1]})).filter(t => t.lp).map(t => ({...t, y0: y(t.lp.v)})).sort((a, b) => a.y0 - b.y0);
+    tags.forEach((t, i) => { t.ty = i ? Math.max(t.y0, tags[i - 1].ty + 17) : t.y0; });
+    const shift = Math.max(0, (tags.length ? tags[tags.length - 1].ty : 0) - (h - m.b - 8)); tags.forEach(t => { t.ty -= shift; });
+    svg.selectAll('text').filter(function () { const ty = +this.getAttribute('y') - 4; return +this.getAttribute('x') > w - m.r && tags.some(t => Math.abs(t.ty - ty) < 12); }).remove();
+    ser.forEach(s => { svg.append('path').attr('d', d3.line(p => x(p.d), p => y(p.v))(s.pts)).attr('fill', 'none')
+      .attr('stroke', s.c).attr('stroke-width', 1.5).attr('stroke-linejoin', 'round');
+      const lp = s.pts[s.pts.length - 1]; if (!lp) return;   // dashed last-value line and its tag on the right axis, like a quote
+      svg.append('line').attr('x1', m.l).attr('x2', w - m.r).attr('y1', y(lp.v)).attr('y2', y(lp.v)).attr('stroke', s.c).attr('stroke-dasharray', '3 4').attr('opacity', .55);
+      const ty = tags.find(t => t.s === s).ty;
+      svg.append('rect').attr('x', w - m.r + 2).attr('y', ty - 8).attr('width', m.r - 4).attr('height', 15).attr('fill', s.c);
+      svg.append('text').attr('x', w - m.r + 6).attr('y', ty + 4).attr('fill', '#000').style('fill', '#000').attr('font-weight', 700).text(tk(s.s) + ' ' + d3.format('.1f')(lp.v)); });
     const rule = svg.append('line').attr('y1', m.t).attr('y2', h - m.b).attr('stroke', '#8f8a80').attr('stroke-dasharray', '2 3').style('display', 'none');
     const tip = box.querySelector('.tip');
     const days = [...new Set(rows.map(r => r.day))].sort();
@@ -1962,23 +1981,88 @@ dash.calc('drop_reasons', {
     });
     window.addEventListener('resize', () => { if (st.view === 'surf' && srf.tab === '3d') renderSurf(); });
   })();
+  // ---- stock-style chart (range bars, area or weekly candles, dashed last value, volume bars coloured by up/down day)
+  const stkst = {mode: 'area', log: false, span: 'ALL'};
+  function stockChart(box, pts, o) {
+    box.textContent = ''; box.classList.add('stk'); box.style.position = 'relative';
+    const P = pts.filter(p => p.v != null && p.v > 0);
+    if (P.length < 2) { box.append(el('div', o.empty || 'The chart fills in after a few days of history.', 'dim')); return; }
+    const spans = {'1M': 30, '3M': 91, ALL: 1e9}, cut = +P[P.length - 1].d - spans[stkst.span] * 864e5;
+    const D = P.filter(p => +p.d >= cut).length >= 2 ? P.filter(p => +p.d >= cut) : P;
+    const last = D[D.length - 1], fm = o.fmt || compact;
+    // range bars: the last value against the low and high of the last 7 days and of the whole window
+    const top = el('div', null, 'stk-top');
+    const rng = (lab, arr) => { const lo = d3.min(arr, p => p.v), hi = d3.max(arr, p => p.v), r = el('div', null, 'stk-rng');
+      const bar = el('div', null, 'bar'), dot = el('i'); dot.style.left = (hi > lo ? 100 * (last.v - lo) / (hi - lo) : 50) + '%'; bar.append(dot);
+      r.append(el('span', lab, 'lb'), el('span', fm(lo), 'v'), bar, el('span', fm(hi), 'v')); return r; };
+    top.append(rng('7D Range', D.slice(-7)), rng((stkst.span === 'ALL' ? D.length + 'D' : stkst.span) + ' Range', D));
+    const ctl = el('div', null, 'stk-ctl');
+    [['1M'], ['3M'], ['ALL']].forEach(([k]) => { const b = el('button', k); b.type = 'button'; b.setAttribute('aria-pressed', String(stkst.span === k));
+      b.onclick = () => { stkst.span = k; stockChart(box, pts, o); }; ctl.append(b); });
+    [['area', 'Line'], ['candle', 'Candles']].forEach(([k, l]) => { const b = el('button', l); b.type = 'button'; b.setAttribute('aria-pressed', String(stkst.mode === k));
+      b.onclick = () => { stkst.mode = k; stockChart(box, pts, o); }; ctl.append(b); });
+    const lg = el('button', 'Log'); lg.type = 'button'; lg.setAttribute('aria-pressed', String(stkst.log)); lg.onclick = () => { stkst.log = !stkst.log; stockChart(box, pts, o); }; ctl.append(lg);
+    top.append(ctl); box.append(top);
+    const W = Math.max(280, box.clientWidth - 4), H = o.h || 300, m = {t: 10, r: 70, b: 22, l: 8}, volH = Math.round(H * 0.22), gap = 8;
+    const pH = H - m.t - m.b - volH - gap;
+    const x = d3.scaleUtc([D[0].d, new Date(+last.d + 864e5)], [m.l, W - m.r]);
+    // candles: one per week from the daily series (open = first day, close = last day, high and low within the week)
+    const weeks = d3.groups(D, p => d3.utcMonday.floor(p.d)).map(([wk, a]) => ({d: wk, o: a[0].v, c: a[a.length - 1].v, h: d3.max(a, p => p.v), l: d3.min(a, p => p.v), vol: d3.sum(a, p => p.vol || 0)}));
+    const ext = stkst.mode === 'candle' ? [d3.min(weeks, w => w.l), d3.max(weeks, w => w.h)] : d3.extent(D, p => p.v);
+    const y = (stkst.log ? d3.scaleLog() : d3.scaleLinear()).domain(stkst.log ? ext : [ext[0] - (ext[1] - ext[0]) * .08, ext[1] + (ext[1] - ext[0]) * .08]).range([m.t + pH, m.t]).nice();
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
+    const ticks = stkst.log ? y.ticks(4).filter((t, i, a) => a.length < 6 || [1, 2, 5].includes(+String(t)[0])) : y.ticks(4);
+    svg.append('g').selectAll('line').data(ticks).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', d => y(d)).attr('y2', d => y(d)).attr('stroke', '#2c2a28');
+    svg.append('g').selectAll('text').data(ticks.filter(t => Math.abs(y(t) - y(last.v)) > 14)).join('text').attr('x', W - m.r + 8).attr('y', d => y(d) + 4).text(d => fm(d));
+    const up = '#6ab7ff', dn = '#ff6b5e', G = '#4fd27a';
+    if (stkst.mode === 'candle') {
+      const cw = Math.max(3, (W - m.l - m.r) / Math.max(weeks.length, 1) * 0.55);
+      const g = svg.append('g').selectAll('g').data(weeks).join('g').attr('transform', w => `translate(${x(new Date(+w.d + 3.5 * 864e5))},0)`);
+      g.append('line').attr('y1', w => y(w.h)).attr('y2', w => y(w.l)).attr('stroke', w => w.c >= w.o ? up : dn);
+      g.append('rect').attr('x', -cw / 2).attr('width', cw).attr('y', w => y(Math.max(w.o, w.c))).attr('height', w => Math.max(1, Math.abs(y(w.o) - y(w.c)))).attr('fill', w => w.c >= w.o ? up : dn);
+    } else {
+      const gid = 'g' + Math.random().toString(36).slice(2);
+      const gr = svg.append('defs').append('linearGradient').attr('id', gid).attr('x1', 0).attr('x2', 0).attr('y1', 0).attr('y2', 1);
+      gr.append('stop').attr('offset', '0%').attr('stop-color', G).attr('stop-opacity', .35); gr.append('stop').attr('offset', '100%').attr('stop-color', G).attr('stop-opacity', .03);
+      svg.append('path').attr('d', d3.area(p => x(p.d), m.t + pH, p => y(p.v))(D)).attr('fill', `url(#${gid})`);
+      svg.append('path').attr('d', d3.line(p => x(p.d), p => y(p.v))(D)).attr('fill', 'none').attr('stroke', G).attr('stroke-width', 1.6);
+    }
+    // dashed last-value line with its tag on the axis
+    const lc = stkst.mode === 'candle' ? up : G;
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(last.v)).attr('y2', y(last.v)).attr('stroke', lc).attr('stroke-dasharray', '4 4').attr('opacity', .8);
+    svg.append('text').attr('x', W - m.r + 8).attr('y', y(last.v) + 4).attr('fill', lc).style('fill', lc).text(fm(last.v));
+    // volume pane: daily bars, blue on an up day and red on a down day
+    const vt = m.t + pH + gap, vy = d3.scaleLinear([0, d3.max(D, p => p.vol || 0) || 1], [vt + volH, vt]);
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', vt).attr('y2', vt).attr('stroke', '#2c2a28');
+    const bw = Math.max(1, (W - m.l - m.r) / D.length - 1);
+    svg.append('g').selectAll('rect').data(D).join('rect').attr('x', p => x(p.d) - bw / 2).attr('width', bw).attr('y', p => vy(p.vol || 0)).attr('height', p => vt + volH - vy(p.vol || 0))
+      .attr('fill', (p, i) => i && (p.vol || 0) < (D[i - 1].vol || 0) ? dn : up).attr('opacity', .85);
+    svg.append('text').attr('x', W - m.r + 8).attr('y', vt + 10).text(o.volLabel || 'Daily');
+    svg.append('text').attr('x', W - m.r + 8).attr('y', vt + 24).text(fm(d3.max(D, p => p.vol || 0)));
+    const xt = x.ticks(Math.max(2, Math.floor(W / 120)));
+    svg.append('g').selectAll('text').data(xt.filter(d => x(d) > m.l + 22 && x(d) < W - m.r - 22)).join('text').attr('x', d => x(d)).attr('y', H - 5).attr('text-anchor', 'middle').text(d => `${MON.at(d.getUTCMonth())} ${d.getUTCDate()}`);
+    // crosshair
+    const tip = el('div', null, 'tipx'); box.append(tip);
+    const vline = svg.append('line').attr('y1', m.t).attr('y2', vt + volH).attr('stroke', '#8f8a80').attr('stroke-dasharray', '2 3').style('display', 'none');
+    svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', W - m.l - m.r).attr('height', H - m.t - m.b).attr('fill', 'transparent')
+      .on('mousemove', ev => { const [mx] = d3.pointer(ev), t = x.invert(mx); const p = D.reduce((a, b) => Math.abs(b.d - t) < Math.abs(a.d - t) ? b : a);
+        vline.attr('x1', x(p.d)).attr('x2', x(p.d)).style('display', null);
+        tip.textContent = `${fmtDay(p.d.toISOString().slice(0, 10))} · ${o.label || 'Value'} ${fm(p.v)} · ${o.volLabel || 'Daily'} ${fm(p.vol || 0)}` + (p.s != null ? ` · ${compact(p.s)} subs` : '');
+        tip.style.display = 'block'; const bx = box.getBoundingClientRect(), sx = bx.width / W;
+        tip.style.left = Math.min(x(p.d) * sx + 12, bx.width - tip.offsetWidth - 4) + 'px'; tip.style.top = (top.offsetHeight + 6) + 'px'; })
+      .on('mouseleave', () => { vline.style('display', 'none'); tip.style.display = 'none'; });
+    if (o.note) box.append(el('div', o.note, 'dim'));
+  }
+  function creatorPts(ser) {
+    if (!ser || !ser.views) return [];
+    const start = new Date(ser.start + 'T00:00:00Z');
+    const raw = ser.views.map((v, i) => ({d: new Date(+start + i * 864e5), vol: v == null ? null : Math.max(0, v), s: ser.subs[i]}));
+    return raw.map((p, i) => { const win = raw.slice(Math.max(0, i - 6), i + 1).filter(q => q.vol != null);
+      return {...p, v: win.length >= Math.min(7, i + 1) && win.length ? d3.sum(win, q => q.vol) * 7 / win.length : null}; }).filter(p => p.vol != null);
+  }
   function sparkChart(box, ser, h) {
-    box.querySelectorAll('svg').forEach(x => x.remove());
-    if (!ser || !ser.views || ser.views.filter(v => v != null).length < 2) { box.append(el('div', 'The chart fills in after a few days of history.', 'dim')); return; }
-    const w = Math.max(240, box.clientWidth - 4), m = {t: 6, r: 44, b: 16, l: 44};
-    const start = new Date(ser.start + 'T00:00:00Z'), dayMs = 86400000;
-    const pts = ser.views.map((v, i) => ({d: new Date(+start + i * dayMs), v, s: ser.subs[i]}));
-    const x = d3.scaleUtc(d3.extent(pts, p => p.d), [m.l, w - m.r]);
-    const yv = d3.scaleLinear([0, d3.max(pts, p => p.v) || 1], [h - m.b, m.t]).nice();
-    const ys = d3.scaleLinear(d3.extent(pts.filter(p => p.s != null), p => p.s), [h - m.b, m.t]).nice();
-    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${w} ${h}`).attr('height', h);
-    const bw = Math.max(1, (w - m.l - m.r) / pts.length - 1);
-    svg.append('g').selectAll('rect').data(pts.filter(p => p.v != null)).join('rect').attr('x', p => x(p.d) - bw / 2).attr('width', bw)
-      .attr('y', p => yv(Math.max(0, p.v))).attr('height', p => h - m.b - yv(Math.max(0, p.v))).attr('fill', '#5a4a10');
-    svg.append('path').attr('d', d3.line(p => x(p.d), p => ys(p.s)).defined(p => p.s != null)(pts)).attr('fill', 'none').attr('stroke', 'var(--g)').attr('stroke-width', 1.5);
-    svg.append('g').selectAll('text').data(yv.ticks(3)).join('text').attr('x', m.l - 4).attr('y', d => yv(d) + 3).attr('text-anchor', 'end').attr('fill', 'var(--tm)').attr('font-size', 9).text(d => compact(d));
-    svg.append('g').selectAll('text').data(ys.ticks(3)).join('text').attr('x', w - m.r + 4).attr('y', d => ys(d) + 3).attr('fill', 'var(--g)').attr('font-size', 9).text(d => compact(d));
-    svg.append('g').selectAll('text').data(x.ticks(4)).join('text').attr('x', d => x(d)).attr('y', h - 3).attr('text-anchor', 'middle').attr('fill', 'var(--tm)').attr('font-size', 9).text(d => `${MON.at(d.getUTCMonth())} ${d.getUTCDate()}`);
+    stockChart(box, creatorPts(ser), {h: h || 300, label: 'Views 7D', volLabel: 'Views/day',
+      note: 'Top: views over the trailing 7 days, read like a price. Bottom: views each day, blue when up on the day before and red when down. Candles group a week: open, high, low, close.'});
   }
   function drawTear(cd, ni, series) {
     const box = $('ts'); box.textContent = '';
@@ -2097,7 +2181,7 @@ dash.calc('drop_reasons', {
       (c.rpm_source === 'placeholder' ? 'Earnings use placeholder RPM bands until real ones are set (5.9). ' : '') +
       'Definitions in the Methodology Handbook. Not investment advice.', 'ts-foot');
     box.append(foot);
-    sparkChart(chart, series.find(s => s.channel_id === c.channel_id), 150);
+    sparkChart(chart, series.find(s => s.channel_id === c.channel_id), 300);
   }
   document.querySelectorAll('#wl-tier .cmb').forEach(b => b.addEventListener('click', () => { wst.tier = b.dataset.t; document.querySelectorAll('#wl-tier .cmb').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw(); }));
   document.querySelectorAll('#wl-stage .cmb').forEach(b => b.addEventListener('click', () => { wst.stage = b.dataset.s; document.querySelectorAll('#wl-stage .cmb').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw(); }));
