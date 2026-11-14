@@ -16,6 +16,8 @@ names instead of codes, readable column names, and a comment on every view and k
     ask_platform_rates    each platform's creator share, last and next change (the rates board)
     ask_rate_changes      every dated change to a platform's creator share
     ask_niche_rpm         YouTube RPM by niche from TubeLab estimates
+    ask_format_niches     long-form vs Shorts per niche: views, growth, share, uploads, typical views
+    ask_format_creators   long-form vs Shorts per creator
     ask_creator_revenue   estimated monthly revenue (ads + sponsors), catalog value and financing capacity per creator
     ask_creator_risk      volatility, beta, drawdown, growth per unit of risk per creator
     ask_creator_business  revenue streams and sponsors per creator, from descriptions
@@ -37,6 +39,10 @@ from . import holders, rates, surface
 ROOT = Path(__file__).resolve().parent.parent
 
 GUIDE = [
+    ("ask_format_niches", "One row per niche and format (LONG or SHORTS, where a Short runs 3 minutes or less): views in the last 7 days and the 7 before, 7-day growth, the format's share of the niche's tracked views over 28 days, uploads and creators posting in 28 days, and the median views of a 7-30 day old video.",
+     "Built from tracked recent uploads, not a channel's oldest videos. Growth is empty until 14 days of history exist."),
+    ("ask_format_creators", "One row per creator and format: the same fields as ask_format_niches, plus the share of that format's views from the creator's single biggest video.",
+     "Use it to see whether a creator's growth comes from Shorts or long-form."),
     ("ask_creator_revenue", "One row per creator: estimated monthly ad and sponsor revenue (low, mid, high), the RPM used and where it came from, the present value of the existing catalog over 5 years, and how much an advance or a loan that catalog and revenue could support.",
      "Every dollar is an estimate. RPM is TubeLab's niche estimate when rpm_source says so, otherwise the published range for the niche. Catalog value counts no new uploads. Use mid for a single figure and quote the low-high range."),
     ("ask_creator_risk", "One row per creator with 30+ days of history: annualized volatility of daily attention (7-day views), beta to the rest of their niche, max drawdown, annualized growth, growth per unit of volatility, and the share of views from their biggest video.",
@@ -235,7 +241,7 @@ def build(con) -> list[str]:
             SELECT t.name AS niche, k.niche_code, t.sector, k.videos, k.creators, k.small_reach AS small_creator_reach,
                    k.mid_reach AS median_creator_reach, k.big_reach AS big_creator_reach, k.skew, k.dispersion,
                    k.term AS reach_3m_vs_first_week
-            FROM ({surface.SKEW_SQL}) k LEFT JOIN ask_topics t ON t.code = k.niche_code""")
+            FROM ({surface.SKEW_SQL.replace("{base}", surface._base())}) k LEFT JOIN ask_topics t ON t.code = k.niche_code""")
         made.append("ask_niche_skew")
 
     if have("creator_business", "screener"):
@@ -245,6 +251,18 @@ def build(con) -> list[str]:
                    array_to_string(b.streams, '; ') AS revenue_streams
             FROM creator_business b JOIN screener s USING (channel_id) LEFT JOIN ask_topics t ON t.code = s.niche_code""")
         made.append("ask_creator_business")
+    if have("format_niche"):
+        con.execute("""CREATE OR REPLACE VIEW ask_format_niches AS
+            SELECT coalesce(t.name, f.niche_code) AS niche, t.sector, f.fmt AS format, f.views_7d, f.views_prev_7d, f.growth_7d,
+                   f.views_28d, f.share AS share_of_niche_views, f.uploads_28d, f.creators_posting, f.views_per_video
+            FROM format_niche f LEFT JOIN ask_topics t ON t.code = f.niche_code""")
+        made.append("ask_format_niches")
+    if have("format_creator", "screener"):
+        con.execute("""CREATE OR REPLACE VIEW ask_format_creators AS
+            SELECT s.title AS creator, f.channel_id, f.fmt AS format, f.views_7d, f.views_prev_7d, f.growth_7d, f.views_28d,
+                   f.share AS share_of_creator_views, f.uploads_28d, f.views_per_video, f.top_video_share
+            FROM format_creator f JOIN screener s USING (channel_id)""")
+        made.append("ask_format_creators")
     if have("creator_revenue", "screener"):
         con.execute("""CREATE OR REPLACE VIEW ask_creator_revenue AS
             SELECT s.title AS creator, r.channel_id, coalesce(t.name, r.niche_code) AS niche, r.views_30d, r.shorts_share,

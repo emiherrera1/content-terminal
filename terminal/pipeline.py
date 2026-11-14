@@ -114,6 +114,11 @@ def _business(ctx):
     return business.build(ctx.con, ctx.today)
 
 
+def _formats(ctx):
+    from . import formats
+    return formats.build(ctx.con)
+
+
 def _revenue(ctx):
     from . import revenue
     return revenue.build(ctx.con, ctx.today)
@@ -220,6 +225,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("comments", _comments, retries=1),
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
+        Stage("formats", _formats),
         Stage("risk", _risk),
         Stage("revenue", _revenue),
         Stage("ask", _ask),
@@ -234,6 +240,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("niche_rpm", _rpm, retries=1),
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
+        Stage("formats", _formats),
         Stage("risk", _risk),
         Stage("revenue", _revenue),
         Stage("ask", _ask),
@@ -247,6 +254,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("business", _business),
         Stage("compute", _compute, critical=True),
         Stage("later", _later),
+        Stage("formats", _formats),
         Stage("risk", _risk),
         Stage("revenue", _revenue),
         Stage("ask", _ask),

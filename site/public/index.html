@@ -99,6 +99,10 @@ window.dash = (() => {
 .ct .tk:nth-of-type(n+2){display:none}
 .ct #stamp{display:none} .ct .grid>div:last-child{display:none!important} .ct .grid{grid-template-columns:minmax(0,1fr)!important}
 .ct .fnrow{display:flex;align-items:center;border-bottom:1px solid var(--line)} .ct .fnrow .fns{flex:1;border-bottom:0}
+.ct .fmtsw{display:flex;align-items:center;gap:2px;flex:none;margin-left:8px} .ct .fmtsw .dim{font-size:10px;margin-right:4px}
+.ct .fmtsw button{background:none;border:1px solid var(--line);color:var(--tx);padding:2px 6px;font-size:10px;cursor:pointer}
+.ct .fmtsw button[aria-pressed=true]{background:var(--acc);color:#000;border-color:var(--acc);font-weight:700}
+.ct .fmttag{color:var(--acc);margin-left:6px}
 .ct .fnrow .search{margin:0 8px;flex:0 0 11rem} .ct .fnrow .search input{padding:2px 6px;font-size:10px}
 .ct .fns .fn small{display:none} .ct .fntitle{font-size:10px}
 .ct .secbar:empty{display:none}
@@ -120,6 +124,7 @@ window.dash = (() => {
   .ct .fnrow .fns::-webkit-scrollbar{display:none}
   .ct .fns .fn{flex:none;padding:9px 12px;font-size:12px}
   .ct .fntitle{display:none}
+  .ct .fmtsw{margin:0 8px 6px} .ct .fmtsw button{flex:1;padding:8px 0;font-size:12px}
   .ct .fnrow .search{flex:none;margin:0 8px 6px} .ct .fnrow .search input{padding:8px;font-size:16px}
   .ct .fnrow.scoped .search{display:none}
   .ct #command-line .prompt{padding:8px} .ct #command-line .prompt input{font-size:16px}
@@ -344,6 +349,7 @@ window.dash = (() => {
   </div>
   <div class="secbar" id="secbar" aria-live="polite"></div>
   <div class="fnrow"><div class="fbar fns" id="fnbar" role="tablist" aria-label="Functions"></div>
+  <div class="fmtsw" id="fmtsw" role="group" aria-label="Format: all videos, long-form only or Shorts only"><span class="dim">Videos</span><button type="button" data-f="ALL">All</button><button type="button" data-f="LONG">Long</button><button type="button" data-f="SHORTS">Shorts</button></div>
   <label class="search"><input id="search" type="search" placeholder="Filter…" aria-label="Filter the current screen" autocomplete="off"></label></div>
 
   <div class="grid">
@@ -766,7 +772,14 @@ dash.calc('drop_reasons', {
   const fmtDay = d => d ? `${MON.at(Number(d.slice(5, 7)) - 1)} ${Number(d.slice(8, 10))}, ${d.slice(0, 4)}` : '—';
   const SORTS = {CCOS: 'ccos', SI: 'si', NGP: 'ngp', TVE: 'tve', CHG: 'chg'};
   const COLORS = ['#ffb340', '#7dd3ff', '#e8e4da', '#ff8ad8', '#b39dff', '#4dd2c0'];
-  const st = {view: 'home', sector: null, q: '', sort: 'ccos', sec: null};
+  const st = {view: 'home', sector: null, q: '', sort: 'ccos', sec: null, fmt: 'ALL'};
+  try { const f = localStorage.getItem('ct-fmt'); if (['ALL', 'LONG', 'SHORTS'].includes(f)) st.fmt = f; } catch (e) {}
+  const FMTNAME = {ALL: 'all videos', LONG: 'long-form only', SHORTS: 'Shorts only'};
+  function setFmt(f) {
+    st.fmt = f; try { localStorage.setItem('ct-fmt', f); } catch (e) {}
+    document.querySelectorAll('#fmtsw button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === f)));
+    draw();
+  }
   const $ = id => document.getElementById(id);
   const el = (tag, text, c) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (c) e.className = c; return e; };
   const td = (tr, text, c) => { const x = tr.insertCell(); x.textContent = text; if (c) x.className = c; return x; };
@@ -794,6 +807,10 @@ dash.calc('drop_reasons', {
     dash.setLink(v); draw();
   }
 
+  document.querySelectorAll('#fmtsw button').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.f === st.fmt));
+    b.addEventListener('click', () => { setFmt(b.dataset.f); say('Format: ' + FMTNAME[b.dataset.f]); });
+  });
   $('search').addEventListener('input', e => { st.q = e.target.value.trim().toLowerCase(); draw(); });
 
   function fillTicker(id, items) {
@@ -877,7 +894,9 @@ dash.calc('drop_reasons', {
     ser.forEach(s => { const i = el('span'); const sw = el('i'); sw.style.background = s.c; i.append(sw, el('span', tk(s.s) + ' ' + s.s)); leg.append(i); });
   }
 
+  const SCR_HEAD = document.querySelector('#scr thead').innerHTML;
   function drawCreators(rows) {
+    const t0 = $('scr'); if (t0.dataset.fmt) { t0.tHead.innerHTML = SCR_HEAD; delete t0.dataset.fmt; $('scr-note').textContent = 'sorted by vs niche'; }
     const tb = $('scr').tBodies[0]; tb.textContent = '';
     rows.filter(r => !st.q || (r.channel + ' ' + r.niche).toLowerCase().includes(st.q))
       .sort((a, b) => N(b.growth_vs_niche) - N(a.growth_vs_niche))
@@ -887,6 +906,59 @@ dash.calc('drop_reasons', {
         td(tr, spct(N(r.view_growth_28d)), 'narrow'); td(tr, spct(g), g >= 0 ? 'up' : 'dn');
         td(tr, r.uploads_28d, 'narrow'); td(tr, pct(N(r.outlier_rate)), 'narrow');
       });
+  }
+
+  // ---- Format split: long-form against Shorts, from tracked videos (terminal/formats.py)
+  const growthCell = (tr, v) => td(tr, v == null ? '—' : spct(N(v)), v == null ? 'dim' : cls(N(v)));
+  function drawFmtNiches(rows) {
+    const box = $('sectors'); box.textContent = '';
+    const f = st.fmt, q = st.q;
+    const by = d3.group(rows.filter(r => !q || (r.niche || '').toLowerCase().includes(q)), r => r.niche_code);
+    const items = [...by.values()].map(rs => { const L = rs.find(r => r.fmt === 'LONG') || {}, S = rs.find(r => r.fmt === 'SHORTS') || {};
+      const one = f === 'LONG' ? L : f === 'SHORTS' ? S : null;
+      return {niche_code: rs[0].niche_code, niche: rs[0].niche, sector: rs[0].sector, L, S, one,
+        v7: one ? N(one.views_7d) : N(L.views_7d) + N(S.views_7d)}; }).filter(x => !x.one || x.one.fmt);
+    const note = el('p', f === 'ALL'
+      ? 'Long-form against Shorts by niche, from tracked videos (a Short runs 3 minutes or less). Niche scores start Nov 20; until then this is the niche screen. Use the Videos switch (or type LONG or SHORTS) to show one format.'
+      : FMTNAME[f].replace(/^./, c => c.toUpperCase()) + ': views, growth and uploads from ' + (f === 'LONG' ? 'long-form videos' : 'Shorts') + ' only. Share is this format\'s share of the niche\'s tracked views over 28 days. Niche scores (CCOS) use all views; switch Videos to All to see them.', 'cnote');
+    const sectors = [...new Set(items.map(x => x.sector))].sort();
+    let first = true;
+    sectors.filter(s => !st.sector || tk(s) === st.sector).forEach(sec => {
+      const list = items.filter(x => x.sector === sec).sort((a, b) => b.v7 - a.v7); if (!list.length) return;
+      const head = el('div', null, 'sec'); const nm = el('div', null, 'nm'); nm.append(el('span', String(sec).toUpperCase()));
+      if (f !== 'ALL') nm.append(el('span', f === 'LONG' ? 'LONG-FORM' : 'SHORTS', 'fmttag'));
+      head.append(nm); box.append(head);
+      const t = el('table'); if (!first) t.className = 'hidehead'; first = false;
+      const cols = f === 'ALL'
+        ? [['Niche'], ['Views 7D'], ['Shorts share', 1], ['Long 7D chg'], ['Shorts 7D chg'], ['Long views/video', 1], ['Shorts views/video', 1]]
+        : [['Niche'], ['Views 7D'], ['Chg 7D'], ['Share', 1], ['Uploads 28D', 1], ['Creators', 1], ['Views/video', 1]];
+      const hr = t.createTHead().insertRow(); cols.forEach(([l, nar]) => hr.append(el('th', l, nar ? 'narrow' : null)));
+      const tb = t.createTBody();
+      list.forEach(x => { const tr = tb.insertRow(); tr.style.cursor = 'pointer'; tr.addEventListener('click', () => loadSec('niche', x.niche));
+        td(tr, String(x.niche).toUpperCase()); td(tr, compact(x.v7));
+        if (f === 'ALL') { td(tr, x.S.share == null ? '—' : pct(N(x.S.share)), 'narrow'); growthCell(tr, x.L.growth_7d); growthCell(tr, x.S.growth_7d);
+          td(tr, x.L.views_per_video == null ? '—' : compact(N(x.L.views_per_video)), 'narrow'); td(tr, x.S.views_per_video == null ? '—' : compact(N(x.S.views_per_video)), 'narrow'); }
+        else { const o = x.one; growthCell(tr, o.growth_7d); td(tr, o.share == null ? '—' : pct(N(o.share)), 'narrow'); td(tr, num(N(o.uploads_28d)), 'narrow');
+          td(tr, num(N(o.creators_posting)), 'narrow'); td(tr, o.views_per_video == null ? '—' : compact(N(o.views_per_video)), 'narrow'); }
+      });
+      box.append(t);
+    });
+    if (!box.childElementCount) box.append(el('p', 'No niches match.')); else box.append(note);
+  }
+  function drawFmtCreators(rows, scr) {
+    const t = $('scr'), f = st.fmt, subs = new Map(scr.map(r => [r.channel_id, r]));
+    t.dataset.fmt = f; t.tHead.textContent = '';
+    const hr = t.tHead.insertRow();
+    [['Creator'], ['Niche', 1], ['Subs'], ['Views 7D'], ['Chg 7D'], ['Share', 1], ['Upl 28D', 1], ['Views/video', 1], ['Top video', 1]].forEach(([l, nar]) => hr.append(el('th', l, nar ? 'narrow' : null)));
+    $('scr-note').textContent = FMTNAME[f] + ' · share = of the creator\'s tracked views · sorted by 7-day change, then views';
+    const tb = t.tBodies[0]; tb.textContent = '';
+    rows.filter(r => r.fmt === f && (!st.q || ((r.channel || '') + ' ' + (r.niche || '')).toLowerCase().includes(st.q)))
+      .sort((a, b) => (b.growth_7d == null) - (a.growth_7d == null) || N(b.growth_7d) - N(a.growth_7d) || N(b.views_7d) - N(a.views_7d))
+      .forEach(r => { const tr = tb.insertRow(); tr.dataset.key = r.channel_id; const s0 = subs.get(r.channel_id);
+        td(tr, String(r.channel).toUpperCase()); td(tr, String(r.niche || '—').toUpperCase(), 'narrow'); td(tr, s0 ? compact(N(s0.subscribers)) : '—');
+        td(tr, compact(N(r.views_7d))); growthCell(tr, r.growth_7d); td(tr, r.share == null ? '—' : pct(N(r.share)), 'narrow');
+        td(tr, num(N(r.uploads_28d)), 'narrow'); td(tr, r.views_per_video == null ? '—' : compact(N(r.views_per_video)), 'narrow');
+        td(tr, r.top_video_share == null ? '—' : pct(N(r.top_video_share)), 'narrow'); });
   }
 
   function drawAlerts(rows) {
@@ -1285,7 +1357,9 @@ dash.calc('drop_reasons', {
       if (!hit) { say("No creator matches '" + term.toUpperCase() + "'"); return false; }
       st.sec = {type, id: hit.channel_id, label: hit.channel}; nav.key = 'crtr'; runFn('crtr', 'DES'); say(hit.channel.toUpperCase() + ' CRTR loaded · functions: ' + KEYS.crtr.fns.map(x => x[0]).join(' '));
     } else {
-      const ni = dash.data('niches'), sf = dash.data('surface'); if (ni.status !== 'ok') return false;
+      const ni0 = dash.data('niches'), sk0 = dash.data('skew');
+      const ni = ni0.status === 'ok' && ni0.data.length ? ni0 : sk0.status === 'ok' ? {status: 'ok', data: sk0.data.map(r => ({niche: r.niche, niche_code: r.niche_code, tag: r.niche_code}))} : ni0;
+      if (ni.status !== 'ok') return false;
       const hit = ni.data.find(r => r.niche.toLowerCase() === t) || ni.data.find(r => r.niche.toLowerCase().includes(t) || r.tag.toLowerCase() === t);
       if (!hit) { say("No niche matches '" + term.toUpperCase() + "'"); return false; }
       st.sec = {type, id: hit.niche_code || hit.tag, label: hit.niche}; runFn('niche', 'DES'); say(hit.niche.toUpperCase() + ' NICHE loaded · functions: ' + KEYS.niche.fns.map(x => x[0]).join(' '));
@@ -1328,7 +1402,7 @@ dash.calc('drop_reasons', {
       const b = t.createTBody(); if (!rows.length) { const r = b.insertRow(), c = r.insertCell(); c.colSpan = cols.length; c.className = 'dim'; c.textContent = 'Nothing yet.'; c.style.textAlign = 'left'; }
       rows.forEach(r => { const tr = b.insertRow(); if (onClick) { tr.style.cursor = 'pointer'; tr.addEventListener('click', () => onClick(r)); }
         cols.forEach(([, fn, l]) => { const [v, cl] = fn(r); const c = tr.insertCell(); c.textContent = v; if (cl) c.className = cl; if (l) c.style.textAlign = 'left'; }); }); };
-    const sk = dash.data('skew'), early = !(ni.status === 'ok' && ni.data.length) && sk.status === 'ok' && sk.data.length;
+    const sk = dash.data(st.fmt === 'ALL' ? 'skew' : 'skew_' + st.fmt.toLowerCase()), early = !(ni.status === 'ok' && ni.data.length) && sk.status === 'ok' && sk.data.length;
     $('h-wei-t').textContent = early ? 'Sectors' : 'Sector indexes'; $('h-wei-m').textContent = early ? 'niche reach · CCOS indexes start Nov 20' : 'CCOS · click to open';
     $('h-niche-t').textContent = early ? 'Niche skew' : 'Niche movers'; $('h-niche-m').textContent = early ? 'small creators\' reach vs big · click to load' : '7-day change · click to load';
     if (early) {
@@ -1916,6 +1990,10 @@ dash.calc('drop_reasons', {
     if (vrow) cbx.append(el('div', 'Revenue (estimate): ' + money(N(vrow.total_mid)) + ' a month (' + range(vrow, 'total') + '; ads ' + money(N(vrow.ad_mid)) +
       ', sponsors ' + money(N(vrow.sponsor_mid)) + ') · catalog value ' + money(N(vrow.catalog_mid)) + ' (' + range(vrow, 'catalog') + ')' +
       ' · advance ' + money(N(vrow.advance_capacity)) + ' · debt capacity ' + money(N(vrow.debt_capacity)), 'ts-txt'));
+    const ffx = dash.data('fmt_creators'), frows = ffx.status === 'ok' ? ffx.data.filter(x => x.channel_id === c.channel_id) : [];
+    if (frows.length) cbx.append(el('div', 'Format (tracked views, 28 days): ' + ['LONG', 'SHORTS'].map(k => { const r = frows.find(x => x.fmt === k);
+      return (k === 'LONG' ? 'Long-form ' : 'Shorts ') + (r ? pct(N(r.share)) + ' of views' + (r.growth_7d != null ? ', ' + spct(N(r.growth_7d)) + ' 7D' : '') +
+        (r.views_per_video != null ? ', ~' + compact(N(r.views_per_video)) + ' a video' : '') : 'none'); }).join(' · '), 'ts-txt'));
     if (rrow) cbx.append(el('div', 'Risk (90 days): vol ' + pct(N(rrow.volatility)) + (rrow.beta != null ? ' · beta ' + f2(N(rrow.beta)) : '') +
       ' · max drawdown ' + pct(N(rrow.max_drawdown)) + (rrow.growth_per_risk != null ? ' · growth ÷ vol ' + f2(N(rrow.growth_per_risk)) : ''), 'ts-txt'));
     if (brow) {
@@ -2165,12 +2243,16 @@ dash.calc('drop_reasons', {
       [[r.channel.toUpperCase()], [compact(N(r.subscribers)) + ' subs', 'dim'], [spct(N(r.view_growth_28d)) + ' views 28D', N(r.view_growth_28d) >= 0 ? 'up' : 'dn']]));
     if (ix.status === 'ok') fillTicker('tk-index', ix.data.map(r =>
       [[r.sector.toUpperCase() + ' INDEX'], [tk(r.sector), 'dim'], ['AVG CCOS ' + f2(r.avg_ccos)], [spct(r.chg), cls(r.chg)]]));
-    if (ni.status === 'ok' && ix.status === 'ok') drawSectors(ni.data, ix.data); else $('sectors').textContent = '';
+    const fnx = dash.data('fmt_niches'), fcx = dash.data('fmt_creators');
+    const niHas = ni.status === 'ok' && ni.data.length;
+    if (st.view === 'niche' && fnx.status === 'ok' && (st.fmt !== 'ALL' || !niHas)) drawFmtNiches(fnx.data);
+    else if (ni.status === 'ok' && ix.status === 'ok') drawSectors(ni.data, ix.data); else $('sectors').textContent = '';
     if (id.status === 'ok') {
       drawChart('chart-mini', 'legend-mini', id.data, 170);
       if (st.view === 'trend') drawChart('chart-big', 'legend-big', id.data, 340);
     }
-    if (sc.status === 'ok') drawCreators(sc.data);
+    if (sc.status === 'ok' && st.fmt !== 'ALL' && fcx.status === 'ok') drawFmtCreators(fcx.data, sc.data);
+    else if (sc.status === 'ok') drawCreators(sc.data);
     if (al.status === 'ok') drawAlerts(al.data);
     const nw = dash.data('news'); if (nw.status === 'ok') drawNews(nw.data);
     const me = dash.data('methodology');
@@ -2200,7 +2282,7 @@ dash.calc('drop_reasons', {
     if (st.view === 'hds' && hhx.status === 'ok') drawHds(hhx.data, hgx.status === 'ok' ? hgx.data : []);
     const rtx = dash.data('rates'), rcx = dash.data('rate_changes'), rpx = dash.data('niche_rpm');
     if (st.view === 'platform' && rtx.status === 'ok') drawRates(rtx.data, rcx.status === 'ok' ? rcx.data : [], rpx.status === 'ok' ? rpx.data : []);
-    const sfx = dash.data('surface'), skx = dash.data('skew');
+    const sfx = dash.data(st.fmt === 'ALL' ? 'surface' : 'surface_' + st.fmt.toLowerCase()), skx = dash.data(st.fmt === 'ALL' ? 'skew' : 'skew_' + st.fmt.toLowerCase());
     if (st.view === 'surf') drawSurf(sfx.status === 'ok' ? sfx.data : [], skx.status === 'ok' ? skx.data : []);
     const csx = dash.data('creator_series');
     if (cdx.status === 'ok' && ni.status === 'ok' && st.view === 'tear') drawTear(cdx.data, ni.data, csx.status === 'ok' ? csx.data : []);
@@ -2214,7 +2296,7 @@ dash.calc('drop_reasons', {
     markTips();
   }
 
-  const CMDS = ['HOME', 'CRTR', 'PLAT', 'WEI', 'MOST', 'ALRT', 'TOP', 'GP', 'IMAP', 'FMT', 'COV', 'NI', 'LADR', 'UCAP', 'DEAL', 'BIZ', 'SPON', 'SRCH', 'WTCH', 'CN', 'DEF', 'RATE', 'HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'HMAP', 'WATCH', 'TEAR', 'COMP', 'CORP', 'UNDERCAP', 'SURF', 'SKEW', 'RATES', 'RPM', 'HDS', 'HOLDERS', 'STREAMS', 'SPONSORS', 'RISK', 'DEALS', 'INVESTORS', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', '!LIFE', '!GAME', '!FINX'];
+  const CMDS = ['HOME', 'CRTR', 'PLAT', 'WEI', 'MOST', 'ALRT', 'TOP', 'GP', 'IMAP', 'FMT', 'COV', 'NI', 'LADR', 'UCAP', 'DEAL', 'BIZ', 'SPON', 'SRCH', 'WTCH', 'CN', 'DEF', 'RATE', 'HELP', 'NICHE', 'TREND', 'CREATOR', 'ALERTS', 'HMAP', 'WATCH', 'TEAR', 'COMP', 'CORP', 'UNDERCAP', 'SURF', 'SKEW', 'RATES', 'RPM', 'HDS', 'HOLDERS', 'STREAMS', 'SPONSORS', 'RISK', 'DEALS', 'INVESTORS', 'PLATFORM', 'NEWS', 'FORMATS', 'COVERAGE', 'DES', 'ANALYZE', 'SORT', 'CLEAR', 'LONG', 'SHORTS', 'ALL', '!LIFE', '!GAME', '!FINX'];
   input.addEventListener('keydown', e => {
     if (e.key === 'Tab') {
       const v = input.value.trim().toUpperCase(); const m = CMDS.filter(c => c.startsWith(v));
@@ -2241,7 +2323,7 @@ dash.calc('drop_reasons', {
     }
     if (!arg && KEYS[nav.key].fns.some(x => x[0] === C)) { runFn(nav.key, C); say(C + ': ' + KEYS[nav.key].fns.find(x => x[0] === C)[1]); return; }
     if (!arg && C === 'DES' && st.sec) { runFn(st.sec.type === 'crtr' ? 'crtr' : 'niche', 'DES'); return; }
-    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, HMAP, WATCH, TEAR <creator>, COMP [A vs B], CORP, UNDERCAP, DEALS, INVESTORS, HDS [company or funder], RISK, STREAMS, SPONSORS, SURF [niche], SKEW, RATES, RPM, PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, $TICKER, CLEAR'); }
+    if (C === 'HELP') { show('help'); say('Commands: NICHE, TREND, CREATOR [search], ALERTS, HMAP, WATCH, TEAR <creator>, COMP [A vs B], CORP, UNDERCAP, DEALS, INVESTORS, HDS [company or funder], RISK, REV, STREAMS, SPONSORS, SURF [niche], SKEW, RATES, RPM, PLATFORM, NEWS, FORMATS [search], COVERAGE, DES <code>, ANALYZE <niche>, SORT <CCOS|SI|NGP|TVE|CHG>, LONG, SHORTS or ALL (which videos count), $TICKER, CLEAR'); }
     else if (C === 'NICHE' || C === 'MARKET') { st.sector = null; show('niche'); say('Niche market overview'); }
     else if (C.startsWith('!') || C.startsWith('$')) { st.sector = '!' + C.slice(1); show('niche'); say('Index ' + st.sector); }
     else if (C === 'TREND') { show('trend'); say('Trend analysis: index average CCOS by day'); }
@@ -2287,6 +2369,11 @@ dash.calc('drop_reasons', {
     else if (C === 'CORP' || C === 'COMPANIES') { corpTab('ladder'); say('Creator companies: stage ladder from no company to outside capital'); }
     else if (C === 'UNDERCAP' || C === 'UNDERCAPITALIZED') { corpTab('under'); say('Undercapitalized: growing creators with no outside capital found'); }
     else if (C === 'DEALS') { corpTab('deals'); say('Deals: financing rounds for creator companies'); }
+    else if (C === 'LONG' || C === 'SHORTS' || C === 'ALL' || C === 'FMT') {
+      const f = C === 'FMT' ? (arg.trim().toUpperCase().replace(/^SHORT$/, 'SHORTS') || 'ALL') : C;
+      if (!['ALL', 'LONG', 'SHORTS'].includes(f)) say('FMT takes ALL, LONG or SHORTS');
+      else { setFmt(f); say('Format: ' + FMTNAME[f] + (f === 'ALL' ? '' : '. Niche and creator screens, the surface and skew now count ' + (f === 'LONG' ? 'long-form videos' : 'Shorts') + ' only; scores, risk and revenue use all views.')); }
+    }
     else if (C === 'REV' || C === 'REVENUE' || C === 'USCAP') { show('rev'); say('Revenue: estimated monthly revenue, catalog value and what it could finance'); }
     else if (C === 'RISK') { show('risk'); say('Risk: volatility, beta to the niche, drawdown, growth per unit of risk'); }
     else if (C === 'STREAMS') { corpTab('streams'); say('Revenue streams: how creators make money beyond ads, from their descriptions'); }

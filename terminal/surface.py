@@ -21,16 +21,28 @@ SKEW_AGE = 90      # skew and dispersion are read on videos up to 3 months old, 
 
 REQUIRED = ("videos", "video_snapshots", "channel_snapshots", "channel_niche")
 
-BASE = f"""
+BASE = """
 WITH v AS (SELECT video_id, arg_max(views, snapshot_date) AS views, max(snapshot_date) AS d FROM video_snapshots GROUP BY 1),
      c AS (SELECT channel_id, arg_max(subscribers, snapshot_date) AS subs FROM channel_snapshots GROUP BY 1),
      x AS (SELECT vi.video_id, vi.channel_id, n.niche_code, substr(n.niche_code, 1, 2) AS sector_code, c.subs, v.views,
                   date_diff('day', vi.published_at::DATE, v.d) AS age,
                   percent_rank() OVER (PARTITION BY n.niche_code ORDER BY c.subs) AS pr
            FROM videos vi JOIN v USING (video_id) JOIN c USING (channel_id) JOIN channel_niche n USING (channel_id)
-           WHERE c.subs > 0 AND v.views IS NOT NULL AND vi.published_at IS NOT NULL)
+           WHERE c.subs > 0 AND v.views IS NOT NULL AND vi.published_at IS NOT NULL {fmt})
 SELECT * FROM x WHERE age BETWEEN 0 AND 365
 """
+
+
+def _fmt(fmt: str | None) -> str:
+    """'LONG' or 'SHORTS' keeps one format (a Short runs 3 minutes or less); None keeps both. Size percentiles are then
+    taken among the creators posting that format."""
+    if fmt is None:
+        return ""
+    return f"AND coalesce(vi.duration_s, 0) {'<=' if fmt == 'SHORTS' else '>'} 180"
+
+
+def _base(fmt: str | None = None) -> str:
+    return BASE.format(fmt=_fmt(fmt))
 
 
 def _have(con) -> bool:
@@ -42,9 +54,9 @@ def _age_case(ages) -> str:
     return "CASE " + " ".join(f"WHEN age <= {d} THEN {i}" for i, (d, _) in enumerate(ages)) + " END"
 
 
-def _cells(con, scope_col: str, ages, n_sizes: int) -> list[tuple]:
+def _cells(con, scope_col: str, ages, n_sizes: int, fmt: str | None = None) -> list[tuple]:
     rows = con.execute(f"""
-        WITH b AS ({BASE})
+        WITH b AS ({_base(fmt)})
         SELECT {scope_col} AS scope, least(floor(pr * {n_sizes}), {n_sizes - 1})::INT AS size_i, {_age_case(ages)} AS age_i,
                count(*) AS n, median(views / subs) * 100 AS reach,
                quantile_cont(ln(views + 1), 0.75) - quantile_cont(ln(views + 1), 0.25) AS disp,
@@ -53,14 +65,14 @@ def _cells(con, scope_col: str, ages, n_sizes: int) -> list[tuple]:
     return rows
 
 
-def cells(con, label=lambda c: c, sector=lambda c: c) -> list[dict]:
+def cells(con, label=lambda c: c, sector=lambda c: c, fmt: str | None = None) -> list[dict]:
     """One row per cell: scope (ALL, a sector code, or a niche code), its size and age position, and the reach and spread."""
     if not _have(con):
         return []
     out = []
     plans = [("all", "'ALL'", AGES, SIZES), ("sector", "sector_code", AGES, SIZES), ("niche", "niche_code", AGES_NICHE, SIZES_NICHE)]
     for level, col, ages, sizes in plans:
-        for scope, si, ai, n, reach, disp, med_subs, creators in _cells(con, col, ages, len(sizes)):
+        for scope, si, ai, n, reach, disp, med_subs, creators in _cells(con, col, ages, len(sizes), fmt):
             ok = n >= MIN_N and creators >= MIN_CREATORS
             name = "All niches" if level == "all" else sector(scope) if level == "sector" else label(scope)
             out.append({"level": level, "scope": scope, "scope_label": name, "size_i": si, "size": sizes[si],
@@ -70,7 +82,7 @@ def cells(con, label=lambda c: c, sector=lambda c: c) -> list[dict]:
 
 
 SKEW_SQL = f"""
-WITH b AS ({BASE}),
+WITH b AS ({{base}}),
      t AS (SELECT *, least(floor(pr * 3), 2)::INT AS third FROM b WHERE age <= {SKEW_AGE}),
      s AS (SELECT niche_code, any_value(sector_code) AS sector_code, count(*) AS videos, count(DISTINCT channel_id) AS creators,
                   median(views / subs) FILTER (WHERE third = 0) * 100 AS small_reach,
@@ -89,12 +101,12 @@ FROM s
 """
 
 
-def skew(con, label=lambda c: c, sector=lambda c: c) -> list[dict]:
+def skew(con, label=lambda c: c, sector=lambda c: c, fmt: str | None = None) -> list[dict]:
     """One row per niche, steepest skew first. skew = small creators' reach / big creators' reach (videos up to 3 months);
     term = the median creator's reach at up to 3 months over their first week, how much a video keeps earning after launch."""
     if not _have(con):
         return []
-    cur = con.execute(SKEW_SQL + " ORDER BY skew DESC NULLS LAST")
+    cur = con.execute(SKEW_SQL.replace("{base}", _base(fmt)) + " ORDER BY skew DESC NULLS LAST")
     cols = [d[0] for d in cur.description]
     out = []
     for r in cur.fetchall():

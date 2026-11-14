@@ -325,6 +325,27 @@ def revenue(con, label) -> list[dict]:
     return rows
 
 
+def format_split(con, label, sector, table: str, key: str) -> list[dict]:
+    """Long-form and Shorts rows from terminal/formats.py, named for the page."""
+    if not _has(con, table):
+        return []
+    rows = _rows(con, f"SELECT * FROM {table} ORDER BY {key}, fmt")
+    if key == "niche_code":
+        for r in rows:
+            r["niche"], r["sector"] = label(r["niche_code"]), sector(r["niche_code"])
+    else:
+        names = dict(_rows_t(con, "SELECT channel_id, title FROM channels")) if _has(con, "channels") else {}
+        niche = dict(_rows_t(con, "SELECT channel_id, niche_code FROM channel_niche")) if _has(con, "channel_niche") else {}
+        for r in rows:
+            r["channel"] = names.get(r["channel_id"]) or r["channel_id"]
+            r["niche"] = label(niche[r["channel_id"]]) if niche.get(r["channel_id"]) else None
+    return rows
+
+
+def _rows_t(con, sql):
+    return con.execute(sql).fetchall()
+
+
 def corp_companies(con) -> list[dict]:
     return _rows(con, "SELECT * FROM creator_company_list") if _has(con, "creator_company_list") else []
 
@@ -508,6 +529,12 @@ def build(con, out_dir: Path = OUT, source: str = "live", public: bool = False) 
         "platform_movement": platform_movement(con, label),
         "surface": surface.cells(con, label, sector),
         "skew": surface.skew(con, label, sector),
+        "surface_long": surface.cells(con, label, sector, "LONG"),
+        "surface_shorts": surface.cells(con, label, sector, "SHORTS"),
+        "skew_long": surface.skew(con, label, sector, "LONG"),
+        "skew_shorts": surface.skew(con, label, sector, "SHORTS"),
+        "fmt_niches": format_split(con, label, sector, "format_niche", "niche_code"),
+        "fmt_creators": format_split(con, label, sector, "format_creator", "channel_id"),
     }
     rpm = rates.latest_rpm(con, label)
     if source == "synthetic":
