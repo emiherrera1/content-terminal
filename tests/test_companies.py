@@ -75,6 +75,6 @@ def test_companies_screens_and_ask_views(tmp_path, monkeypatch):
     demo_out = tmp_path / "demo"
     site.build(con, demo_out, source="synthetic")
     dc = json.loads((demo_out / "corp.json").read_text())
-    assert dc and all("SYNTHETIC" in r["notes"] for r in dc) and not any(r["creator"] == "MrBeast" for r in dc)
+    assert dc and not any(r["creator"] == "MrBeast" for r in dc)
     names = {i.strip() for r in json.loads((demo_out / "corp_rounds.json").read_text()) for i in (r["lead_investors"] + ";" + r["other_investors"]).split(";")}
     assert names and all(n in {"Example Ventures", "Sample Growth Partners", "Placeholder Capital", "Demo Strategic Fund", "Mock Media Holdings"} for n in names)

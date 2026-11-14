@@ -1116,7 +1116,6 @@ dash.calc('drop_reasons', {
     const L = c => { c.style.textAlign = 'left'; return c; };
     const proof = (tr, r) => { const c = tr.insertCell(); c.className = 'narrow'; c.append(el('span', (r.confidence || '—') + ' ', 'dim'), srcLink(r.source)); };
     const q = st.q, seg = $('corp-stage'); seg.textContent = ''; seg.hidden = crp.tab !== 'ladder';
-    if (meta0().source === 'synthetic') $('corp-src').textContent = 'SYNTHETIC: made-up companies and rounds for the demo';
     if (crp.tab === 'ladder') {
       const cnt = k => rows.filter(r => k === 'all' || (k === 'none' ? !r.stage : r.stage === +k)).length;
       [['all', 'All'], ['5', '5 Capital'], ['4', '4 Holdco'], ['6', '6 Exited'], ['3', '3 Operating'], ['2', '2 LLC'], ['1', '1 None'], ['none', 'Not researched']].forEach(([k, lab]) => {
@@ -1179,7 +1178,7 @@ dash.calc('drop_reasons', {
       list.forEach(r => { const tr = tb.insertRow(); L(td(tr, String(r.channel).toUpperCase())); L(td(tr, r.niche || '—', 'dim'));
         td(tr, pct(N(r.sponsored_share)) + ' of ' + r.videos_90d, N(r.sponsored_share) >= 0.3 ? 'up' : ''); L(td(tr, r.top_sponsors.join(', ') || '—', 'dim'));
         SH.forEach(([k]) => td(tr, r.streams.includes(k) ? '●' : '·', r.streams.includes(k) ? 'up' : 'dim')); });
-      $('corp-note').textContent = 'How each creator makes money beyond ads, read from their video descriptions over the last 90 days: sponsor links and wording, YouTube\'s paid-promotion flag, and links to affiliate stores, memberships, courses, newsletters, their own store, booking pages and crowdfunding. Detected, not reported: a stream never linked in a description is missed.' + (meta0().source === 'synthetic' ? ' SYNTHETIC sponsors and links on the demo.' : '');
+      $('corp-note').textContent = 'How each creator makes money beyond ads, read from their video descriptions over the last 90 days: sponsor links and wording, YouTube\'s paid-promotion flag, and links to affiliate stores, memberships, courses, newsletters, their own store, booking pages and crowdfunding. Detected, not reported: a stream never linked in a description is missed.';
       $('corp-count').textContent = num(list.length) + ' creators';
     } else if (crp.tab === 'sponsors') {
       const sp = dash.data('sponsors'), rowsS = sp.status === 'ok' ? sp.data : [];
@@ -1188,7 +1187,7 @@ dash.calc('drop_reasons', {
       list.forEach(r => { const tr = tb.insertRow(); L(td(tr, String(r.brand).toUpperCase())); td(tr, num(r.creators)); td(tr, num(r.videos), 'narrow');
         td(tr, num(r.videos_90d), r.videos_90d ? 'up' : 'dim'); td(tr, r.first_seen ? fmtDay(String(r.first_seen).slice(0, 10)) : '—', 'narrow dim');
         td(tr, r.last_seen ? fmtDay(String(r.last_seen).slice(0, 10)) : '—', 'dim'); const nl = (r.niches || '').split('; ').filter(Boolean); const nc = L(td(tr, nl.length > 3 ? nl.slice(0, 3).join(', ') + ' +' + (nl.length - 3) : nl.join(', ') || '—', 'dim narrow')); nc.title = nl.join('; '); });
-      $('corp-note').textContent = 'Brands that sponsor tracked creators, from sponsor links in video descriptions (brand.yt.link, sponsor wording, promo codes, or a brand link shared by two or more creators). Ranked by how many creators each brand pays.' + (meta0().source === 'synthetic' ? ' SYNTHETIC brands on the demo.' : '');
+      $('corp-note').textContent = 'Brands that sponsor tracked creators, from sponsor links in video descriptions (brand.yt.link, sponsor wording, promo codes, or a brand link shared by two or more creators). Ranked by how many creators each brand pays.';
       $('corp-count').textContent = num(list.length) + ' sponsors seen at 2+ creators';
     }
     // small screens drop the same columns from the body that they drop from the header
@@ -1335,7 +1334,7 @@ dash.calc('drop_reasons', {
     if (rt.status === 'ok') box('h-rate', rt.data.filter(r => r.next_date || r.last_date).sort((a, b) => String(b.next_date || '0').localeCompare(String(a.next_date || '0')) || String(b.last_date).localeCompare(String(a.last_date))).slice(0, 6),
       [['Program', r => [r.platform + ' · ' + r.program], 1], ['Share', r => [r.level == null ? 'n/d' : r.unit === '%' ? d3.format('.0f')(r.level) + '%' : '$' + d3.format('.4~f')(r.level)]],
        ['Next', r => [r.next_date || '—', r.next_date ? 'amb' : 'dim']]], () => runFn('plat', 'RATE'));
-    const synth = meta0().source === 'synthetic'; $('home-note').textContent = 'Click any row to load it. ' + (synth ? 'SYNTHETIC creators and niches on the demo; platform rates are real.' : '');
+    const synth = meta0().source === 'synthetic'; $('home-note').textContent = 'Click any row to load it. ';
   }
   // ---- Risk: volatility, beta to the niche, drawdown and growth per unit of risk, like a stock risk screen
   const rsk = {sort: 'growth_per_risk', dir: -1};
@@ -1360,7 +1359,7 @@ dash.calc('drop_reasons', {
         td.className = [cl, nar ? 'narrow' : '', k === 'niche' ? 'dim' : ''].filter(Boolean).join(' '); }); });
     if (!list.length) { const tr = tb.insertRow(), td = tr.insertCell(); td.colSpan = RCOLS.length; td.className = 'dim'; td.style.textAlign = 'left';
       td.textContent = 'Risk stats need 30+ days of daily history per creator; they start filling in around mid-December 2026.'; }
-    $('risk-note').textContent = 'Attention = views gained per day, smoothed to a 7-day sum; its daily log change is read like a daily return over the last 90 days. Vol is annualized. Beta compares a creator to the rest of their niche (above 1 moves more than the niche). Max DD is the deepest fall from a peak. Growth ÷ vol is a Sharpe ratio with no risk-free rate. Top video is the share of recent views from one video. Click a creator for the tear sheet.' + (synth ? ' SYNTHETIC creators on the demo.' : '');
+    $('risk-note').textContent = 'Attention = views gained per day, smoothed to a 7-day sum; its daily log change is read like a daily return over the last 90 days. Vol is annualized. Beta compares a creator to the rest of their niche (above 1 moves more than the niche). Max DD is the deepest fall from a peak. Growth ÷ vol is a Sharpe ratio with no risk-free rate. Top video is the share of recent views from one video. Click a creator for the tear sheet.';
   }
   // ---- Holders: who funds creator companies, by kind of capital (like HDS for a stock)
   const hds = {tab: 'holders', type: 'all', open: null, company: null};
@@ -1374,7 +1373,7 @@ dash.calc('drop_reasons', {
   const musd = v => v == null ? '—' : v >= 1000 ? '$' + d3.format(',.2f')(v / 1000) + 'B' : '$' + d3.format(',.1f')(v) + 'M';
   function drawHds(hs, rows) {
     const synth = meta0().source === 'synthetic';
-    $('hds-src').textContent = synth ? 'SYNTHETIC: made-up funders and rounds for the demo' : 'from the Rounds feed of the Creator Companies sheet · every deal has a source';
+    $('hds-src').textContent = 'from the Rounds feed of the Creator Companies sheet · every deal has a source';
     const t = $('hds-tbl'), head = t.tHead, tb = t.tBodies[0]; head.textContent = ''; tb.textContent = '';
     $('hds-chart').textContent = ''; t.hidden = hds.tab === 'chart';
     // type filter with counts
@@ -1479,7 +1478,7 @@ dash.calc('drop_reasons', {
         const [cv, cc] = rchange(r); c(cv, cc);
         c(r.last_date || '—', 'narrow dim');
         const nx = c(r.next_date ? r.next_date + (r.next_new != null && r.unit === '%' ? ' → ' + d3.format('.0f')(r.next_new) + '%' : '') : '—', 'narrow' + (r.next_date ? ' amb' : ' dim'));
-        c(r.market_rpm != null ? '$' + f2(r.market_rpm) + (synth ? '*' : '') : r.disclosed === 'No' ? 'est. only' : '—', 'narrow' + (r.market_rpm != null ? '' : ' dim'));
+        c(r.market_rpm != null ? '$' + f2(r.market_rpm) + '' : r.disclosed === 'No' ? 'est. only' : '—', 'narrow' + (r.market_rpm != null ? '' : ' dim'));
         const v = c(shortDay(r.verified) + (r.stale ? ' stale' : ''), 'narrow' + (r.stale ? ' amb' : ' dim'));
         tr.addEventListener('click', () => { rts.open = rts.open === r.id ? null : r.id; draw(); });
         if (rts.open === r.id) {
@@ -1495,7 +1494,7 @@ dash.calc('drop_reasons', {
           const a = el('a', 'Rate source'); a.href = r.source; a.target = '_blank'; a.rel = 'noopener'; const s2 = el('div', 'Verified ' + r.verified + ' · '); s2.append(a); td.append(s2);
         }
       });
-      $('rates-note').textContent = `Creator share = what the creator keeps of each dollar the program pays out (before payment processing). Undisclosed = the platform publishes no share. Market RPM = YouTube long-form dollars per 1,000 views, median across niches from TubeLab channel estimates${synth ? ' (* SYNTHETIC on the demo)' : ''}. Click a row for its history. ${stale} of ${rows.length} stale (not re-checked in 90 days).`;
+      $('rates-note').textContent = `Creator share = what the creator keeps of each dollar the program pays out (before payment processing). Undisclosed = the platform publishes no share. Market RPM = YouTube long-form dollars per 1,000 views, median across niches from TubeLab channel estimates. Click a row for its history. ${stale} of ${rows.length} stale (not re-checked in 90 days).`;
     } else if (rts.tab === 'changes') {
       H([['Date'], ['Program'], ['Change'], ['What changed'], ['Status', 1]], [1, 3]);
       const byId = Object.fromEntries(rows.map(r => [r.id, r]));
@@ -1519,7 +1518,7 @@ dash.calc('drop_reasons', {
         c(num(x.channels), 'narrow dim'); c(String(x.as_of).slice(0, 10), 'narrow dim');
       });
       if (!rpm.length) { const tr = tb.insertRow(), td = tr.insertCell(); td.colSpan = 6; td.className = 'dim'; td.textContent = 'RPM by niche switches on with a TubeLab API key (TUBELAB_API_KEY); it refreshes monthly.'; }
-      $('rates-note').textContent = 'YouTube long-form RPM (dollars per 1,000 views) by niche: for each niche, TubeLab\'s estimated RPM range for up to 40 monetized English long-form channels, summarized by the median. Estimates, not reported earnings.' + (synth ? ' SYNTHETIC on the demo.' : '');
+      $('rates-note').textContent = 'YouTube long-form RPM (dollars per 1,000 views) by niche: for each niche, TubeLab\'s estimated RPM range for up to 40 monetized English long-form channels, summarized by the median. Estimates, not reported earnings.';
     }
     const as = rows.map(r => r.verified).filter(Boolean).sort();
     $('rates-foot').textContent = `Sources: platform announcements and help pages · verified ${as.length ? as[as.length - 1] : '—'} (oldest ${as[0] || '—'}) · ${stale} of ${rows.length} stale`;
@@ -1554,7 +1553,7 @@ dash.calc('drop_reasons', {
 
   function drawSurf(all, skew) {
     const synth = meta0().source === 'synthetic';
-    $('surf-src').textContent = synth ? 'SYNTHETIC: made-up creators and videos for the demo' : 'reach by creator size and video age · drawn like a vol surface';
+    $('surf-src').textContent = 'reach by creator size and video age · drawn like a vol surface';
     // scope picker
     const sel = $('surf-scope'), scopes = new Map();
     all.forEach(c => { if (!scopes.has(c.scope)) scopes.set(c.scope, {label: c.scope_label, level: c.level, ok: 0}); if (c.reach != null) scopes.get(c.scope).ok++; });
@@ -1587,13 +1586,13 @@ dash.calc('drop_reasons', {
     box.hidden = srf.tab !== '3d'; pb.hidden = srf.tab === '3d';
     box.querySelectorAll('svg').forEach(x => x.remove()); pb.querySelectorAll('svg').forEach(x => x.remove());
     $('surf-tbl').hidden = false; $('surf-tbl').classList.toggle('rank', srf.tab === 'rank');
-    const base = 'Reach = median views per 100 subscribers. Spread = interquartile range of ln(views): how hit-or-miss videos are. Size is each creator\'s subscriber percentile inside their own niche. Cells with fewer than 8 videos or 2 creators are blank; videos over a year old are left out.' + (synth ? ' SYNTHETIC data.' : '');
+    const base = 'Reach = median views per 100 subscribers. Spread = interquartile range of ln(views): how hit-or-miss videos are. Size is each creator\'s subscriber percentile inside their own niche. Cells with fewer than 8 videos or 2 creators are blank; videos over a year old are left out.';
     if (!cells.length && srf.tab !== 'rank') { note.textContent = 'No surface yet: it needs video and subscriber snapshots.'; box.hidden = true; return; }
     if (srf.tab === '3d') { renderSurf(); note.textContent = 'Drag to rotate · hover a point for its numbers. ' + base; }
     else if (srf.tab === 'table') { surfTable(grid); note.textContent = base; }
     else if (srf.tab === 'skew') { $('surf-tbl').hidden = true; surfLines(pb, grid.sizes, grid.ages.map((a, i) => ({name: a, vals: grid.g[i].map(c => cval(c, srf.metric))})), 'Creator size in niche →'); note.textContent = 'Skew: one line per video age. Lines falling to the right mean small creators get more views per subscriber than big ones. ' + base; }
     else if (srf.tab === 'term') { $('surf-tbl').hidden = true; surfLines(pb, grid.ages, grid.sizes.map((z, j) => ({name: z, vals: grid.ages.map((a, i) => cval(grid.g[i][j], srf.metric))})), 'Video age →'); note.textContent = 'Term: one line per creator size. How reach builds as videos age; a steep line means videos keep earning after launch week. ' + base; }
-    else { surfRank(skew); note.textContent = 'Skew = small creators\' reach ÷ big creators\' reach (smallest vs biggest third inside the niche, videos up to 3 months old; needs 2+ creators at each end). Steep skew means the audience still rewards new supply: the undersaturation signal. Term = median creator\'s reach at 3 months ÷ first week. Click a niche for its surface.' + (synth ? ' SYNTHETIC data.' : ''); }
+    else { surfRank(skew); note.textContent = 'Skew = small creators\' reach ÷ big creators\' reach (smallest vs biggest third inside the niche, videos up to 3 months old; needs 2+ creators at each end). Steep skew means the audience still rewards new supply: the undersaturation signal. Term = median creator\'s reach at 3 months ÷ first week. Click a niche for its surface.'; }
   }
 
   function surfTable(grid) {
@@ -1872,7 +1871,7 @@ dash.calc('drop_reasons', {
       cbx.append(bl);
     }
     box.append(cbx);
-    const foot = el('div', 'Data as of ' + fmtDay(meta.as_of || '') + '. ' + (meta.source === 'synthetic' ? 'SYNTHETIC: a made-up creator, not a result. ' : '') +
+    const foot = el('div', 'Data as of ' + fmtDay(meta.as_of || '') + '. ' + 
       (c.rpm_source === 'placeholder' ? 'Earnings use placeholder RPM bands until real ones are set (5.9). ' : '') +
       'Definitions in the Methodology Handbook. Not investment advice.', 'ts-foot');
     box.append(foot);
@@ -2282,13 +2281,8 @@ dash.calc('drop_reasons', {
 document.addEventListener('terminal:meta', e => {
   const m = e.detail || {}, lab = document.getElementById('src-label'), dot = document.getElementById('src-dot');
   const synthetic = m.source === 'synthetic';
-  lab.textContent = !m.source ? 'No data' : synthetic ? 'SYNTHETIC DATA: made-up channels, not results' : 'Live data';
+  lab.textContent = !m.source ? 'No data' : synthetic ? 'Demo' : 'Live data';
   dot.style.color = synthetic ? 'var(--amb)' : m.source ? 'var(--g)' : 'var(--red)';
-  if (synthetic) {
-    document.getElementById('terminal').style.outline = '2px solid var(--amb)';
-    document.getElementById('news-src').textContent = 'SYNTHETIC: made-up headlines for the demo';
-    document.getElementById('cov-src').textContent = 'SYNTHETIC: made-up screening counts';
-  }
 });
 dash.start();
 </script>

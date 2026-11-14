@@ -23,7 +23,7 @@ def test_site_files_match_the_page(tmp_path):
     assert set(meta["datasets"]) >= {"niches", "index_daily", "screener", "alerts", "news", "methodology", "coverage", "formats_sheet"}
     # the demo fills every screen with made-up data, never real screening counts or real headlines
     news = json.loads((tmp_path / "news.json").read_text())
-    assert news and all(n["source"] == "Demo Wire (synthetic)" and "example.com" in n["url"] for n in news)
+    assert news and all(n["source"] == "Demo Wire" and "example.com" in n["url"] for n in news)
     cov = json.loads((tmp_path / "coverage.json").read_text())
     assert cov and all(r["screened"] == r["kept"] + r["review"] + r["dropped"] for r in cov)
     assert json.loads((tmp_path / "formats_sheet.json").read_text())

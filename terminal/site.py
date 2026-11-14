@@ -336,7 +336,7 @@ def _demo_corp(details: list[dict]) -> tuple[list[dict], list[dict], list[dict]]
         raised = None
         if co:
             cos.append({"company": co, "creator": name, "relationship": "Owns", "type": "Holding" if st >= 4 else "Operating",
-                        "parent": None, "what": "SYNTHETIC: made-up company", "status": "Sold" if st == 6 else "Active",
+                        "parent": None, "what": "Demo company", "status": "Sold" if st == 6 else "Active",
                         "source": None, "confidence": "Inferred", "last_checked": None})
         if st in (5, 6):
             raised = float(2 + h % 18)
@@ -348,7 +348,7 @@ def _demo_corp(details: list[dict]) -> tuple[list[dict], list[dict], list[dict]]
                                          5: "Outside capital", 6: "Exited"}.get(st),
                           "main_company": co, "outside_money": None if st is None else "Yes" if raised else "None found",
                           "raised_usd_m": raised, "research_status": "To research" if st is None else "Done",
-                          "confidence": None if st is None else "Inferred", "source": None, "notes": "SYNTHETIC: made-up company data",
+                          "confidence": None if st is None else "Inferred", "source": None, "notes": None,
                           "last_checked": None, "channel": name, "niche": d.get("niche"), "niche_code": d.get("niche_code"),
                           "subscribers": d.get("subscribers"), "view_growth_28d": d.get("view_growth_28d"),
                           "growth_vs_niche": d.get("growth_vs_niche"), "cvs": d.get("cvs"), "tier": d.get("tier"), "tracked": True,
@@ -404,7 +404,7 @@ def _demo_news(as_of: dt.date, creators: list[str]) -> list[dict]:
         c = rng.choice(creators) if "{c}" in title and creators else ""
         when = end - dt.timedelta(hours=rng.randint(2, 20 * 24))
         hours = (end - when).total_seconds() / 3600
-        out.append({"url": f"https://example.com/demo-news/{i + 1}", "title": title.format(c=c), "source": "Demo Wire (synthetic)",
+        out.append({"url": f"https://example.com/demo-news/{i + 1}", "title": title.format(c=c), "source": "Demo Wire",
                     "published": when.strftime("%Y-%m-%d %H:%M"), "category": cat, "platform": plat, "impact": imp,
                     "sentiment": sent, "creators": c, "score": weight[imp] * 0.5 ** (hours / 168)})
     return out
