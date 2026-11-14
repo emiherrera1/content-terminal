@@ -106,6 +106,35 @@ window.dash = (() => {
 .ct #command-line .prompt{border-top:0;padding:4px 8px}
 .ct #command-line .log{display:none;position:absolute;left:0;right:0;top:100%;z-index:20;height:auto;max-height:12rem;background:var(--panel);border:1px solid var(--line);border-top:0;padding:6px 8px;box-shadow:0 6px 16px rgba(0,0,0,.5)}
 .ct #command-line.open .log{display:block}
+/* ---- phones: keys become a bottom tab bar (moved out of the container by script), function codes scroll sideways,
+   tables scroll sideways with the name column pinned, tap targets at least 36px */
+#mkeys.mnav{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;gap:2px;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));
+  background:#000;border-top:1px solid #ffc94d;font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;text-transform:uppercase}
+#mkeys.mnav .mk{all:unset;flex:1;min-width:0;text-align:center;padding:11px 0;font-size:10px;font-weight:700;color:#ffc94d;border:1px solid #3a3420;cursor:pointer}
+#mkeys.mnav .mk[aria-selected=true]{background:#ffc94d;color:#000}
+#mkeys.mnav .clock,#mkeys.mnav #stamp{display:none}
+@container (max-width:640px){
+  .ct{padding-bottom:64px}
+  .ct .fnrow{flex-direction:column;align-items:stretch}
+  .ct .fnrow .fns{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:6px 8px}
+  .ct .fnrow .fns::-webkit-scrollbar{display:none}
+  .ct .fns .fn{flex:none;padding:9px 12px;font-size:12px}
+  .ct .fntitle{display:none}
+  .ct .fnrow .search{flex:none;margin:0 8px 6px} .ct .fnrow .search input{padding:8px;font-size:16px}
+  .ct .fnrow.scoped .search{display:none}
+  .ct #command-line .prompt{padding:8px} .ct #command-line .prompt input{font-size:16px}
+  .ct #command-line .log{max-height:7.5rem}
+  .ct .cmb,.ct .flt{padding:9px 11px;font-size:11px}
+  .ct .seg{flex-wrap:wrap}
+  .ct .secbar{gap:2px 10px;padding:6px 8px;font-size:10px}
+  .ct .secbar>b{font-size:12px;flex-basis:100%;order:-1} .ct .seckey{margin-left:0}
+  .ct .pb{max-height:none;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .ct .pb table td:first-child,.ct .pb table th:first-child{position:sticky;left:0;z-index:1;background:var(--panel);box-shadow:1px 0 0 var(--line)}
+  .ct .pb table td:first-child{max-width:44vw;overflow:hidden;text-overflow:ellipsis}
+  .ct td,.ct th{padding:7px 6px}
+  .ct .ph{flex-wrap:wrap;gap:2px 8px} .ct .ph .meta{font-size:9px}
+  .ct .status{flex-wrap:wrap;gap:2px 10px;font-size:9px}
+}
 .ct .clock{margin-left:auto;font-size:13px;font-weight:700;white-space:nowrap}
 .ct .search{margin:6px 8px;border:1px solid var(--line);display:flex}
 .ct .search input{all:unset;flex:1;padding:4px 8px;color:var(--tx);font-family:inherit;text-transform:uppercase}
@@ -749,7 +778,7 @@ dash.calc('drop_reasons', {
   const cl = document.getElementById('command-line'); let clTimer = null;
   const openLog = ms => { cl.classList.add('open'); log.scrollTop = log.scrollHeight; clearTimeout(clTimer); if (ms) clTimer = setTimeout(() => { if (document.activeElement !== input) cl.classList.remove('open'); }, ms); };
   input.addEventListener('focus', () => openLog());
-  input.addEventListener('blur', () => openLog(2500));
+  input.addEventListener('blur', () => openLog(matchMedia('(max-width: 640px)').matches ? 800 : 2500));
   const say = t => { log.textContent += 'CONTENT> ' + t + '\n'; openLog(document.activeElement === input ? 0 : 5000); };
   log.textContent = "CONTENT> Welcome to Content Terminal. Type 'help' for commands.\n";
 
@@ -1260,6 +1289,8 @@ dash.calc('drop_reasons', {
   }
   function renderSec() {
     const box = $('secbar'); box.textContent = '';
+    // on a phone the filter row hides while it only repeats the loaded security
+    document.querySelector('.ct .fnrow').classList.toggle('scoped', !!st.sec && st.q === st.sec.label.toLowerCase());
     if (!st.sec) return;
     const x = el('button', '✕', 'secx'); x.title = 'Unload'; x.addEventListener('click', () => { const was = st.sec.label.toLowerCase(); st.sec = null; if (st.q === was) setQ(''); renderSec(); renderKeys(); draw(); });
     const name = el('b', st.sec.label.toUpperCase() + ' '); const tag = el('span', st.sec.type === 'crtr' ? 'CRTR' : 'NICHE', 'seckey');
@@ -1275,7 +1306,15 @@ dash.calc('drop_reasons', {
       if (n) { stat('CCOS', f2(N(n.ccos))); stat('CHG 7D', spct(N(n.chg)), cls(N(n.chg))); stat('TREND', n.trend, tcls(n.trend)); stat('SI', f3(N(n.si))); stat('RISK', n.risk, rcls(n.risk)); if (n.sector) stat('SECTOR', n.sector); }
     }
   }
-  document.querySelectorAll('#mkeys .mk').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; runFn(k, KEYS[k].fns[0][0]); }));
+  document.querySelectorAll('#mkeys .mk').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; runFn(k, KEYS[k].fns[0][0]); window.scrollTo(0, 0); }));
+  (() => {
+    const bar = $('mkeys'), home = bar.parentNode, after = bar.nextSibling, mq = matchMedia('(max-width: 640px)');
+    const place = () => { if (mq.matches) { if (bar.parentNode !== document.body) document.body.append(bar); bar.classList.add('mnav'); }
+      else { if (bar.parentNode !== home) home.insertBefore(bar, after); bar.classList.remove('mnav'); } };
+    place(); mq.addEventListener('change', place);
+    // a shorter hint fits a phone's command line
+    if (mq.matches) $('cmd').placeholder = 'Name + CRTR or NICHE, or a code · HELP';
+  })();
   // the home board: market-wide monitors on one screen
   function drawHome() {
     const ix = dash.data('indices'), ni = dash.data('niches'), sc = dash.data('screener'), al = dash.data('alerts'), nw = dash.data('news'), rt = dash.data('rates');
@@ -1695,7 +1734,8 @@ dash.calc('drop_reasons', {
   (() => {
     const cv = $('surf-cv'), tip = $('surf-tip'); let drag = null;
     cv.addEventListener('pointerdown', e => { drag = {x: e.clientX, y: e.clientY, yaw: srf.yaw, pitch: srf.pitch}; cv.setPointerCapture(e.pointerId); });
-    cv.addEventListener('pointerup', () => { drag = null; });
+    cv.addEventListener('pointerup', e => { const was = drag; drag = null;
+      if (was && Math.hypot(e.clientX - was.x, e.clientY - was.y) < 6) cv.dispatchEvent(new PointerEvent('pointermove', {clientX: e.clientX, clientY: e.clientY})); });
     cv.addEventListener('pointercancel', () => { drag = null; });
     cv.addEventListener('pointerleave', () => { if (!drag) { srf.hover = null; tip.hidden = true; renderSurf(); } });
     cv.addEventListener('pointermove', e => {
