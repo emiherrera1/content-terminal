@@ -92,11 +92,21 @@ window.dash = (() => {
 .ct .secbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:5px 8px;border-bottom:1px solid var(--line);background:var(--hl);min-height:1.6em}
 .ct .secbar>b{color:var(--acc);font-size:13px} .ct .seckey{background:var(--amb);color:#000;padding:0 5px;font-weight:700;margin-left:-8px}
 .ct .secst i{font-style:normal;color:var(--tm)} .ct .secx{all:unset;cursor:pointer;color:var(--tm);padding:0 4px} .ct .secx:hover{color:var(--red)}
-.ct .hgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line)}
+.ct .hgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line)}
 .ct .hbox{background:var(--bg);min-width:0;overflow:hidden} .ct .hbox table{width:100%} .ct .hbox table{table-layout:fixed} .ct .hbox td,.ct .hbox th{overflow:hidden;text-overflow:ellipsis} .ct .hbox td:first-child,.ct .hbox th:first-child{width:62%}
 @container (max-width:900px){.ct .hgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @container (max-width:560px){.ct .hgrid{grid-template-columns:minmax(0,1fr)}}
-.ct .clock{margin-left:auto;font-size:22px;font-weight:700;white-space:nowrap}
+.ct .tk:nth-of-type(n+2){display:none}
+.ct #stamp{display:none} .ct .grid>div:last-child{display:none!important} .ct .grid{grid-template-columns:minmax(0,1fr)!important}
+.ct .fnrow{display:flex;align-items:center;border-bottom:1px solid var(--line)} .ct .fnrow .fns{flex:1;border-bottom:0}
+.ct .fnrow .search{margin:0 8px;flex:0 0 11rem} .ct .fnrow .search input{padding:2px 6px;font-size:10px}
+.ct .fns .fn small{display:none} .ct .fntitle{font-size:10px}
+.ct .secbar:empty{display:none}
+.ct #command-line{position:relative;margin:0;border-left:0;border-right:0;border-top:0}
+.ct #command-line .prompt{border-top:0;padding:4px 8px}
+.ct #command-line .log{display:none;position:absolute;left:0;right:0;top:100%;z-index:20;height:auto;max-height:12rem;background:var(--panel);border:1px solid var(--line);border-top:0;padding:6px 8px;box-shadow:0 6px 16px rgba(0,0,0,.5)}
+.ct #command-line.open .log{display:block}
+.ct .clock{margin-left:auto;font-size:13px;font-weight:700;white-space:nowrap}
 .ct .search{margin:6px 8px;border:1px solid var(--line);display:flex}
 .ct .search input{all:unset;flex:1;padding:4px 8px;color:var(--tx);font-family:inherit;text-transform:uppercase}
 .ct .search input::placeholder{color:var(--td)}
@@ -299,9 +309,13 @@ window.dash = (() => {
     <button class="mk" data-k="home" aria-selected="true">HOME</button><button class="mk" data-k="crtr" aria-selected="false">CRTR</button><button class="mk" data-k="niche" aria-selected="false">NICHE</button><button class="mk" data-k="corp" aria-selected="false">CORP</button><button class="mk" data-k="plat" aria-selected="false">PLAT</button><button class="mk" data-k="news" aria-selected="false">NEWS</button><button class="mk" data-k="help" aria-selected="false">HELP</button>
     <span class="clock" id="clock">—</span>
   </div>
+  <div class="panel cl" id="command-line">
+        <pre class="log" id="log" aria-live="polite"></pre>
+    <label class="prompt"><b>CONTENT&gt;</b><input id="cmd" type="text" placeholder="Type a creator or niche, then CRTR or NICHE (MRBEAST CRTR) · or a code like SURF, HDS, RATE · HELP" autocomplete="off" spellcheck="false" aria-label="Command"></label>
+  </div>
   <div class="secbar" id="secbar" aria-live="polite"></div>
-  <div class="fbar fns" id="fnbar" role="tablist" aria-label="Functions"></div>
-  <label class="search"><input id="search" type="search" placeholder="Search creators and niches..." aria-label="Search creators and niches" autocomplete="off"></label>
+  <div class="fnrow"><div class="fbar fns" id="fnbar" role="tablist" aria-label="Functions"></div>
+  <label class="search"><input id="search" type="search" placeholder="Filter…" aria-label="Filter the current screen" autocomplete="off"></label></div>
 
   <div class="grid">
     <div class="panel" id="main">
@@ -311,9 +325,8 @@ window.dash = (() => {
           <div class="hbox"><div class="ph"><span>Sector indexes</span><span class="meta">CCOS · click to open</span></div><table id="h-wei"></table></div>
           <div class="hbox"><div class="ph"><span>Niche movers</span><span class="meta">7-day change · click to load</span></div><table id="h-niche"></table></div>
           <div class="hbox"><div class="ph"><span>MOST · creator movers</span><span class="meta">vs niche · click to load</span></div><table id="h-most"></table></div>
-          <div class="hbox"><div class="ph"><span>ALRT · spikes today</span><span class="meta">σ vs 28 days</span></div><table id="h-alrt"></table></div>
           <div class="hbox"><div class="ph"><span>TOP · news</span><span class="meta">ranked</span></div><table id="h-top"></table></div>
-          <div class="hbox"><div class="ph"><span>RATE · platform rates</span><span class="meta">next and last changes</span></div><table id="h-rate"></table></div>
+          <table id="h-alrt" hidden></table><table id="h-rate" hidden></table>
         </div>
         <div class="cnote" id="home-note"></div>
       </section>
@@ -592,14 +605,8 @@ window.dash = (() => {
     </div>
   </div>
 
-  <div class="panel cl" id="command-line">
-    <div class="ph"><span>Command line</span></div>
-    <pre class="log" id="log" aria-live="polite"></pre>
-    <label class="prompt"><b>CONTENT&gt;</b><input id="cmd" type="text" placeholder="Enter command..." autocomplete="off" spellcheck="false" aria-label="Command"></label>
-  </div>
   <div class="status">
-    <span><span class="dot" id="src-dot">●</span> <span id="src-label">Loading</span></span><span id="src-switch" hidden></span><span>F1=Help</span><span>Esc=Close</span><span>Tab=Autocomplete</span>
-    <span>Data: daily, as of <span data-source="summary" data-field="asOf" data-row="0">—</span></span>
+    <span><span class="dot" id="src-dot">●</span> <span id="src-label">Loading</span></span><span id="src-switch" hidden></span><span>Data: daily, as of <span data-source="summary" data-field="asOf" data-row="0">—</span></span>
     <span class="ver">Content terminal v0.5 · <a href="/logout" style="color:inherit">Log out</a></span>
   </div>
 </div>
@@ -738,8 +745,13 @@ dash.calc('drop_reasons', {
 
   // command log
   const log = $('log'), input = $('cmd');
-  const say = t => { log.textContent += 'CONTENT> ' + t + '\n'; log.scrollTop = log.scrollHeight; };
-  say('Welcome to Content Terminal v0.5'); say("Type 'help' for available commands");
+  // the log drops down under the command line while it is in use, then folds away
+  const cl = document.getElementById('command-line'); let clTimer = null;
+  const openLog = ms => { cl.classList.add('open'); log.scrollTop = log.scrollHeight; clearTimeout(clTimer); if (ms) clTimer = setTimeout(() => { if (document.activeElement !== input) cl.classList.remove('open'); }, ms); };
+  input.addEventListener('focus', () => openLog());
+  input.addEventListener('blur', () => openLog(2500));
+  const say = t => { log.textContent += 'CONTENT> ' + t + '\n'; openLog(document.activeElement === input ? 0 : 5000); };
+  log.textContent = "CONTENT> Welcome to Content Terminal. Type 'help' for commands.\n";
 
   function show(v) {
     st.view = v;
@@ -1248,7 +1260,7 @@ dash.calc('drop_reasons', {
   }
   function renderSec() {
     const box = $('secbar'); box.textContent = '';
-    if (!st.sec) { box.append(el('span', 'No security loaded · type a creator or niche name, then CRTR or NICHE (e.g. MRBEAST CRTR, FITNESS NICHE)', 'dim')); return; }
+    if (!st.sec) return;
     const x = el('button', '✕', 'secx'); x.title = 'Unload'; x.addEventListener('click', () => { const was = st.sec.label.toLowerCase(); st.sec = null; if (st.q === was) setQ(''); renderSec(); renderKeys(); draw(); });
     const name = el('b', st.sec.label.toUpperCase() + ' '); const tag = el('span', st.sec.type === 'crtr' ? 'CRTR' : 'NICHE', 'seckey');
     box.append(x, name, tag);
