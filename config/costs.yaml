@@ -8,11 +8,12 @@ youtube:
   daily_quota_units: 10000   # free; the pull stops before this
 tubelab:
   credits_per_search: 5
-  monthly_credits:            # your plan's monthly credit allowance; fill in from TubeLab > Billing to see what is left
+  monthly_credits: 400        # Pro (legacy) plan; assumed equal to the current Pro plan's 400 until confirmed on TubeLab > Billing
+  topup_price_per_credit: 0.10   # basic top-up packages ($25 for 250); top-up credits never expire
 motherduck:
   free_storage_gb: 10         # check your MotherDuck plan; the board warns at 80%
 subscriptions:      # monthly, in dollars; set to 0 for anything on a free plan
-  TubeLab Pro: 39
+  TubeLab Pro (legacy, API included): 39   # confirm the price on TubeLab > Manage Plan
   vidIQ Pro:                  # fill in what you pay
   MotherDuck: 0
   Cloudflare Pages: 0
