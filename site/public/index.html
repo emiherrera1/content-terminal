@@ -345,7 +345,7 @@ window.dash = (() => {
   </div>
   <div class="panel cl" id="command-line">
         <pre class="log" id="log" aria-live="polite"></pre>
-    <label class="prompt"><b>CONTENT&gt;</b><input id="cmd" type="text" placeholder="Type a creator or niche, then CRTR or NICHE (MRBEAST CRTR) · or a code like SURF, HDS, RATE · HELP" autocomplete="off" spellcheck="false" aria-label="Command"></label>
+    <label class="prompt"><b>CONTENT&gt;</b><input id="cmd" type="text" placeholder="Type a creator or niche, then CRTR or NICHE (DOCTOR MIKE CRTR) · or a code like SURF, HDS, RATE · HELP" autocomplete="off" spellcheck="false" aria-label="Command"></label>
   </div>
   <div class="secbar" id="secbar" aria-live="polite"></div>
   <div class="fnrow"><div class="fbar fns" id="fnbar" role="tablist" aria-label="Functions"></div>
@@ -599,7 +599,7 @@ window.dash = (() => {
         <div class="pb"><dl>
           <dt>How it is organized</dt>
           <dd>Market keys across the top: HOME (monitors), CRTR (creators, read like stocks), NICHE (sectors and niches, read like indexes), CORP (creator companies, read like private markets), PLAT (platforms, read like macro and rates), NEWS, HELP. Each key has its own function codes in the strip below it.</dd>
-          <dd>Load a security by typing its name and key: MRBEAST CRTR, FITNESS NICHE. Add a function to jump straight there: MRBEAST CRTR RISK. The loaded security stays in the bar under the keys while you move between functions; list functions are filtered to it. ✕ unloads it.</dd>
+          <dd>Load a security by typing its name and key: DOCTOR MIKE CRTR, FITNESS NICHE. Add a function to jump straight there: DOCTOR MIKE CRTR RISK. Only tracked creators load: 517 YouTube creators in Lifestyle, Technology, Business &amp; Finance and Health &amp; Wellness. The loaded security stays in the bar under the keys while you move between functions; list functions are filtered to it. ✕ unloads it.</dd>
           <dd>CRTR: DES (tear sheet) · SRCH · RISK · BIZ · CORP · HDS · COMP · WTCH · CN. NICHE: DES (analysis) · NI · GP · IMAP · SURF · SKEW · RPM · FMT · COV. CORP: LADR · UCAP · DEAL · HDS · BIZ · SPON. PLAT: PLAT · RATE · RPM. HOME: WEI · MOST · ALRT · TOP · RATE.</dd>
           <dt>Commands</dt>
           <dd>NICHE · TREND · CREATOR [search] · ALERTS · HMAP · WATCH · TEAR &lt;creator&gt; · COMP [A vs B] · CORP · UNDERCAP · DEALS · INVESTORS · HDS [company or funder] · RISK · STREAMS · SPONSORS · SURF [niche] · SKEW · RATES · RPM · PLATFORM · NEWS · FORMATS [search] · COVERAGE · DES &lt;code&gt; · ANALYZE &lt;niche&gt; · HELP · CLEAR</dd>
@@ -1354,7 +1354,7 @@ dash.calc('drop_reasons', {
     if (type === 'crtr') {
       const cd = dash.data('creator_details'); if (cd.status !== 'ok') return false;
       const hit = cd.data.find(c => c.channel.toLowerCase() === t) || cd.data.find(c => c.channel.toLowerCase().includes(t));
-      if (!hit) { say("No creator matches '" + term.toUpperCase() + "'"); return false; }
+      if (!hit) { say("'" + term.toUpperCase() + "' isn't a tracked creator. The terminal tracks " + cd.data.length + " YouTube creators in Lifestyle, Technology, Business & Finance and Health & Wellness; try CRTR SRCH to browse them."); return false; }
       st.sec = {type, id: hit.channel_id, label: hit.channel}; nav.key = 'crtr'; runFn('crtr', 'DES'); say(hit.channel.toUpperCase() + ' CRTR loaded · functions: ' + KEYS.crtr.fns.map(x => x[0]).join(' '));
     } else {
       const ni0 = dash.data('niches'), sk0 = dash.data('skew');
