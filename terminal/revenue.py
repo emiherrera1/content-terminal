@@ -136,7 +136,7 @@ def _has(con, *tables) -> bool:
 def _tubelab(con) -> dict[str, dict]:
     if not _has(con, "niche_rpm"):
         return {}
-    cur = con.execute("SELECT * FROM niche_rpm WHERE as_of = (SELECT max(as_of) FROM niche_rpm)")
+    cur = con.execute("SELECT * FROM niche_rpm QUALIFY row_number() OVER (PARTITION BY niche_code ORDER BY as_of DESC) = 1")
     cols = [d[0] for d in cur.description]
     return {r["niche_code"]: r for r in (dict(zip(cols, x)) for x in cur.fetchall())}
 

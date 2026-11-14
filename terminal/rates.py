@@ -132,8 +132,14 @@ def load_rpm(con, today: dt.date | None = None, label=None, search=None, sleep=N
     today = today or dt.date.today()
     con.execute(DDL)
     last = con.execute("SELECT max(as_of) FROM niche_rpm").fetchone()[0]
-    if last and (today - last).days < RPM_REFRESH_DAYS:
-        return f"fresh (last pull {last}); next after {last + dt.timedelta(days=RPM_REFRESH_DAYS)}"
+    all_niches = [r[0] for r in con.execute("SELECT DISTINCT niche_code FROM channel_niche ORDER BY 1").fetchall()]
+    fresh = last and (today - last).days < RPM_REFRESH_DAYS
+    if fresh:   # between monthly pulls, price only niches that have no recent price (a newly added sector)
+        priced = {r[0] for r in con.execute("SELECT DISTINCT niche_code FROM niche_rpm WHERE as_of > ?",
+                                            [today - dt.timedelta(days=RPM_REFRESH_DAYS)]).fetchall()}
+        missing = [c for c in all_niches if c not in priced]
+        if not missing:
+            return f"fresh (last pull {last}); next after {last + dt.timedelta(days=RPM_REFRESH_DAYS)}"
     if label is None:
         from .coverage import _label as label
     import time
@@ -142,7 +148,7 @@ def load_rpm(con, today: dt.date | None = None, label=None, search=None, sleep=N
         search, gap = (lambda q: _search(key, q, sleep=sleep)), TUBELAB_GAP_S
     else:
         sleep, gap = sleep or (lambda s: None), 0
-    niches = [r[0] for r in con.execute("SELECT DISTINCT niche_code FROM channel_niche ORDER BY 1").fetchall()]
+    niches = missing if fresh else all_niches
     tracked = {r[0] for r in con.execute("SELECT channel_id FROM channels").fetchall()}
     rows, failed = [], []
     for i, code in enumerate(niches):
@@ -159,7 +165,7 @@ def load_rpm(con, today: dt.date | None = None, label=None, search=None, sleep=N
                          "TubeLab estimate"))
     if not rows and failed:
         raise RuntimeError(f"every TubeLab search failed, e.g. {failed[0]}")
-    con.execute("DELETE FROM niche_rpm WHERE as_of = ?", [today])
+    con.execute(f"DELETE FROM niche_rpm WHERE as_of = ? AND list_contains(?, niche_code)", [today, niches])
     if rows:
         con.executemany("INSERT INTO niche_rpm VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", rows)
     done = len(niches) - len(failed)
@@ -171,7 +177,7 @@ def latest_rpm(con, label=lambda c: c) -> list[dict]:
     got = con.execute("SELECT count(*) FROM information_schema.tables WHERE table_name = 'niche_rpm'").fetchone()[0]
     if not got:
         return []
-    cur = con.execute("SELECT * FROM niche_rpm WHERE as_of = (SELECT max(as_of) FROM niche_rpm) ORDER BY rpm_mid DESC")
+    cur = con.execute("SELECT * FROM niche_rpm QUALIFY row_number() OVER (PARTITION BY niche_code ORDER BY as_of DESC) = 1 ORDER BY rpm_mid DESC")
     cols = [d[0] for d in cur.description]
     return [{**dict(zip(cols, r)), "niche": label(r[1])} for r in cur.fetchall()]
 

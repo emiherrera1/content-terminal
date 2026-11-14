@@ -56,3 +56,19 @@ def test_one_failed_niche_keeps_the_rest():
     out = rates.load_rpm(con, dt.date(2026, 11, 14), label=lambda c: c, search=search)
     assert out.startswith("1 of 2 niches priced") and "1 failed" in out
     assert con.execute("SELECT niche_code, rpm_mid FROM niche_rpm").fetchall() == [("03.07", 3.0)]
+
+
+def test_a_new_niche_is_priced_between_monthly_pulls():
+    import datetime as dt
+    from terminal import rates, store
+    con = store.connect(":memory:")
+    con.execute("CREATE TABLE channel_niche AS SELECT * FROM (VALUES ('UCa', '03.07', '03')) t(channel_id, niche_code, sector)")
+    hit = [{"id": "UCx", "monetization": {"rpmEstimationFrom": 2, "rpmEstimationTo": 4}}]
+    calls = []
+    search = lambda q: calls.append(q) or hit
+    rates.load_rpm(con, dt.date(2026, 11, 1), label=lambda c: c, search=search)
+    con.execute("INSERT INTO channel_niche VALUES ('UCb', '01.68', '01')")
+    out = rates.load_rpm(con, dt.date(2026, 11, 14), label=lambda c: c, search=search)
+    assert calls == ["03.07", "01.68"] and out.startswith("1 of 1")       # only the new niche is searched
+    assert rates.load_rpm(con, dt.date(2026, 11, 15), label=lambda c: c, search=search).startswith("fresh")
+    assert sorted(r["niche_code"] for r in rates.latest_rpm(con)) == ["01.68", "03.07"]   # both still priced

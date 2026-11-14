@@ -5,8 +5,10 @@
 #   10 Social & Community  11 Sports  12 Pets & Animals  13 Science  14 Travel
 #   15 Automotive  16 Religion & Spirituality  (17 Sensitive Topics is secondary-only)
 # Consumer-demand sectors: Lifestyle (fitness, food, fashion & beauty), Technology (consumer tech),
-# Business & Finance (personal finance, entrepreneurship), Health & Wellness.
+# Business & Finance (personal finance, entrepreneurship), Health & Wellness. Entertainment covers the biggest creators
+# and the creator companies the fund and Holders screens follow.
 sectors:
+  - "01"   # Entertainment, added 2026-11-14
   - "03"
   - "04"
   - "08"

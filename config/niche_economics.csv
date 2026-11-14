@@ -22,3 +22,8 @@ niche_code,rpm_low,rpm_high,shorts_rpm_low,shorts_rpm_high,sponsor_cpm_low,spons
 09.27,2,7.5,0.01,0.07,20,40,Health / Fitness; Motivation / Self-Help (proxy),Education / Self-Improvement
 09.28,2,14,0.01,0.07,15,25,Health / Fitness; Health & Wellness,Lifestyle / Vlog
 09.49,2,14,0.01,0.07,20,40,Health / Fitness; Health & Wellness,Education / Self-Improvement
+01.01,1,4,0.01,0.07,15,25,Entertainment / Vlogs; Comedy / Entertainment (proxy for film and TV commentary),Lifestyle / Vlog
+01.02,1,4,0.01,0.07,15,25,Entertainment / Vlogs; Comedy / Entertainment,Lifestyle / Vlog
+01.03,1,3.5,0.01,0.07,15,25,Entertainment / Vlogs; Music,Lifestyle / Vlog
+01.67,0.5,2.5,0.01,0.07,15,25,Kids / Family; Kids / Animation,Lifestyle / Vlog (proxy; kids' content limits ad targeting and sponsorship)
+01.68,1,4,0.01,0.07,15,25,Entertainment / Vlogs; Comedy / Entertainment,Lifestyle / Vlog
