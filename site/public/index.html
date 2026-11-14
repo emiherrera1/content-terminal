@@ -329,7 +329,7 @@ window.dash = (() => {
 [data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
 </style>
 <div class="ct" id="terminal">
-  <div class="tk"><span class="lab">Niches</span><div class="vp" id="tk-niches" data-source="niches"><div class="run"></div></div></div>
+  <div class="tk"><span class="lab" id="tk-lab">Niches</span><div class="vp" id="tk-niches" data-source="niches"><div class="run"></div></div></div>
   <div class="tk"><span class="lab">Creators</span><div class="vp" id="tk-creators" data-source="screener"><div class="run"></div></div></div>
   <div class="tk"><span class="lab">Index</span><div class="vp" id="tk-index" data-source="indices"><div class="run"></div></div></div>
 
@@ -351,8 +351,8 @@ window.dash = (() => {
       <section class="view" id="home">
         <div class="ph"><span>WEI · Market monitors</span><span class="meta" data-source="summary" data-field="asOf" data-row="0">—</span></div>
         <div class="hgrid">
-          <div class="hbox"><div class="ph"><span>Sector indexes</span><span class="meta">CCOS · click to open</span></div><table id="h-wei"></table></div>
-          <div class="hbox"><div class="ph"><span>Niche movers</span><span class="meta">7-day change · click to load</span></div><table id="h-niche"></table></div>
+          <div class="hbox"><div class="ph"><span id="h-wei-t">Sector indexes</span><span class="meta" id="h-wei-m">CCOS · click to open</span></div><table id="h-wei"></table></div>
+          <div class="hbox"><div class="ph"><span id="h-niche-t">Niche movers</span><span class="meta" id="h-niche-m">7-day change · click to load</span></div><table id="h-niche"></table></div>
           <div class="hbox"><div class="ph"><span>MOST · creator movers</span><span class="meta">vs niche · click to load</span></div><table id="h-most"></table></div>
           <div class="hbox"><div class="ph"><span>TOP · news</span><span class="meta">ranked</span></div><table id="h-top"></table></div>
           <table id="h-alrt" hidden></table><table id="h-rate" hidden></table>
@@ -641,7 +641,7 @@ window.dash = (() => {
 
   <div class="status">
     <span><span class="dot" id="src-dot">●</span> <span id="src-label">Loading</span></span><span id="src-switch" hidden></span><span>Data: daily, as of <span data-source="summary" data-field="asOf" data-row="0">—</span></span>
-    <span class="ver">Content terminal v0.5 · <a href="/logout" style="color:inherit">Log out</a></span>
+    <span class="ver">Content terminal v0.6 · <a href="/logout" style="color:inherit">Log out</a></span>
   </div>
 </div>
 <script>
@@ -1328,10 +1328,21 @@ dash.calc('drop_reasons', {
       const b = t.createTBody(); if (!rows.length) { const r = b.insertRow(), c = r.insertCell(); c.colSpan = cols.length; c.className = 'dim'; c.textContent = 'Nothing yet.'; c.style.textAlign = 'left'; }
       rows.forEach(r => { const tr = b.insertRow(); if (onClick) { tr.style.cursor = 'pointer'; tr.addEventListener('click', () => onClick(r)); }
         cols.forEach(([, fn, l]) => { const [v, cl] = fn(r); const c = tr.insertCell(); c.textContent = v; if (cl) c.className = cl; if (l) c.style.textAlign = 'left'; }); }); };
-    if (ix.status === 'ok') box('h-wei', ix.data.slice().sort((a, b) => N(b.avg_ccos) - N(a.avg_ccos)),
+    const sk = dash.data('skew'), early = !(ni.status === 'ok' && ni.data.length) && sk.status === 'ok' && sk.data.length;
+    $('h-wei-t').textContent = early ? 'Sectors' : 'Sector indexes'; $('h-wei-m').textContent = early ? 'niche reach · CCOS indexes start Nov 20' : 'CCOS · click to open';
+    $('h-niche-t').textContent = early ? 'Niche skew' : 'Niche movers'; $('h-niche-m').textContent = early ? 'small creators\' reach vs big · click to load' : '7-day change · click to load';
+    if (early) {
+      const bySec = d3.rollups(sk.data.filter(r => r.sector), v => ({sector: v[0].sector, niches: v.length, creators: d3.sum(v, r => N(r.creators)),
+        skew: d3.median(v.filter(r => r.skew != null), r => N(r.skew))}), r => r.sector).map(([, v]) => v).sort((a, b) => N(b.skew) - N(a.skew));
+      box('h-wei', bySec, [['Sector', r => [r.sector.toUpperCase()], 1], ['Niches', r => [num(r.niches)]], ['Creators', r => [num(r.creators)]],
+        ['Med. skew', r => [r.skew == null ? '—' : f2(r.skew) + '×', N(r.skew) > 1 ? 'up' : '']]], () => runFn('niche', 'SKEW'));
+      box('h-niche', sk.data.filter(r => r.skew != null).sort((a, b) => N(b.skew) - N(a.skew)).slice(0, 8),
+        [['Niche', r => [r.niche.toUpperCase()], 1], ['Creators', r => [num(r.creators)]], ['Skew', r => [f2(N(r.skew)) + '×', N(r.skew) > 1 ? 'up' : '']]], r => loadSec('niche', r.niche));
+    }
+    if (!early && ix.status === 'ok') box('h-wei', ix.data.slice().sort((a, b) => N(b.avg_ccos) - N(a.avg_ccos)),
       [['Index', r => [tk(r.sector) + ' ' + r.sector.toUpperCase()], 1], ['CCOS', r => [r.avg_ccos == null ? '—' : f2(r.avg_ccos)]], ['Chg 7D', r => [spct(r.chg), cls(r.chg)]]],
       r => { st.sector = tk(r.sector); nav.key = 'niche'; nav.fn = 'NI'; show('niche'); });
-    if (ni.status === 'ok') box('h-niche', ni.data.slice().sort((a, b) => N(b.chg) - N(a.chg)).slice(0, 8),
+    if (!early && ni.status === 'ok') box('h-niche', ni.data.slice().sort((a, b) => N(b.chg) - N(a.chg)).slice(0, 8),
       [['Niche', r => [r.niche.toUpperCase()], 1], ['CCOS', r => [f2(N(r.ccos))]], ['Chg 7D', r => [spct(N(r.chg)), cls(N(r.chg))]]], r => loadSec('niche', r.niche));
     if (sc.status === 'ok') box('h-most', sc.data.filter(r => r.growth_vs_niche != null).sort((a, b) => N(b.growth_vs_niche) - N(a.growth_vs_niche)).slice(0, 8),
       [['Creator', r => [r.channel.toUpperCase()], 1], ['Subs', r => [compact(N(r.subscribers))]], ['Vs niche', r => [spct(N(r.growth_vs_niche)), cls(N(r.growth_vs_niche))]]], r => loadSec('crtr', r.channel));
@@ -2139,12 +2150,16 @@ dash.calc('drop_reasons', {
           al = dash.data('alerts'), su = dash.data('summary');
     const s = su.status === 'ok' ? su.data[0] : null;
     document.querySelectorAll('[data-source="summary"][data-field]').forEach(e => {
-      const f = e.dataset.field, v = s ? s[f] : null;
+      const f = e.dataset.field, v = s && s[f] !== '' && s[f] != null ? s[f] : f === 'asOf' ? (meta0().as_of || null) : null;
       e.textContent = v == null ? '—' : f === 'asOf' ? fmtDay(v) : f === 'avgCcos' ? f2(v) : typeof v === 'number' ? num(v) : String(v).toUpperCase();
       e.className = e.className.replace(/\b(up|dn|fl)\b/g, '').trim();
       if (s && f === 'temp') e.classList.add(v === 'HOT' ? 'up' : v === 'WARM' ? 'fl' : 'dn');
     });
-    if (ni.status === 'ok') fillTicker('tk-niches', ni.data.slice().sort((a, b) => N(b.ccos) - N(a.ccos)).map(n =>
+    const niReady = ni.status === 'ok' && ni.data.length;
+    $('tk-lab').textContent = niReady || sc.status !== 'ok' ? 'Niches' : 'Creators';
+    if (!niReady && sc.status === 'ok') fillTicker('tk-niches', sc.data.filter(r => r.growth_vs_niche != null).sort((a, b) => N(b.growth_vs_niche) - N(a.growth_vs_niche)).slice(0, 20).map(r =>
+      [[r.channel.toUpperCase()], [compact(N(r.subscribers)) + ' subs', 'dim'], [spct(N(r.growth_vs_niche)) + ' vs niche', cls(N(r.growth_vs_niche))]]));
+    if (niReady) fillTicker('tk-niches', ni.data.slice().sort((a, b) => N(b.ccos) - N(a.ccos)).map(n =>
       [[n.niche.toUpperCase()], [n.tag, 'dim'], ['CCOS ' + f2(N(n.ccos))], [spct(N(n.chg)), cls(N(n.chg))]]));
     if (sc.status === 'ok') fillTicker('tk-creators', sc.data.slice(0, 15).map(r =>
       [[r.channel.toUpperCase()], [compact(N(r.subscribers)) + ' subs', 'dim'], [spct(N(r.view_growth_28d)) + ' views 28D', N(r.view_growth_28d) >= 0 ? 'up' : 'dn']]));
