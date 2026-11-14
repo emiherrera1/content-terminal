@@ -107,9 +107,19 @@ window.dash = (() => {
 .ct .fns .fn small{display:none} .ct .fntitle{font-size:10px}
 .ct .secbar:empty{display:none}
 .ct #command-line{position:relative;margin:0;border-left:0;border-right:0;border-top:0}
-.ct #command-line .prompt{border-top:0;padding:4px 8px}
+.ct #command-line .prompt{border-top:0;padding:4px 8px} .ct #command-line .prompt b{margin-right:8px;color:var(--acc)}
 .ct #command-line .log{display:none;position:absolute;left:0;right:0;top:100%;z-index:20;height:auto;max-height:12rem;background:var(--panel);border:1px solid var(--line);border-top:0;padding:6px 8px;box-shadow:0 6px 16px rgba(0,0,0,.5)}
 .ct #command-line.open .log{display:block}
+.ct #command-line.palopen .log{display:none!important}
+.ct .pal{position:absolute;left:0;right:0;top:100%;z-index:30;background:var(--panel);border:1px solid var(--line);border-top:0;
+  max-height:70vh;overflow-y:auto;padding:6px 0 10px;box-shadow:0 10px 24px rgba(0,0,0,.6);text-transform:none}
+.ct .pal .ph2{color:var(--tm);font-weight:700;padding:10px 12px 4px 92px;font-size:11px;letter-spacing:.04em}
+.ct .pal .it{display:flex;align-items:baseline;gap:14px;padding:4px 12px;cursor:pointer;margin:0 6px;border-radius:3px}
+.ct .pal .it .cd{flex:0 0 66px;text-align:right;color:var(--acc);font-weight:700}
+.ct .pal .it .lb{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx)}
+.ct .pal .it .rt{flex:none;color:var(--tm);font-size:11px;text-transform:uppercase}
+.ct .pal .it[aria-selected=true]{background:#2c2a27} .ct .pal .it:hover{background:#221f1c}
+.ct .pal .keys{color:var(--td);font-size:10px;padding:8px 12px 0 92px}
 /* ---- phones: keys become a bottom tab bar (moved out of the container by script), function codes scroll sideways,
    tables scroll sideways with the name column pinned, tap targets at least 36px */
 #mkeys.mnav{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;gap:2px;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));
@@ -128,6 +138,8 @@ window.dash = (() => {
   .ct .fnrow .search{flex:none;margin:0 8px 6px} .ct .fnrow .search input{padding:8px;font-size:16px}
   .ct .fnrow.scoped .search{display:none}
   .ct #command-line .prompt{padding:8px} .ct #command-line .prompt input{font-size:16px}
+  .ct .pal{max-height:60vh} .ct .pal .ph2{padding-left:70px} .ct .pal .keys{display:none}
+  .ct .pal .it{padding:9px 10px} .ct .pal .it .cd{flex-basis:50px}
   .ct #command-line .log{max-height:7.5rem}
   .ct .cmb,.ct .flt{padding:9px 11px;font-size:11px}
   .ct .seg{flex-wrap:wrap}
@@ -345,7 +357,8 @@ window.dash = (() => {
   </div>
   <div class="panel cl" id="command-line">
         <pre class="log" id="log" aria-live="polite"></pre>
-    <label class="prompt"><b>CONTENT&gt;</b><input id="cmd" type="text" placeholder="Type a creator or niche, then CRTR or NICHE (DOCTOR MIKE CRTR) · or a code like SURF, HDS, RATE · HELP" autocomplete="off" spellcheck="false" aria-label="Command"></label>
+    <label class="prompt"><b>SEARCH</b><input id="cmd" type="text" placeholder="Try: Doctor Mike, fitness, top news" autocomplete="off" spellcheck="false" aria-label="Search creators, niches and functions" role="combobox" aria-expanded="false" aria-controls="pal"></label>
+    <div class="pal" id="pal" role="listbox" hidden></div>
   </div>
   <div class="secbar" id="secbar" aria-live="polite"></div>
   <div class="fnrow"><div class="fbar fns" id="fnbar" role="tablist" aria-label="Functions"></div>
@@ -795,10 +808,88 @@ dash.calc('drop_reasons', {
   // the log drops down under the command line while it is in use, then folds away
   const cl = document.getElementById('command-line'); let clTimer = null;
   const openLog = ms => { cl.classList.add('open'); log.scrollTop = log.scrollHeight; clearTimeout(clTimer); if (ms) clTimer = setTimeout(() => { if (document.activeElement !== input) cl.classList.remove('open'); }, ms); };
-  input.addEventListener('focus', () => openLog());
   input.addEventListener('blur', () => openLog(matchMedia('(max-width: 640px)').matches ? 800 : 2500));
-  const say = t => { log.textContent += 'CONTENT> ' + t + '\n'; openLog(document.activeElement === input ? 0 : 5000); };
-  log.textContent = "CONTENT> Welcome to Content Terminal. Type 'help' for commands.\n";
+  const say = t => { log.textContent += '» ' + t + '\n'; openLog(document.activeElement === input ? 0 : 5000); };
+
+  // ---- search palette: suggestions as you type, plus a plain-language menu of what the terminal can do
+  const pal = $('pal'); const palst = {items: [], i: -1};
+  const START = [['DES', 'Look up a creator'], ['SRCH', 'Screen creators'], ['MOST', 'See who is moving today'], ['NI', 'Browse niches'],
+    ['SKEW', 'Find undersaturated niches'], ['SURF', 'See how reach changes with size and age'], ['REV', 'Estimate revenue and catalog value'],
+    ['RISK', 'Check a creator\'s risk'], ['COMP', 'Compare two creators or niches'], ['HDS', 'See who funds creator companies'],
+    ['DEAL', 'See recent deals'], ['UCAP', 'Find creators with no outside capital'], ['RATE', 'Check platform payout rates'], ['TOP', 'Read the top news']];
+  const SETTINGS = [['LONG', 'Count long-form videos only'], ['SHORTS', 'Count Shorts only'], ['ALL', 'Count all videos'], ['HELP', 'All commands and keys'], ['DEF', 'Look up what a metric means']];
+  const fnKey = code => { for (const k of [nav.key, 'crtr', 'niche', 'home', 'corp', 'plat', 'news', 'help'].filter(Boolean)) if (KEYS[k] && KEYS[k].fns.some(f => f[0] === code)) return k; return null; };
+  const runCode = code => { if (['LONG', 'SHORTS', 'ALL'].includes(code)) { setFmt(code); say('Format: ' + FMTNAME[code]); return; }
+    const k = fnKey(code); if (k) runFn(k, code); };
+  const sources = () => {
+    const cd = dash.data('creator_details'), ni = dash.data('niches'), sk = dash.data('skew'), hh = dash.data('holders');
+    const niches = ni.status === 'ok' && ni.data.length ? ni.data : sk.status === 'ok' ? sk.data : [];
+    return {creators: cd.status === 'ok' ? cd.data : [], niches, holders: hh.status === 'ok' ? hh.data : []};
+  };
+  function palItems(q) {
+    const out = [], src = sources(), t = q.toLowerCase();
+    if (!t) {
+      if (st.sec) { const n = st.sec.label.toUpperCase(), cr = st.sec.type === 'crtr';
+        out.push({h: 'Loaded'}, {cd: cr ? 'CRTR' : 'NICHE', lb: n, rt: cr ? 'creator' : 'niche', run: () => runFn(cr ? 'crtr' : 'niche', 'DES')});
+        (cr ? [['REV', 'Revenue and catalog value'], ['RISK', 'Risk'], ['BIZ', 'Revenue streams and sponsors'], ['COMP', 'Compare']]
+            : [['SURF', 'Reach surface'], ['SKEW', 'Skew ranking'], ['RPM', 'RPM by niche']]).forEach(([c, l]) =>
+          out.push({cd: c, lb: l + ' · ' + n, run: () => runFn(cr ? 'crtr' : 'niche', c)})); }
+      out.push({h: 'Start here'}); START.forEach(([c, l]) => out.push({cd: c, lb: l, run: () => runCode(c)}));
+      out.push({h: 'Settings and help'}); SETTINGS.forEach(([c, l]) => out.push({cd: c, lb: l + (['LONG', 'SHORTS', 'ALL'].includes(c) && st.fmt === c ? ' (on)' : ''), run: () => runCode(c)}));
+      return out;
+    }
+    const score = name => { const x = String(name || '').toLowerCase(); return x === t ? 0 : x.startsWith(t) ? 1 : x.split(/\s+/).some(w => w.startsWith(t)) ? 2 : x.includes(t) ? 3 : 9; };
+    const cr = src.creators.map(r => [score(r.channel), r]).filter(x => x[0] < 9).sort((a, b) => a[0] - b[0] || N(b[1].subscribers) - N(a[1].subscribers)).slice(0, 6).map(x => x[1]);
+    const nis = src.niches.map(r => [score(r.niche), r]).filter(x => x[0] < 9).sort((a, b) => a[0] - b[0]).slice(0, 4).map(x => x[1]);
+    const hs = src.holders.map(r => [score(r.holder || r.funder || r.name), r]).filter(x => x[0] < 9).sort((a, b) => a[0] - b[0]).slice(0, 3).map(x => x[1]);
+    const fns = [...START, ...SETTINGS].filter(([c, l]) => c.toLowerCase().startsWith(t) || l.toLowerCase().includes(t)).slice(0, 5);
+    if (cr.length || nis.length) out.push({h: 'Suggested'});
+    if (cr.length) { const top = cr[0], n = top.channel;
+      out.push({cd: 'CRTR', lb: n, rt: (top.niche || '') + ' · ' + compact(N(top.subscribers)) + ' subs', run: () => loadSec('crtr', n)});
+      [['REV', 'Revenue and catalog value'], ['RISK', 'Risk'], ['BIZ', 'Revenue streams and sponsors']].forEach(([c, l]) =>
+        out.push({cd: c, lb: l + ' · ' + n, run: () => { if (loadSec('crtr', n)) runFn('crtr', c); }}));
+      cr.slice(1).forEach(r => out.push({cd: 'CRTR', lb: r.channel, rt: (r.niche || '') + ' · ' + compact(N(r.subscribers)) + ' subs', run: () => loadSec('crtr', r.channel)})); }
+    nis.forEach((r, i) => { out.push({cd: 'NICHE', lb: r.niche, rt: r.sector || '', run: () => loadSec('niche', r.niche)});
+      if (i === 0 && !cr.length) out.push({cd: 'SURF', lb: 'Reach surface · ' + r.niche, run: () => { if (loadSec('niche', r.niche)) runFn('niche', 'SURF'); }}); });
+    if (hs.length) { out.push({h: 'Funders'}); hs.forEach(r => { const nm = r.holder || r.funder || r.name;
+      out.push({cd: 'HDS', lb: nm, rt: r.type || '', run: () => { setQ(nm); runFn('corp', 'HDS'); }}); }); }
+    if (fns.length) { out.push({h: 'Functions'}); fns.forEach(([c, l]) => out.push({cd: c, lb: l, run: () => runCode(c)})); }
+    if (!out.length) out.push({h: 'No match. Press Enter to run it as a command, or type HELP.'});
+    return out;
+  }
+  function drawPal() {
+    const q = input.value.trim();
+    palst.items = palItems(/^[A-Z!]{2,}(\s|$)/.test(q) && CMDS.includes(q.split(/\s+/)[0].toUpperCase()) && q.includes(' ') ? '' : q);
+    const sel = palst.items.filter(x => !x.h); palst.i = q && sel.length ? Math.min(Math.max(palst.i, 0), sel.length - 1) : Math.min(palst.i, sel.length - 1);
+    pal.textContent = ''; let k = -1;
+    palst.items.forEach(x => {
+      if (x.h) { pal.append(el('div', x.h, 'ph2')); return; }
+      k++; const row = el('div', null, 'it'); row.setAttribute('role', 'option'); row.setAttribute('aria-selected', String(k === palst.i)); row.dataset.k = k;
+      row.append(el('span', x.cd, 'cd'), el('span', x.lb, 'lb')); if (x.rt) row.append(el('span', x.rt, 'rt'));
+      row.addEventListener('mousedown', e => { e.preventDefault(); palRun(x); }); pal.append(row);
+    });
+    pal.append(el('div', '↑ ↓ to move · Enter to open · Esc to close · or type a command (SURF FITNESS, DOCTOR MIKE CRTR RISK)', 'keys'));
+    const cur = pal.querySelector('[aria-selected=true]'); if (cur) cur.scrollIntoView({block: 'nearest'});
+  }
+  const palOpen = on => { pal.hidden = !on; cl.classList.toggle('palopen', on); input.setAttribute('aria-expanded', String(on)); if (on) drawPal(); };
+  function palRun(x) { input.value = ''; log.textContent += '> ' + (x.cd + ' ' + x.lb).toUpperCase() + '\n'; palOpen(false); input.blur(); x.run(); }
+  input.addEventListener('focus', () => { palst.i = -1; palOpen(true); });
+  input.addEventListener('input', () => { palst.i = input.value.trim() ? 0 : -1; palOpen(true); });
+  input.addEventListener('blur', () => palOpen(false));
+  input.addEventListener('keydown', e => {
+    if (pal.hidden) return;
+    const sel = palst.items.filter(x => !x.h);
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (!sel.length) return;
+      palst.i = e.key === 'ArrowDown' ? (palst.i + 1) % sel.length : (palst.i <= 0 ? sel.length - 1 : palst.i - 1); drawPal(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); palOpen(false); input.blur(); }
+    else if (e.key === 'Enter') {
+      const q = input.value.trim(), first = (q.split(/\s+/)[0] || '').toUpperCase(), words = q.toUpperCase().split(/\s+/);
+      const typedCommand = CMDS.includes(first) || words.slice(1).some(w => w === 'CRTR' || w === 'NICHE') || first.startsWith('!') || first.startsWith('$');
+      if (palst.i >= 0 && sel[palst.i] && !(typedCommand && palst.i === 0 && q)) { e.preventDefault(); e.stopImmediatePropagation(); palRun(sel[palst.i]); }
+      else palOpen(false);   // falls through to the command line below
+    }
+  });
+  log.textContent = "» Welcome to Content Terminal. Click SEARCH to see what it can do.\n";
 
   function show(v) {
     st.view = v;
@@ -1392,7 +1483,7 @@ dash.calc('drop_reasons', {
       else { if (bar.parentNode !== home) home.insertBefore(bar, after); bar.classList.remove('mnav'); } };
     place(); mq.addEventListener('change', place);
     // a shorter hint fits a phone's command line
-    if (mq.matches) $('cmd').placeholder = 'Name + CRTR or NICHE, or a code · HELP';
+    if (mq.matches) $('cmd').placeholder = 'Try: Doctor Mike, fitness, top news';
   })();
   // the home board: market-wide monitors on one screen
   function drawHome() {
