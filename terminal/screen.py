@@ -139,6 +139,8 @@ def run(info_fn=None, client=None, discovered=None, path=OUT, limit: int | None 
                 msg = client.messages.create(model=MODEL, max_tokens=4000 + 100 * len(batch), system=system, messages=[
                     {"role": "user", "content": USER.format(channels=_block(batch, info))}])
                 llm.warn_if_cut(msg, "screen")
+                from . import usage
+                usage.anthropic(msg, MODEL, "screen channels")
                 for cid, (verdict, reason, note) in parse_reply(llm.reply_text(msg), [r["channel"] for r in batch]).items():
                     done[cid] = {**base[cid], "verdict": verdict, "reason": reason, "note": note}
                 write(done, path)   # saved per batch: a rerun picks up where this one stopped

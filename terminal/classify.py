@@ -8,7 +8,7 @@ import os
 
 import anthropic
 
-from . import ctncs, llm, store
+from . import ctncs, llm, store, usage
 
 MODEL = os.environ.get("CLASSIFIER_MODEL", "claude-sonnet-5-5")
 
@@ -60,6 +60,7 @@ def classify_channels(con, sectors: list[str], limit: int | None = None, redo: b
                 codes=codes, title=title, description=(description or "")[:1500],
                 videos="\n".join(f"- {t}" for t in titles) or "- (none)")}],
         )
+        usage.anthropic(msg, MODEL, "classify channels")
         text = llm.reply_text(msg).strip()
         try:
             out = json.loads(text[text.index("{"): text.rindex("}") + 1])

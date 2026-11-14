@@ -99,9 +99,11 @@ def _search(key: str, query: str, size: int = 40, sleep=None) -> list[dict]:
     q = urllib.parse.urlencode([("query", query), ("contentKind", "long-form"), ("monetizationAdsense", "true"),
                                 ("size", str(size)), ("language", "en")])
     req = urllib.request.Request(f"{TUBELAB}/search/channels?{q}", headers={"Authorization": f"Api-Key {key}"})
+    from . import usage
     for attempt in range(TUBELAB_RETRIES + 1):
         try:
             with urllib.request.urlopen(req, timeout=60) as r:
+                usage.tubelab()
                 return json.loads(r.read().decode("utf-8")).get("hits", [])
         except urllib.error.HTTPError as e:
             if e.code != 429 or attempt == TUBELAB_RETRIES:

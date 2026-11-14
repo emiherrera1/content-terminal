@@ -575,4 +575,12 @@ def build(con, out_dir: Path = OUT, source: str = "live", public: bool = False) 
             "datasets": list(sets), "rows": {k: len(v) for k, v in sets.items()},
             "cvs": _cvs_config(), "public": public}
     (out_dir / "manifest.json").write_text(json.dumps(meta, indent=1))
+    # the operations board: owner-only on the live site (served under /api/, closed to guests); beside the data on the demo
+    try:
+        from . import ops
+        ops_dir = out_dir if source == "synthetic" else out_dir.parent / "api"
+        ops_dir.mkdir(parents=True, exist_ok=True)
+        (ops_dir / "ops.json").write_text(json.dumps(ops.build(con), default=str))
+    except Exception as e:  # noqa: BLE001 - the board never blocks the site
+        print(f"ops board not written: {e}")
     return meta

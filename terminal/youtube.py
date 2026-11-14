@@ -24,6 +24,8 @@ def _key() -> str:
 
 
 def _get(path: str, **params) -> dict:
+    from . import usage
+    usage.youtube(path)
     r = requests.get(f"{API}/{path}", params={**params, "key": _key()}, timeout=30)
     r.raise_for_status()
     return r.json()

@@ -116,6 +116,16 @@ window.dash = (() => {
 .ct .sayline.fade{opacity:0}
 .ct .logbtn{background:none;border:1px solid var(--line);color:var(--tm);font:inherit;font-size:10px;padding:2px 7px;margin-right:8px;cursor:pointer}
 .ct .logbtn[aria-pressed=true]{color:#000;background:var(--tx)}
+#terminal[data-role=guest] .mk[data-k=ops]{display:none!important}
+.ct #ops-tabs{display:flex;gap:2px;padding:6px 8px} .ct #ops-tabs button{background:none;border:1px solid var(--line);color:var(--tm);font:inherit;padding:3px 10px;cursor:pointer}
+.ct #ops-tabs button[aria-pressed=true]{background:var(--acc);color:#000;border-color:var(--acc);font-weight:700}
+.ct .opsum{display:flex;flex-wrap:wrap;gap:8px;padding:4px 8px 10px} .ct .opsum div{border:1px solid var(--line);padding:6px 12px;min-width:120px}
+.ct .opsum b{display:block;font-size:18px} .ct .opsum span{color:var(--tm);font-size:10px}
+.ct .st-OK{color:var(--g)} .ct .st-WARN{color:var(--amb)} .ct .st-FAIL{color:var(--red)} .ct .st-OFF{color:var(--tm)} .ct .st-WAIT{color:#7dd3ff}
+.ct #ops-body .ph2{color:var(--acc);font-weight:700;padding:14px 8px 4px;font-size:11px}
+.ct .opsrun{cursor:pointer} .ct .opsstages td{color:var(--tm);font-size:11px;padding-left:24px;white-space:normal;word-break:break-word;max-width:0}
+.ct #ops-body table{width:100%;table-layout:auto}
+.ct .meter{display:inline-block;width:120px;height:6px;background:#2c2a28;vertical-align:middle;margin-right:8px} .ct .meter i{display:block;height:100%;background:var(--g)}
 .ct .ndes{margin:8px;border:1px solid var(--line);background:#161514;padding:10px 12px;position:relative}
 .ct .ndes h3{margin:0 0 6px;font-size:12px;color:var(--acc)} .ct .ndes .x{position:absolute;right:8px;top:6px;background:none;border:0;color:var(--tm);cursor:pointer;font:inherit}
 .ct .ndes dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 18px;margin:0}
@@ -373,7 +383,7 @@ window.dash = (() => {
 
   <div class="fbar" id="mkeys" role="tablist" aria-label="Markets">
     <span class="stamp" id="stamp">—</span>
-    <button class="mk" data-k="home" aria-selected="true">HOME</button><button class="mk" data-k="crtr" aria-selected="false">CRTR</button><button class="mk" data-k="niche" aria-selected="false">NICHE</button><button class="mk" data-k="corp" aria-selected="false">CORP</button><button class="mk" data-k="plat" aria-selected="false">PLAT</button><button class="mk" data-k="news" aria-selected="false">NEWS</button><button class="mk" data-k="help" aria-selected="false">HELP</button>
+    <button class="mk" data-k="home" aria-selected="true">HOME</button><button class="mk" data-k="crtr" aria-selected="false">CRTR</button><button class="mk" data-k="niche" aria-selected="false">NICHE</button><button class="mk" data-k="corp" aria-selected="false">CORP</button><button class="mk" data-k="plat" aria-selected="false">PLAT</button><button class="mk" data-k="news" aria-selected="false">NEWS</button><button class="mk" data-k="help" aria-selected="false">HELP</button><button class="mk" data-k="ops" aria-selected="false" title="Operations: what is working, what failed, what it costs (only you see this)">OPS</button>
     <span class="clock" id="clock">—</span>
   </div>
   <div class="panel cl" id="command-line">
@@ -484,6 +494,11 @@ window.dash = (() => {
         <div class="ph"><span>Risk</span><span class="meta">volatility, beta, drawdown and growth per unit of risk · click a column to sort</span></div>
         <div class="pb" style="max-height:none"><table id="risk-tbl"><thead></thead><tbody></tbody></table></div>
         <div class="cnote" id="risk-note"></div>
+      </section>
+      <section class="view" id="ops" hidden>
+        <div class="ph"><span>Operations</span><span class="meta" id="ops-meta">what is working, what broke, what updated, what it costs · only you see this</span></div>
+        <div class="tabs" id="ops-tabs"><button type="button" data-t="status">Status</button><button type="button" data-t="runs">Runs</button><button type="button" data-t="costs">Costs</button></div>
+        <div class="pb" id="ops-body" style="max-height:none"></div>
       </section>
       <section class="view" id="rev" hidden>
         <div class="ph"><span>Revenue and catalog value</span><span class="meta">estimates · monthly revenue, what the catalog is worth, what it could finance · click a column to sort</span></div>
@@ -1445,10 +1460,14 @@ dash.calc('drop_reasons', {
       ['RATE', 'Monetization rates', () => ratesTab('board', true)],
       ['RPM', 'RPM by niche', () => ratesTab('rpm', true), true]]},
     news: {label: 'NEWS', title: 'News', fns: [['TOP', 'Top and time-ordered news', () => show('news'), true]]},
+    ops: {label: 'OPS', title: 'Operations: health, runs and cost (only you)', fns: [
+      ['STAT', 'What is working and what is not', () => opsTab('status')],
+      ['RUNS', 'Every run, stage by stage', () => opsTab('runs')],
+      ['COST', 'What the terminal costs', () => opsTab('costs')]]},
     help: {label: 'HELP', title: 'Help and definitions', fns: [['HELP', 'Commands and keys', () => show('help')], ['DEF', 'Metric definitions (DES <code>)', () => show('des')]]},
   };
   // which key and function a view belongs to, so a view opened from anywhere lights up the right place
-  const HOME_OF = {home: ['home', 'WEI'], creator: ['crtr', 'SRCH'], tear: ['crtr', 'DES'], risk: ['crtr', 'RISK'], rev: ['crtr', 'REV'], watch: ['crtr', 'WTCH'], comp: ['crtr', 'COMP'],
+  const HOME_OF = {ops: ['ops', 'STAT'], home: ['home', 'WEI'], creator: ['crtr', 'SRCH'], tear: ['crtr', 'DES'], risk: ['crtr', 'RISK'], rev: ['crtr', 'REV'], watch: ['crtr', 'WTCH'], comp: ['crtr', 'COMP'],
     alerts: ['home', 'ALRT'], niche: ['niche', 'NI'], trend: ['niche', 'GP'], hmap: ['niche', 'IMAP'], surf: ['niche', 'SURF'], formats: ['niche', 'FMT'],
     coverage: ['niche', 'COV'], corp: ['corp', 'LADR'], hds: ['corp', 'HDS'], platform: ['plat', 'PLAT'], news: ['news', 'TOP'], help: ['help', 'HELP'], des: ['help', 'DEF']};
   const nav = {key: 'home', fn: 'WEI'};
@@ -1580,6 +1599,81 @@ dash.calc('drop_reasons', {
     if (!list.length) { const tr = tb.insertRow(), td = tr.insertCell(); td.colSpan = RCOLS.length; td.className = 'dim'; td.style.textAlign = 'left';
       td.textContent = 'Risk stats need 30+ days of daily history per creator; they start filling in around mid-December 2026.'; }
     $('risk-note').textContent = 'Attention = views gained per day, smoothed to a 7-day sum; its daily log change is read like a daily return over the last 90 days. Vol is annualized. Beta compares a creator to the rest of their niche (above 1 moves more than the niche). Max DD is the deepest fall from a peak. Growth ÷ vol is a Sharpe ratio with no risk-free rate. Top video is the share of recent views from one video. Click a creator for the tear sheet.';
+  }
+  // ---- Operations board (owner only): status of every source and stage, every run, and cost
+  const ops = {tab: 'status', data: null, open: null, tried: false};
+  function opsLoad() {
+    if (ops.tried) return; ops.tried = true;
+    const get = u => fetch(u, {credentials: 'same-origin', cache: 'no-store'}).then(r => r.ok ? r.json() : Promise.reject(r.status));
+    get('api/ops.json').catch(() => get(BASE + 'ops.json')).then(d => { ops.data = d; if (st.view === 'ops') drawOps(); })
+      .catch(() => { ops.data = {missing: true}; if (st.view === 'ops') drawOps(); });
+  }
+  function opsTab(t) { ops.tab = t; show('ops'); }
+  document.querySelectorAll('#ops-tabs button').forEach(b => b.addEventListener('click', () => { const t = b.dataset.t; runFn('ops', {status: 'STAT', runs: 'RUNS', costs: 'COST'}[t]); }));
+  const etTime = s => { if (!s) return '—'; const d = new Date(String(s).replace(' ', 'T') + (String(s).includes('Z') || String(s).includes('+') ? '' : 'Z'));
+    return new Intl.DateTimeFormat('en-US', {timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'}).format(d) + ' ET'; };
+  const usd2 = v => v == null ? '—' : '$' + (Math.abs(v) < 10 ? d3.format(',.2f')(v) : d3.format(',.0f')(v));
+  function drawOps() {
+    document.querySelectorAll('#ops-tabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === ops.tab)));
+    const box = $('ops-body'); box.textContent = '';
+    if (!ops.data) { opsLoad(); box.append(el('p', 'Loading…', 'dim')); return; }
+    const d = ops.data;
+    if (d.missing) { box.append(el('p', 'The operations board is written by each daily run. It appears here after the next run.', 'dim')); return; }
+    $('ops-meta').textContent = 'built ' + etTime(d.generated_at) + ' · only you see this';
+    const tbl = (cols, rows, fill) => { const t = el('table'), hr = t.createTHead().insertRow(); cols.forEach(([l, left]) => { const th = el('th', l); if (left) th.style.textAlign = 'left'; hr.append(th); });
+      const tb = t.createTBody(); rows.forEach(r => fill(tb.insertRow(), r)); return t; };
+    if (ops.tab === 'status') {
+      const n = k => d.board.filter(b => b.status === k).length;
+      const sum = el('div', null, 'opsum');
+      [['OK', 'working'], ['WARN', 'need a look'], ['FAIL', 'broken'], ['WAIT', 'filling in'], ['OFF', 'off or not set up']].forEach(([k, l]) => { const x = el('div'); x.append(el('b', String(n(k)), 'st-' + k), el('span', l)); sum.append(x); });
+      box.append(sum);
+      const order = {FAIL: 0, WARN: 1, WAIT: 2, OFF: 3, OK: 4};
+      box.append(tbl([['', 1], ['Area', 1], ['What', 1], ['Updated', 1], ['Detail', 1]],
+        d.board.slice().sort((a, b) => order[a.status] - order[b.status]),
+        (tr, b) => { td(tr, '● ' + b.status, 'st-' + b.status); td(tr, b.area, 'dim'); td(tr, b.item); td(tr, b.last ? fmtDay(String(b.last).slice(0, 10)) : '—', 'dim'); td(tr, b.detail || '', 'dim');
+          [...tr.cells].forEach(c => { c.style.textAlign = 'left'; }); }));
+    } else if (ops.tab === 'runs') {
+      const t = el('table'), hr = t.createTHead().insertRow();
+      ['Job', 'Started', 'Minutes', 'Result', 'OK', 'Warn', 'Failed', 'Off', 'What needs a look'].forEach((l, i) => { const th = el('th', l); if (i < 2 || i === 8) th.style.textAlign = 'left'; hr.append(th); });
+      const tb = t.createTBody();
+      d.runs.forEach(r => { const tr = tb.insertRow(); tr.className = 'opsrun';
+        const bad = r.stages.filter(s => s.status !== 'OK');
+        [[r.job, 1], [etTime(r.started), 1], [String(r.minutes)], ['● ' + r.status, 0, 'st-' + r.status], [String(r.ok)], [String(r.warn)], [String(r.fail)], [String(r.off)],
+         [bad.length ? bad.map(s => s.stage + ' ' + s.status.toLowerCase()).join(', ') : '—', 1, 'dim']].forEach(([v, left, c]) => { const x = td(tr, v, c); if (left) x.style.textAlign = 'left'; });
+        tr.addEventListener('click', () => { ops.open = ops.open === r.run_id ? null : r.run_id; drawOps(); });
+        if (ops.open === r.run_id) r.stages.forEach(s => { const sr = tb.insertRow(); sr.className = 'opsstages';
+          const c = sr.insertCell(); c.colSpan = 9; c.style.textAlign = 'left';
+          c.append(el('span', '● ' + s.status + '  ', 'st-' + s.status), el('span', s.stage + '  ·  ' + (s.seconds != null ? s.seconds + 's' : '') + (s.attempts > 1 ? ' · ' + s.attempts + ' tries' : '') + (s.detail ? '  ·  ' + s.detail : ''))); }); });
+      box.append(t, el('div', 'Click a run to see every stage. Times are Eastern.', 'cnote'));
+    } else {
+      const c = d.costs;
+      const sum = el('div', null, 'opsum');
+      [[usd2(c.total_mtd), 'spent in ' + c.month], [usd2(c.projected_month), 'projected for the month'], [usd2(c.fixed_total), 'plans a month'], [usd2(c.variable_total), 'usage so far this month']]
+        .forEach(([v, l]) => { const x = el('div'); x.append(el('b', v), el('span', l)); sum.append(x); });
+      box.append(sum);
+      const rows = [...Object.entries(c.fixed).map(([k, v]) => ({k, kind: 'Plan, monthly', v})), ...Object.entries(c.variable).map(([k, v]) => ({k, kind: 'Usage this month', v}))];
+      box.append(tbl([['Service', 1], ['Kind', 1], ['Cost']], rows, (tr, r) => { const a = td(tr, r.k); a.style.textAlign = 'left'; const b = td(tr, r.kind, 'dim'); b.style.textAlign = 'left';
+        td(tr, r.v == null ? 'not filled in' : usd2(r.v), r.v == null ? 'st-WARN' : ''); }));
+      box.append(el('div', 'Limits', 'ph2'));
+      box.append(tbl([['What', 1], ['Used'], ['Limit'], ['', 1]], c.limits, (tr, l) => { const a = td(tr, l.name); a.style.textAlign = 'left'; td(tr, num(Math.round(l.used)) + ' ' + l.unit);
+        td(tr, l.limit == null ? '—' : num(l.limit)); const m = tr.insertCell(); m.style.textAlign = 'left';
+        if (l.limit) { const bar = el('span', null, 'meter'), i = el('i'); i.style.width = Math.min(100, 100 * l.used / l.limit) + '%'; if (l.used > 0.8 * l.limit) i.style.background = 'var(--red)'; bar.append(i); m.append(bar, el('span', pct(l.used / l.limit), 'dim')); }
+        else m.append(el('span', l.note || (l.unit === 'credits' ? 'fill in your plan\'s credits in config/costs.yaml' : ''), 'dim')); }));
+      // daily usage cost, last 30 days
+      const days = d3.rollups(c.daily, v => d3.sum(v, x => x.cost), x => String(x.day).slice(0, 10)).sort((a, b) => a[0].localeCompare(b[0])).slice(-30);
+      if (days.length) {
+        box.append(el('div', 'Usage cost by day', 'ph2'));
+        const W = Math.max(280, box.clientWidth - 24), H = 140, m = {t: 8, r: 60, b: 20, l: 8}, cb = el('div', null, 'stk'); box.append(cb);
+        const x = d3.scaleBand(days.map(d => d[0]), [m.l, W - m.r]).padding(.2), y = d3.scaleLinear([0, d3.max(days, d => d[1]) || 1], [H - m.b, m.t]).nice();
+        const svg = d3.select(cb).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
+        svg.append('g').selectAll('line').data(y.ticks(3)).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', v => y(v)).attr('y2', v => y(v)).attr('stroke', '#2c2a28');
+        svg.append('g').selectAll('text').data(y.ticks(3)).join('text').attr('x', W - m.r + 8).attr('y', v => y(v) + 4).text(v => usd2(v));
+        svg.append('g').selectAll('rect').data(days).join('rect').attr('x', v => x(v[0])).attr('width', x.bandwidth()).attr('y', v => y(v[1])).attr('height', v => H - m.b - y(v[1])).attr('fill', '#6ab7ff')
+          .append('title').text(v => v[0] + ': ' + usd2(v[1]));
+        svg.append('g').selectAll('text.x').data(days.filter((v, i) => i % Math.ceil(days.length / 6) === 0)).join('text').attr('x', v => x(v[0]) + x.bandwidth() / 2).attr('y', H - 5).attr('text-anchor', 'middle').text(v => fmtDay(v[0]).slice(0, 6));
+      }
+      box.append(el('div', c.note + (c.unknown_fixed.length ? ' Not filled in yet: ' + c.unknown_fixed.join(', ') + '.' : ''), 'cnote'));
+    }
   }
   // ---- Revenue: estimated monthly revenue, catalog value (USCAP) and financing capacity per creator
   const rvs = {sort: 'catalog_mid', dir: -1};
@@ -2470,6 +2564,7 @@ dash.calc('drop_reasons', {
     renderSec();
     const rkx = dash.data('risk');
     if (st.view === 'risk' && rkx.status === 'ok') drawRisk(rkx.data);
+    if (st.view === 'ops') drawOps();
     const rvx = dash.data('revenue');
     if (st.view === 'rev' && rvx.status === 'ok') drawRev(rvx.data);
     const hhx = dash.data('holders'), hgx = dash.data('holdings');

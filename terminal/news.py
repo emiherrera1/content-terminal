@@ -139,6 +139,8 @@ def tag(con, limit: int | None = None) -> int:
     for url, source, title, summary in rows:
         msg = client.messages.create(model=model, max_tokens=2000, messages=[{"role": "user", "content": PROMPT.format(
             source=source, title=title, summary=summary or "", categories=CATEGORIES, platforms=PLATFORMS)}])
+        from . import usage
+        usage.anthropic(msg, model, "tag news")
         text = llm.reply_text(msg)
         try:
             t = json.loads(text[text.index("{"): text.rindex("}") + 1])

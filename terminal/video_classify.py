@@ -16,7 +16,7 @@ import datetime as dt
 import json
 import os
 
-from . import store, ctncs, llm
+from . import store, ctncs, llm, usage
 
 MODEL = os.environ.get("VIDEO_CLASSIFIER_MODEL", "claude-haiku-5-5")
 BATCH = 25
@@ -142,6 +142,7 @@ def classify_videos(con, limit: int | None = None, days: int = 60, client=None) 
         msg = client.messages.create(model=MODEL, max_tokens=4000 + 150 * len(batch), system=system,
                                      messages=[{"role": "user", "content": USER.format(videos=_video_block(batch))}])
         llm.warn_if_cut(msg, "classify-videos")
+        usage.anthropic(msg, MODEL, "classify videos")
         return parse_reply(llm.reply_text(msg), [r[0] for r in batch], book)
 
     # several batches in flight at once; results are saved every SAVE_EVERY batches so a failure late in a long run
@@ -209,6 +210,7 @@ def collect(con, client=None, wait_s: int = 0, poll_s: int = 30, sleep=None) -> 
         for r in client.messages.batches.results(batch_id):
             if r.result.type == "succeeded" and r.custom_id in ids_of:
                 llm.warn_if_cut(r.result.message, "classify-videos (batch)")
+                usage.anthropic(r.result.message, MODEL, "classify videos", batch=True)
                 out += parse_reply(llm.reply_text(r.result.message), ids_of[r.custom_id], book)
         if out:
             save(con, out)

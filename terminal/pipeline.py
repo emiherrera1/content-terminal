@@ -294,6 +294,11 @@ def run(con, job: str, today: dt.date | None = None, stages: list[Stage] | None 
                 if os.environ.get("TERMINAL_DEBUG"):
                     traceback.print_exc()
                 break
+        try:
+            from . import usage
+            usage.flush(con, run_id, job, st.name)
+        except Exception as e:  # noqa: BLE001 - cost tracking never stops a run
+            print(f"usage not recorded: {e}")
         con.execute("INSERT INTO pipeline_runs VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     [run_id, job, st.name, started, dt.datetime.now(dt.timezone.utc).replace(tzinfo=None), status, attempts, detail[:500]])
         ctx.results[st.name] = (status, detail)

@@ -117,6 +117,9 @@ def main(argv=None):
         return
 
     con = store.connect()
+    import atexit
+    from . import usage
+    atexit.register(lambda: usage.flush(con, None, a.command, a.command))   # seed, discover, screen: count their API use too
     news.connect(con)
     sectors = [str(s).zfill(2) for s in _config()["sectors"]]
 

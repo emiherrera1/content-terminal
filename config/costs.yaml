@@ -1,0 +1,19 @@
+# What the terminal costs to run. Prices are per unit as published by each provider; edit them when a price changes.
+# Variable costs are counted from what each run actually used (terminal/usage.py); fixed costs are the monthly plans.
+anthropic:          # dollars per million tokens (Claude API pricing, checked 2026-11-14)
+  claude-haiku-5-5:  {input: 0.10, output: 0.50, cache_write: 0.125, cache_read: 0.01}
+  claude-sonnet-5-5: {input: 2.00, output: 10.00, cache_write: 2.50, cache_read: 0.10}
+  batch_discount: 0.5   # Message Batches: half price on input and output
+youtube:
+  daily_quota_units: 10000   # free; the pull stops before this
+tubelab:
+  credits_per_search: 5
+  monthly_credits:            # your plan's monthly credit allowance; fill in from TubeLab > Billing to see what is left
+motherduck:
+  free_storage_gb: 10         # check your MotherDuck plan; the board warns at 80%
+subscriptions:      # monthly, in dollars; set to 0 for anything on a free plan
+  TubeLab Pro: 39
+  vidIQ Pro:                  # fill in what you pay
+  MotherDuck: 0
+  Cloudflare Pages: 0
+  GitHub (public repo, Actions free): 0
