@@ -40,3 +40,19 @@ def test_rpm_by_niche_and_ask_views():
     made = ask.build(con)
     assert {"ask_platform_rates", "ask_rate_changes", "ask_niche_rpm"} <= set(made)
     assert con.execute("SELECT creator_share FROM ask_platform_rates WHERE platform = 'Kick'").fetchone()[0] == 95
+
+
+def test_one_failed_niche_keeps_the_rest():
+    import datetime as dt
+    from terminal import rates, store
+    con = store.connect(":memory:")
+    con.execute("CREATE TABLE channel_niche AS SELECT * FROM (VALUES ('UCa', '03.07', '03'), ('UCb', '08.25', '08')) t(channel_id, niche_code, sector)")
+    hit = [{"id": "UCx", "monetization": {"rpmEstimationFrom": 2, "rpmEstimationTo": 4}}]
+
+    def search(q):
+        if q == "08.25":
+            raise RuntimeError("HTTP Error 429")
+        return hit
+    out = rates.load_rpm(con, dt.date(2026, 11, 14), label=lambda c: c, search=search)
+    assert out.startswith("1 of 2 niches priced") and "1 failed" in out
+    assert con.execute("SELECT niche_code, rpm_mid FROM niche_rpm").fetchall() == [("03.07", 3.0)]

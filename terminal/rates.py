@@ -27,6 +27,8 @@ CHANGES = ROOT / "config" / "platform_rate_changes.csv"
 STALE_DAYS = 90
 RPM_REFRESH_DAYS = 28
 TUBELAB = "https://public-api.tubelab.net/v1"
+TUBELAB_GAP_S = 6.5      # TubeLab allows 10 requests a minute per key
+TUBELAB_RETRIES = 4      # on 429, wait a full minute and try again
 
 
 def _read(path: Path) -> list[dict]:
@@ -90,12 +92,21 @@ DDL = """CREATE TABLE IF NOT EXISTS niche_rpm (as_of DATE, niche_code VARCHAR, q
          tracked_matches INTEGER, rpm_low DOUBLE, rpm_mid DOUBLE, rpm_high DOUBLE, source VARCHAR)"""
 
 
-def _search(key: str, query: str, size: int = 40) -> list[dict]:
+def _search(key: str, query: str, size: int = 40, sleep=None) -> list[dict]:
+    import time
+    import urllib.error
+    sleep = sleep or time.sleep
     q = urllib.parse.urlencode([("query", query), ("contentKind", "long-form"), ("monetizationAdsense", "true"),
                                 ("size", str(size)), ("language", "en")])
     req = urllib.request.Request(f"{TUBELAB}/search/channels?{q}", headers={"Authorization": f"Api-Key {key}"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read().decode("utf-8")).get("hits", [])
+    for attempt in range(TUBELAB_RETRIES + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return json.loads(r.read().decode("utf-8")).get("hits", [])
+        except urllib.error.HTTPError as e:
+            if e.code != 429 or attempt == TUBELAB_RETRIES:
+                raise
+            sleep(int(e.headers.get("Retry-After") or 0) or 61)
 
 
 def summarize(hits: list[dict], tracked: set[str]) -> dict | None:
@@ -114,7 +125,7 @@ def summarize(hits: list[dict], tracked: set[str]) -> dict | None:
             "rpm_mid": statistics.median(mids), "rpm_high": statistics.median(highs)}
 
 
-def load_rpm(con, today: dt.date | None = None, label=None, search=None) -> str:
+def load_rpm(con, today: dt.date | None = None, label=None, search=None, sleep=None) -> str:
     key = os.environ.get("TUBELAB_API_KEY")
     if not key and search is None:
         raise NotConfigured("niche RPM: set TUBELAB_API_KEY (TubeLab Pro or Team) to pull YouTube RPM estimates by niche")
@@ -125,20 +136,35 @@ def load_rpm(con, today: dt.date | None = None, label=None, search=None) -> str:
         return f"fresh (last pull {last}); next after {last + dt.timedelta(days=RPM_REFRESH_DAYS)}"
     if label is None:
         from .coverage import _label as label
-    search = search or (lambda q: _search(key, q))
+    import time
+    if search is None:
+        sleep = sleep or time.sleep
+        search, gap = (lambda q: _search(key, q, sleep=sleep)), TUBELAB_GAP_S
+    else:
+        sleep, gap = sleep or (lambda s: None), 0
     niches = [r[0] for r in con.execute("SELECT DISTINCT niche_code FROM channel_niche ORDER BY 1").fetchall()]
     tracked = {r[0] for r in con.execute("SELECT channel_id FROM channels").fetchall()}
-    rows = []
-    for code in niches:
+    rows, failed = [], []
+    for i, code in enumerate(niches):
+        if i and gap:
+            sleep(gap)
         q = label(code)
-        s = summarize(search(q), tracked)
+        try:
+            s = summarize(search(q), tracked)
+        except Exception as e:   # one niche failing keeps the rest; it is retried at the next pull
+            failed.append(f"{code} ({e})")
+            continue
         if s:
             rows.append((today, code, q, s["channels"], s["tracked_matches"], s["rpm_low"], s["rpm_mid"], s["rpm_high"],
                          "TubeLab estimate"))
+    if not rows and failed:
+        raise RuntimeError(f"every TubeLab search failed, e.g. {failed[0]}")
     con.execute("DELETE FROM niche_rpm WHERE as_of = ?", [today])
     if rows:
         con.executemany("INSERT INTO niche_rpm VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", rows)
-    return f"{len(rows)} of {len(niches)} niches priced ({len(niches)} searches, {5 * len(niches)} credits)"
+    done = len(niches) - len(failed)
+    return (f"{len(rows)} of {len(niches)} niches priced ({done} searches, {5 * done} credits)"
+            + (f"; {len(failed)} failed: {', '.join(failed[:3])}" if failed else ""))
 
 
 def latest_rpm(con, label=lambda c: c) -> list[dict]:

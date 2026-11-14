@@ -75,7 +75,18 @@ def _classify_channels(ctx):
 
 def _classify_videos(ctx):
     from . import video_classify
-    return f"{video_classify.classify_videos(ctx.con, ctx.settings.get('video_classify_daily_limit'))} classified"
+    limit = ctx.settings.get('video_classify_daily_limit')
+    if os.environ.get("CLASSIFY_MODE", "batch") == "direct":
+        return f"{video_classify.classify_videos(ctx.con, limit)} classified"
+    # batch mode: pick up anything left from yesterday, then send today's videos; collected before tagging
+    return f"{video_classify.collect(ctx.con)}; {video_classify.submit(ctx.con, limit)}"
+
+
+def _classify_collect(ctx):
+    from . import video_classify
+    if os.environ.get("CLASSIFY_MODE", "batch") == "direct":
+        return "direct mode"
+    return video_classify.collect(ctx.con, wait_s=int(os.environ.get("CLASSIFY_WAIT_S", "1500")))
 
 
 def _news(ctx):
@@ -203,6 +214,7 @@ JOBS: dict[str, list[Stage]] = {
         Stage("notes", _notes, retries=1),
         Stage("companies", _companies, retries=1),
         Stage("news", _news, retries=1),
+        Stage("classify_collect", _classify_collect, retries=1),
         Stage("tag", _tag),
         Stage("business", _business),
         Stage("comments", _comments, retries=1),

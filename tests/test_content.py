@@ -139,3 +139,49 @@ def test_migrate_rewrites_v1_codes():
     assert con.execute("SELECT topic_code, niche, subniche FROM video_classifications WHERE video_id = 'v1'").fetchone() \
         == (WOOD, "02.05.010", WOOD)
     assert ctncs.migrate(con) == {"classifications": 0, "video_classifications": 0}
+
+
+def test_message_batches_submit_then_collect():
+    con = store.connect(":memory:")
+    con.execute("INSERT INTO channels (channel_id, title) VALUES ('UCw', 'Shop Time')")
+    for i in range(30):
+        con.execute("INSERT INTO videos (video_id, channel_id, title, published_at, duration_s) VALUES (?, 'UCw', ?, now(), 600)",
+                    [f"v{i}", f"Build {i}"])
+    store_ = {"status": "in_progress", "reqs": []}
+
+    def reply(params):
+        ids = [line[4:] for line in params["messages"][0]["content"].splitlines() if line.startswith("id: ")]
+        body = json.dumps([{"id": i, "topic": WOOD, "format": "DIY", "confidence": 0.7} for i in ids])
+        return type("M", (), {"content": [type("C", (), {"text": body})()], "stop_reason": "end_turn"})()
+
+    class Batches:
+        @staticmethod
+        def create(requests):
+            store_["reqs"] = requests
+            store_["n"] = store_.get("n", 0) + 1
+            return type("B", (), {"id": f"msgbatch_{store_['n']}"})()
+
+        @staticmethod
+        def retrieve(_id):
+            return type("B", (), {"processing_status": store_["status"]})()
+
+        @staticmethod
+        def results(_id):
+            for r in store_["reqs"]:
+                ok = r["custom_id"] != "g1"   # the second request errors: its videos go out again next time
+                res = type("R", (), {"type": "succeeded" if ok else "errored", "message": reply(r["params"]) if ok else None})()
+                yield type("X", (), {"custom_id": r["custom_id"], "result": res})()
+
+    class Fake:
+        class messages:
+            batches = Batches
+
+    assert "30 videos sent" in video_classify.submit(con, client=Fake)
+    assert store_["reqs"][0]["params"]["system"][0]["cache_control"] == {"type": "ephemeral"}
+    assert video_classify.submit(con, client=Fake) == "nothing to send"          # videos in an open batch are not resent
+    assert "still processing" in video_classify.collect(con, client=Fake, wait_s=0)
+    store_["status"] = "ended"
+    assert video_classify.collect(con, client=Fake).startswith("25 classified")
+    assert con.execute("SELECT count(*) FROM video_classifications").fetchone()[0] == 25
+    assert video_classify.collect(con, client=Fake) == "no open batches"
+    assert "5 videos sent" in video_classify.submit(con, client=Fake)            # the errored request's videos

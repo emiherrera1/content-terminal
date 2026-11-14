@@ -24,7 +24,7 @@ engineer can take it over without a handoff call.
 
 | Job | When | Command | Stages (critical in bold) |
 | --- | --- | --- | --- |
-| daily | 7:17 AM ET every day (`.github/workflows/daily.yml`) | `python -m terminal run daily` | **pull_youtube**, pull_tiktok, pull_instagram, classify_channels, classify_videos, notes, news, tag, comments, **compute**, later, ask, quality_gate, **export**, site; then publishes the site |
+| daily | 7:17 AM ET every day (`.github/workflows/daily.yml`) | `python -m terminal run daily` | **pull_youtube**, pull_tiktok, pull_instagram, classify_channels, classify_videos (sends a half-price Message Batch), notes, news, classify_collect (waits up to 25 minutes for it), tag, business, comments, **compute**, later, ask, quality_gate, **export**, site; then publishes the site |
 | weekly | Mondays 8:03 AM ET (`weekly.yml`) | `python -m terminal run weekly` | google_trends, outcome_csvs, outside_estimates, **compute**, later, audit_sheet, **export**, site; then publishes the site |
 | rebuild | by hand, after a formula or config change | `python -m terminal run rebuild` | tag, **compute**, later, quality_gate, **export** |
 | tests | every push to main (`tests.yml`) | `python -m pytest -q` | 60+ tests, including a synthetic world |
@@ -85,6 +85,8 @@ Keys never go in chat, code or config files.
 | daily red at **pull_youtube**, `400 API key not valid` | key rotated or restricted | Replace `YOUTUBE_API_KEY`. |
 | any job red at the first database step | `MOTHERDUCK_TOKEN` expired | New token at motherduck.com > Settings > Access tokens; replace the secret. |
 | classify stages yellow, `401` or `overloaded` | Anthropic key or capacity | Unclassified videos are picked up on the next run; nothing is lost. |
+| classify_collect says a batch is still processing | Anthropic's batch queue was slow | Those videos are classified on the next run, so new videos can count toward topics a day late. Set `CLASSIFY_MODE=direct` in the workflow to go back to full-price direct calls. |
+| niche_rpm `429` | TubeLab allows 10 requests a minute | The pull spaces searches 6.5 seconds apart and retries a 429 after a minute; a niche that still fails keeps the published range until the next monthly pull. |
 | quality_gate yellow, completeness below 95% | channels deleted, made private, or a partial pull | `SELECT * FROM data_quality_daily ORDER BY d DESC` to see the day; figures that day are partial and flagged. |
 | **compute** red | a formula change broke on real data | Revert the last commit to `terminal/` and rerun `run rebuild`; the raw data is untouched. |
 | later yellow | a statistic failed on real data | Core tables and exports are fine. Run `TERMINAL_DEBUG=1 python -m terminal run rebuild` locally to see the traceback. |

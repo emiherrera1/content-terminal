@@ -6,6 +6,11 @@ format tag (Tutorials, Reviews, DIY...), which is independent of topic.
 
 Videos are sent in batches with the codebook as a cached system prompt, so the per-video cost
 is mostly the video's own title and description. Each video is classified once.
+
+The daily job uses Anthropic's Message Batches API (half the price of direct calls): submit() sends every pending
+video as one batch early in the run, and collect() picks up finished batches later in the same run, or on the next
+run if one is still processing. Videos in an open batch are not sent again. classify_videos() is the direct path,
+kept for the command line and for CLASSIFY_MODE=direct.
 """
 import datetime as dt
 import json
@@ -94,8 +99,21 @@ def save(con, rows: list[dict], model: str = MODEL) -> None:
                    r["format_id"], r["format_label"], r["confidence"], model, False] for r in rows])
 
 
+BATCHES_DDL = """CREATE TABLE IF NOT EXISTS classify_batches (batch_id VARCHAR PRIMARY KEY, submitted_at TIMESTAMP,
+                  videos INTEGER, request_map JSON, collected_at TIMESTAMP, classified INTEGER)"""
+
+
+def _in_open_batches(con) -> set[str]:
+    con.execute(BATCHES_DDL)
+    out = set()
+    for (m,) in con.execute("SELECT request_map FROM classify_batches WHERE collected_at IS NULL").fetchall():
+        for ids in json.loads(m).values():
+            out.update(ids)
+    return out
+
+
 def pending(con, days: int = 60, limit: int | None = None):
-    """Unclassified videos published in the last `days` days, newest first."""
+    """Unclassified videos published in the last `days` days, newest first, leaving out any already in an open batch."""
     rows = con.execute(
         """SELECT v.video_id, v.title, v.description, v.tags, v.duration_s, c.title, k.ctncs_code
            FROM videos v
@@ -105,6 +123,8 @@ def pending(con, days: int = 60, limit: int | None = None):
            WHERE vc.video_id IS NULL AND v.published_at >= ?
            ORDER BY v.published_at DESC""",
         [dt.datetime.now() - dt.timedelta(days=days)]).fetchall()
+    busy = _in_open_batches(con)
+    rows = [r for r in rows if r[0] not in busy]
     return rows[:limit] if limit else rows
 
 
@@ -137,3 +157,63 @@ def classify_videos(con, limit: int | None = None, days: int = 60, client=None) 
                 n += len(pending_rows)
                 pending_rows = []
     return n
+
+
+# ------------------------------------------------------------------ Message Batches: half price, results within hours
+def _params(system, batch) -> dict:
+    return {"model": MODEL, "max_tokens": 4000 + 150 * len(batch), "system": system,
+            "messages": [{"role": "user", "content": USER.format(videos=_video_block(batch))}]}
+
+
+def submit(con, limit: int | None = None, days: int = 60, client=None) -> str:
+    """Send every pending video as one batch request set (BATCH videos per request). Returns a status line."""
+    book = ctncs.load()
+    rows = pending(con, days, limit)
+    if not rows:
+        return "nothing to send"
+    if client is None:
+        import anthropic
+        client = anthropic.Anthropic()
+    system = [{"type": "text", "text": _system(book), "cache_control": {"type": "ephemeral"}}]
+    groups = [rows[i:i + BATCH] for i in range(0, len(rows), BATCH)]
+    reqs = [{"custom_id": f"g{k}", "params": _params(system, g)} for k, g in enumerate(groups)]
+    b = client.messages.batches.create(requests=reqs)
+    con.execute("INSERT INTO classify_batches VALUES (?, ?, ?, ?, NULL, NULL)",
+                [b.id, dt.datetime.now(), len(rows), json.dumps({f"g{k}": [r[0] for r in g] for k, g in enumerate(groups)})])
+    return f"{len(rows)} videos sent in batch {b.id} ({len(reqs)} requests)"
+
+
+def collect(con, client=None, wait_s: int = 0, poll_s: int = 30, sleep=None) -> str:
+    """Save results from every finished open batch. Waits up to wait_s for open batches to finish."""
+    import time
+    sleep = sleep or time.sleep
+    con.execute(BATCHES_DDL)
+    open_ = con.execute("SELECT batch_id, request_map FROM classify_batches WHERE collected_at IS NULL ORDER BY submitted_at").fetchall()
+    if not open_:
+        return "no open batches"
+    if client is None:
+        import anthropic
+        client = anthropic.Anthropic()
+    book, done, waiting, deadline = ctncs.load(), 0, 0, time.monotonic() + wait_s
+    for batch_id, m in open_:
+        ids_of = json.loads(m)
+        while True:
+            b = client.messages.batches.retrieve(batch_id)
+            if b.processing_status == "ended" or time.monotonic() >= deadline:
+                break
+            sleep(poll_s)
+        if b.processing_status != "ended":
+            waiting += 1
+            continue
+        out = []
+        for r in client.messages.batches.results(batch_id):
+            if r.result.type == "succeeded" and r.custom_id in ids_of:
+                llm.warn_if_cut(r.result.message, "classify-videos (batch)")
+                out += parse_reply(llm.reply_text(r.result.message), ids_of[r.custom_id], book)
+        if out:
+            save(con, out)
+        # requests that errored or expired are simply left unclassified; the next submit() sends those videos again
+        con.execute("UPDATE classify_batches SET collected_at = ?, classified = ? WHERE batch_id = ?",
+                    [dt.datetime.now(), len(out), batch_id])
+        done += len(out)
+    return f"{done} classified" + (f"; {waiting} batch(es) still processing, collected next run" if waiting else "")
