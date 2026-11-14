@@ -8,10 +8,11 @@ Monthly revenue now
   ranges in config/niche_economics.csv. Sponsor CPM is always the published rate card.
 
 Catalog value (USCAP: the present value of a creator's existing uploads)
-  Each video's daily views fall with age as a power law: views/day at age a+t = views/day at age a x ((a + t) / a)^-k.
-  k is fitted per sector from every tracked video (log views/day on log age, within channel). Tracked videos are projected
-  one by one from today's rate; the rest of the channel's daily views (its older back catalog, untracked) is projected as
-  one block aged at least a year. Five years of monthly ad revenue at the blended RPM, discounted at DISCOUNT a year.
+  Each video's daily views fall with age as a power law, views/day proportional to age^-k, with two slopes: a steep
+  launch slope k1 before KNEE_DAYS and a flatter tail slope k2 after it, fitted separately for long-form videos and
+  Shorts from every tracked video (log views/day on log age, within channel). Tracked videos are projected one by one
+  from today's rate; the rest of the channel's daily views (its older back catalog, untracked) is projected as one
+  block aged at least a year, so it follows the tail slope. Five years of monthly ad revenue at the blended RPM, discounted at DISCOUNT a year.
   No new uploads count: this is what the catalog is worth if the creator stopped today.
 
 Financing capacity (house rules, stated so they can be argued with)
@@ -33,7 +34,9 @@ SHORT_MAX_S = 180
 HORIZON_MONTHS = 60
 DISCOUNT = 0.12
 BACK_AGE_MIN = 365
-K_DEFAULT, K_MIN, K_MAX, K_MIN_VIDEOS = 1.0, 0.3, 2.0, 50
+K_MIN, K_MAX, K_MIN_VIDEOS = 0.3, 2.5, 50
+KNEE_DAYS = 90
+K_DEFAULT = {(False, "launch"): 1.5, (False, "tail"): 0.8, (True, "launch"): 2.0, (True, "tail"): 1.3}   # (is Short, band)
 ADVANCE_RATE, ADVANCE_MONTHS = 0.6, 36
 DEBT_SHARE, DEBT_MONTHS, DEBT_RATE = 0.3, 36, 0.15
 MONTH_DAYS = 30.4
@@ -89,14 +92,22 @@ def fit_decay(videos: pd.DataFrame) -> float | None:
     return float(min(max(-(x * y).sum() / (x ** 2).sum(), K_MIN), K_MAX))
 
 
-def project(tracked: list[tuple[float, float]], rest_daily: float, rest_age: float, k: float,
+def _log_level(age, k1: float, k2: float, knee: float = KNEE_DAYS):
+    """ln of relative views/day at an age: slope -k1 up to the knee, -k2 after it, continuous at the knee."""
+    a = np.asarray(age, dtype=float)
+    return np.where(a <= knee, -k1 * np.log(a), -k1 * np.log(knee) - k2 * np.log(a / knee))
+
+
+def project(tracked: list[tuple[float, float]], rest_daily: float, rest_age: float, k,
             months: int = HORIZON_MONTHS) -> np.ndarray:
-    """Monthly views from existing videos. tracked = [(age_days, views_per_day_now)]; rest is the untracked back catalog."""
+    """Monthly views from existing videos. tracked = [(age_days, views_per_day_now)]; rest is the untracked back catalog.
+    k is one slope, or (launch slope, tail slope)."""
+    k1, k2 = (k, k) if np.isscalar(k) else k
     t = (np.arange(months) + 0.5) * MONTH_DAYS
     out = np.zeros(months)
     for age, daily in tracked + [(rest_age, rest_daily)]:
         if daily > 0 and age > 0:
-            out += daily * ((age + t) / age) ** -k * MONTH_DAYS
+            out += daily * np.exp(_log_level(age + t, k1, k2) - _log_level(age, k1, k2)) * MONTH_DAYS
     return out
 
 
@@ -139,7 +150,7 @@ COLUMNS = """channel_id VARCHAR, niche_code VARCHAR, views_30d DOUBLE, shorts_sh
 
 def build(con, today: dt.date | None = None) -> str:
     con.execute(f"CREATE OR REPLACE TABLE creator_revenue ({COLUMNS})")
-    con.execute("CREATE OR REPLACE TABLE niche_decay (sector VARCHAR, decay_k DOUBLE, videos INTEGER, fitted BOOLEAN)")
+    con.execute("CREATE OR REPLACE TABLE niche_decay (format VARCHAR, band VARCHAR, decay_k DOUBLE, videos INTEGER, fitted BOOLEAN)")
     if not _has(con, "channel_daily", "channel_niche", "videos", "video_snapshots"):
         return "no history yet"
     last = con.execute("SELECT max(snapshot_date) FROM channel_daily").fetchone()[0]
@@ -169,12 +180,14 @@ def build(con, today: dt.date | None = None) -> str:
     vids["sector"] = vids["channel_id"].map(sector_of)
 
     k_of, decay_rows = {}, []
-    for sec, g in vids.groupby("sector"):
+    for (short, band), dflt in K_DEFAULT.items():
+        g = vids[(vids["short"] == short) & ((vids["age"] < KNEE_DAYS) if band == "launch" else (vids["age"] >= KNEE_DAYS))]
         k = fit_decay(g)
-        k_of[sec] = k if k is not None else K_DEFAULT
-        decay_rows.append((sec, k_of[sec], int(len(g)), k is not None))
-    if decay_rows:
-        con.executemany("INSERT INTO niche_decay VALUES (?, ?, ?, ?)", decay_rows)
+        k_of[(short, band)] = k if k is not None else dflt
+        decay_rows.append(("Shorts" if short else "Long-form", band, k_of[(short, band)], int(len(g)), k is not None))
+    con.executemany("INSERT INTO niche_decay VALUES (?, ?, ?, ?, ?)", decay_rows)
+    k_long = (k_of[(False, "launch")], k_of[(False, "tail")])
+    k_short = (k_of[(True, "launch")], k_of[(True, "tail")])
 
     spons = {}
     if _has(con, "creator_business"):
@@ -190,13 +203,12 @@ def build(con, today: dt.date | None = None) -> str:
         gain = v["daily"].sum()
         s = float(v.loc[v["short"], "daily"].sum() / gain) if gain > 0 else (float(v["short"].mean()) if len(v) else 0.0)
         views_30d = float(c.v30 * 30 / max(c.n30, 1)) if c.n30 and not pd.isna(c.v30) else float(c.daily) * 30
-        k = k_of.get(c.sector, K_DEFAULT)
         long_v, short_v = v[~v["short"]], v[v["short"]]
         rest = max(float(c.daily) - gain, 0.0)
         rest_age = float(max(v["age"].max() if len(v) else 0, BACK_AGE_MIN))
         s_up = float(v["short"].mean()) if len(v) else 0.0   # the back catalog's mix, taken from the upload mix
-        m_long = project(list(zip(long_v["age"], long_v["daily"])), rest * (1 - s_up), rest_age, k)
-        m_short = project(list(zip(short_v["age"], short_v["daily"])), rest * s_up, rest_age, k)
+        m_long = project(list(zip(long_v["age"], long_v["daily"])), rest * (1 - s_up), rest_age, k_long)
+        m_short = project(list(zip(short_v["age"], short_v["daily"])), rest * s_up, rest_age, k_short)
 
         lv = long_v[(long_v["age"] >= 30) & (long_v["age"] <= 120)]["views"]
         if not len(lv):
@@ -206,7 +218,7 @@ def build(con, today: dt.date | None = None) -> str:
 
         row = {"channel_id": c.channel_id, "niche_code": c.niche_code, "views_30d": views_30d, "shorts_share": s,
                "rpm_source": r["rpm_source"], "rpm_basis": r["rpm_basis"], "sponsored_per_month": per_month,
-               "views_per_video": per_video, "sponsor_cpm_mid": r["sponsor_cpm_mid"], "decay_k": k,
+               "views_per_video": per_video, "sponsor_cpm_mid": r["sponsor_cpm_mid"], "decay_k": k_long[1],
                "catalog_views_5y": float((m_long + m_short).sum()), "catalog_half_life_months": half_life(m_long + m_short)}
         for case in CASES:
             rpm, srpm, cpm = r[f"rpm_{case}"], r[f"shorts_rpm_{case}"], r[f"sponsor_cpm_{case}"]
@@ -222,5 +234,5 @@ def build(con, today: dt.date | None = None) -> str:
     if out:
         cols = [c.split()[0] for c in COLUMNS.replace("\n", " ").split(",")]
         con.executemany(f"INSERT INTO creator_revenue VALUES ({', '.join('?' * len(cols))})", [[o[c] for c in cols] for o in out])
-    ks = ", ".join(f"{s} k={k:.2f}" for s, k, _, _ in decay_rows)
+    ks = ", ".join(f"{f} {b} k={k:.2f}" for f, b, k, _, _ in decay_rows)
     return f"{len(out)} creators priced; decay {ks}"
